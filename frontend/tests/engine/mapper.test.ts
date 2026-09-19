@@ -83,6 +83,14 @@ describe('mapFeatures', () => {
     expect(long.leapAllowance).toBeGreaterThan(short.leapAllowance);
   });
 
+  it('never drops the leap allowance below one pentatonic step', () => {
+    // Pentatonic degrees sit 2-3 semitones apart. An allowance below that
+    // makes ordinary stepwise motion score as badly as a leap, which pushes
+    // the transition engine into wild jumps instead of smooth lines.
+    const midWord = mapFeatures(baseFeatures({ wordLength: 0 }), baseState(), preset);
+    expect(midWord.leapAllowance).toBeGreaterThanOrEqual(4);
+  });
+
   it('gives long words an arch gesture and short words a small rise', () => {
     const short = mapFeatures(baseFeatures({ wordLength: 2 }), baseState(), preset);
     const long = mapFeatures(baseFeatures({ wordLength: 9 }), baseState(), preset);

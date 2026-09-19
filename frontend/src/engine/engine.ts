@@ -4,8 +4,14 @@ import { selectNextPitch } from './transition';
 import type { ContourDirection, GenrePreset, MusicalEvent, MusicalState } from './types';
 import type { TypingFeatures } from '../typing/types';
 
-/** How many pitches the repetition penalty remembers. */
-const RECENT_PITCH_MEMORY = 8;
+/**
+ * How many pitches the repetition penalty remembers. Deliberately short: a
+ * pentatonic scale offers only ~11 candidates within an octave of the previous
+ * note, so a long memory penalises nearly every neighbour at once and exiles
+ * the melody to whatever distant pitch is still unused. Four is enough to stop
+ * the line sticking without driving it away.
+ */
+const RECENT_PITCH_MEMORY = 4;
 /** Keystrokes per phrase, used to advance phrasePosition. */
 const PHRASE_LENGTH_EVENTS = 32;
 

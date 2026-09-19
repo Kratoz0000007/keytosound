@@ -101,6 +101,72 @@ describe('MusicEngine', () => {
   });
 });
 
+/** Builds a feature stream from prose, the way the analyzer would. */
+function featuresFromText(text: string): TypingFeatures[] {
+  const out: TypingFeatures[] = [];
+  let buf = '';
+  for (const ch of text) {
+    if (' .,!?'.includes(ch)) {
+      const punctuation =
+        ch === '.' ? 'period' : ch === ',' ? 'comma' : ch === '!' ? 'exclamation' : ch === '?' ? 'question' : 'none';
+      out.push(features({ wordLength: buf.length, punctuation, interval: 200 }));
+      buf = '';
+    } else {
+      buf += ch;
+      out.push(features({ interval: 120 + ((buf.length * 37) % 160) }));
+    }
+  }
+  return out;
+}
+
+const PROSE =
+  'the quick brown fox jumps over the lazy dog. typing should sound like music, ' +
+  'not like a soundboard. it evolves as you write! does it hold up over a longer passage?';
+
+/**
+ * These are the musical invariants that separate this from a soundboard, and
+ * they are the first thing casual weight-tuning breaks. Thresholds are loose
+ * enough to permit taste, tight enough to catch a regression: before the
+ * interval weight and temperature were tuned, big leaps ran at 17%.
+ */
+describe('melodic quality', () => {
+  for (const id of Object.keys(GENRES)) {
+    describe(id, () => {
+      const events = renderSession(featuresFromText(PROSE), GENRES[id], 4242);
+      const pitches = events.map((e) => e.pitch);
+      const intervals = pitches.slice(1).map((p, i) => Math.abs(p - pitches[i]));
+      const share = (fn: (d: number) => boolean) =>
+        intervals.filter(fn).length / intervals.length;
+
+      it('moves mostly by step', () => {
+        expect(share((d) => d >= 1 && d <= 3)).toBeGreaterThan(0.5);
+      });
+
+      it('leaps an octave only rarely', () => {
+        expect(share((d) => d >= 8)).toBeLessThan(0.12);
+      });
+
+      it('still leaps sometimes rather than only running scales', () => {
+        expect(share((d) => d >= 4)).toBeGreaterThan(0.05);
+      });
+
+      it('uses a decent spread of pitches', () => {
+        expect(new Set(pitches).size).toBeGreaterThanOrEqual(8);
+      });
+
+      it('never hammers one pitch', () => {
+        let longest = 1;
+        let run = 1;
+        for (let i = 1; i < pitches.length; i++) {
+          run = pitches[i] === pitches[i - 1] ? run + 1 : 1;
+          longest = Math.max(longest, run);
+        }
+        expect(longest).toBeLessThanOrEqual(4);
+      });
+    });
+  }
+});
+
 describe('determinism contract', () => {
   it('produces an identical note sequence for identical input and seed', () => {
     const session = sentenceFeatures();

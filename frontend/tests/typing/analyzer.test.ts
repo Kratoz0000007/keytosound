@@ -86,6 +86,13 @@ describe('TypingAnalyzer', () => {
     expect(lastFast).toBeGreaterThan(lastSlow);
   });
 
+  it('clamps WPM to a humanly achievable figure', () => {
+    const a = new TypingAnalyzer();
+    // Key auto-repeat fires far faster than anyone can actually type.
+    const results = type(a, 'abcdefghij', 1);
+    expect(results[results.length - 1].speed).toBeLessThanOrEqual(300);
+  });
+
   it('is reset to its initial state by reset()', () => {
     const a = new TypingAnalyzer();
     type(a, 'hello world ');

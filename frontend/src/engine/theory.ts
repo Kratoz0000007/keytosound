@@ -29,3 +29,10 @@ export function isChordTone(pitch: number, chord: Chord): boolean {
   const pc = pitchClass(pitch);
   return chord.intervals.some((i) => pitchClass(chord.root + i) === pc);
 }
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+/** Scientific pitch notation, e.g. 60 -> "C4". For display only. */
+export function noteName(pitch: number): string {
+  return `${NOTE_NAMES[pitchClass(pitch)]}${Math.floor(pitch / 12) - 1}`;
+}

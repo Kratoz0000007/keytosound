@@ -45,7 +45,14 @@ export function mapFeatures(
   else targetTension = clamp(state.phrasePosition, 0, 1);
 
   // Short word, small excursion. Long word, a full arc with a registral peak.
-  const leapAllowance = clamp(2 + Math.min(f.wordLength, 10), 2, 12);
+  // The floor is 4, not 2: pentatonic degrees are 2-3 semitones apart, so an
+  // allowance of 2 makes scoreInterval punish ordinary stepwise motion nearly
+  // as hard as a leap. Combined with the repetition penalty that squeezes the
+  // engine out of its neighbourhood entirely and it reaches for wild jumps.
+  // The ceiling is 8, not 12: at 12 an octave jump scores 0.37 and stops being
+  // exceptional. A long word should widen the *arc* — that is gestureShape's
+  // job — rather than licence one enormous interval.
+  const leapAllowance = clamp(4 + Math.min(f.wordLength, 8) * 0.5, 4, 8);
 
   return {
     durationBeats: durationFromInterval(f.interval),

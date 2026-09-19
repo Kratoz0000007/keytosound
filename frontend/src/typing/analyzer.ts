@@ -6,6 +6,12 @@ const PAUSE_THRESHOLD_MS = 400;
 const SPEED_WINDOW = 16;
 /** Conventional WPM definition: five characters make a word. */
 const CHARS_PER_WORD = 5;
+/**
+ * Held-down keys auto-repeat at ~30ms, which computes to 400wpm and makes the
+ * readout nonsense. Energy is clamped downstream anyway; this keeps the
+ * reported figure in a range a human could actually produce.
+ */
+const MAX_SPEED_WPM = 300;
 
 const PUNCTUATION: Record<string, PunctuationClass> = {
   '.': 'period',
@@ -77,6 +83,6 @@ export class TypingAnalyzer {
     if (this.intervals.length === 0) return 0;
     const mean = this.intervals.reduce((a, b) => a + b, 0) / this.intervals.length;
     if (mean <= 0) return 0;
-    return 60000 / (mean * CHARS_PER_WORD);
+    return Math.min(MAX_SPEED_WPM, 60000 / (mean * CHARS_PER_WORD));
   }
 }

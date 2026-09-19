@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { pitchClass, scalePitchesInRange, isChordTone, SCALES } from '../../src/engine/theory';
+import {
+  pitchClass,
+  scalePitchesInRange,
+  isChordTone,
+  noteName,
+  SCALES,
+} from '../../src/engine/theory';
 
 describe('pitchClass', () => {
   it('wraps into 0..11', () => {
@@ -38,6 +44,15 @@ describe('isChordTone', () => {
 
   it('rejects non-chord tones', () => {
     expect(isChordTone(62, cMajor)).toBe(false); // D
+  });
+});
+
+describe('noteName', () => {
+  it('uses scientific pitch notation', () => {
+    expect(noteName(60)).toBe('C4');
+    expect(noteName(69)).toBe('A4');
+    expect(noteName(61)).toBe('C#4');
+    expect(noteName(72)).toBe('C5');
   });
 });
 
