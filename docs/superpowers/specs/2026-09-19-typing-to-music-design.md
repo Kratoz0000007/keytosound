@@ -41,6 +41,9 @@ These were settled during brainstorming and are not open questions during implem
 To protect the engine budget: **6 genres reduced to 3**, **9 instruments reduced to 5**, and auth
 trimmed to essentials (JWT; no refresh-token rotation, no email verification).
 
+**Revised 2026-09-20.** Jazz and Classical were added back on user request, bringing the count to
+5 genres. Instruments remain at 5. See sections 4.7 and 5 for the consequences.
+
 ## 3. Architecture
 
 ```
@@ -154,7 +157,11 @@ Translates `TypingFeatures` into musical parameters before note selection:
 - **Exclamation** gives a velocity accent plus an upward leap
 - **Question mark** leaves the line on an unresolved 2nd or 7th with rising contour
 - **Capital** gives a velocity accent
-- **Backspace** echoes the previous note
+- **Backspace** erases: a quiet, brief note chosen from pitches strictly *below* the previous one,
+  so deleting walks the melody downward and falls silent at the register floor. **Revised
+  2026-09-20** — it originally replayed the previous pitch verbatim, which meant holding backspace
+  repeated one note indefinitely. That is precisely the robotic repetition section 1 defines the
+  project against, and it was a design error in the original spec.
 
 ### 4.6 TransitionEngine
 
@@ -185,11 +192,25 @@ Randomness exists, but only inside musical constraints.
 
 ### 4.7 Scale safety
 
-Because the user judges by ear rather than theory, defaults are **major and minor pentatonic** —
-no semitone clashes, so genuinely bad notes are close to impossible. All three shipping genres use
-pentatonic scales. Richer seven-note modes (Dorian, Mixolydian) are reserved for the future Jazz
-and Classical presets, where they must be paired with heavy chord-tone weighting to compensate for
-the added clash risk.
+**Revised 2026-09-20.** The original rule was pentatonic-only: no semitone clashes, so genuinely
+bad notes are close to impossible for a user judging by ear. Adding Jazz and Classical required
+seven-note modes (Dorian, C major), which reintroduce exactly that risk.
+
+Measurement confirmed the risk was real rather than theoretical. With only heavier chord-tone
+weighting to protect it, Classical produced a semitone clash against the current chord on **21%**
+of notes, and Jazz on 16%, against 6-10% for the pentatonic genres.
+
+Two changes fixed it:
+
+1. **Step size is derived from the active scale** (`maxScaleStep`) instead of hardcoded to 3. The
+   "non-chord tone must be approached by step" rule is nearly free on a seven-note scale, where
+   adjacent degrees sit 1-2 semitones apart, so a fixed 3 waved most dissonances through.
+2. **Semitone clashes are penalised on their own terms** (`clashesWithChord`). A minor second
+   against the chord is the harshest available interval and now scores 0.03 on a strong beat,
+   regardless of how it was approached.
+
+Result: all five genres now sit at **5-8%** clash. Locked in by the harmonic-quality regression
+tests, which fail above 12%.
 
 ### 4.8 Phrase model
 
@@ -223,9 +244,15 @@ Genres are **data, not code** — a genre is a parameter set, so adding one is a
 programming. Each genre supplies: scale set, chord progression, tempo range, scoring weights,
 softmax temperature, grid subdivision, instrument defaults, and effects chain.
 
-**Shipping 3 genres** (Lo-Fi, Synthwave, 8-Bit) and **5 instruments** (Piano, Synth Lead, Electric
-Piano, Bass, 8-Bit Synth). Classical, Jazz, and Ambient remain authorable later at no
-architectural cost.
+**Revised 2026-09-20.** A genre originally carried no rhythm, so every genre shared one hardcoded
+drum loop and differed only by tempo — 8-Bit was Lo-Fi played faster. Each preset now owns a
+**`Groove`**: kick, snare, hat and bass placements on a 16th-note grid plus a swing amount, played
+by a 16-step sequencer. Empty drum arrays are legal and meaningful, which is how Classical has no
+percussion at all rather than needing a special case.
+
+**Shipping 5 genres** (Lo-Fi, Synthwave, 8-Bit, Jazz, Classical) and **5 instruments** (Piano,
+Synth Lead, Electric Piano, Bass, 8-Bit Synth). Ambient remains authorable later at no
+architectural cost — it needs no code, only a preset.
 
 ## 6. Backend responsibilities (Spring Boot)
 

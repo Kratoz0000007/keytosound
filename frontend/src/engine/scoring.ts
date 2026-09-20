@@ -1,11 +1,5 @@
-import { isChordTone } from './theory';
+import { clashesWithChord, isChordTone } from './theory';
 import type { Chord, ContourDirection, GestureShape } from './types';
-
-/**
- * In a pentatonic scale, adjacent degrees can be 2 or 3 semitones apart,
- * so "approached by step" means up to a minor third.
- */
-const STEP_SEMITONES = 3;
 
 /** A leap wider than this triggers the reverse-by-step rule. */
 const LEAP_THRESHOLD = 4;
@@ -40,10 +34,19 @@ export function scoreChordTone(
   previousPitch: number,
   chord: Chord,
   onStrongBeat: boolean,
+  /** One step in the active scale, from maxScaleStep. 3 for pentatonic, 2 for diatonic. */
+  maxStep: number,
 ): number {
   if (isChordTone(candidate, chord)) return onStrongBeat ? 1 : 0.8;
-  const approachedByStep = Math.abs(candidate - previousPitch) <= STEP_SEMITONES;
+
+  const approachedByStep = Math.abs(candidate - previousPitch) <= maxStep;
   if (!approachedByStep) return 0.05;
+
+  // The approached-by-step allowance is nearly free on a seven-note scale,
+  // where adjacent degrees are 1-2 semitones apart, so it lets minor seconds
+  // against the chord straight through. Penalise that clash on its own terms.
+  if (clashesWithChord(candidate, chord)) return onStrongBeat ? 0.03 : 0.12;
+
   return onStrongBeat ? 0.15 : 0.5;
 }
 

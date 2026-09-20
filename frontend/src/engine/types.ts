@@ -1,4 +1,10 @@
-export type ScaleName = 'majorPentatonic' | 'minorPentatonic';
+/**
+ * Pentatonic scales have no semitone clashes, so bad notes are nearly
+ * impossible — that is why the first three genres use them. The seven-note
+ * modes below reintroduce that risk and must be paired with heavier
+ * chordTone weighting; see the Jazz and Classical presets.
+ */
+export type ScaleName = 'majorPentatonic' | 'minorPentatonic' | 'dorian' | 'major';
 
 export type InstrumentId =
   | 'piano'
@@ -37,6 +43,22 @@ export interface ScoringWeights {
   tension: number;
 }
 
+/**
+ * One bar of backing rhythm on a 16th-note grid. Each array holds the step
+ * indices (0-15) where that voice fires. Empty arrays are legal and
+ * meaningful: Classical has no drums at all, and a string quartet with a
+ * kick drum would be absurd.
+ */
+export interface Groove {
+  kick: number[];
+  snare: number[];
+  hat: number[];
+  /** Steps where the bass restates the chord root. */
+  bass: number[];
+  /** 0 = straight, 0.5 = heavy swing. Delays odd-numbered 16ths. */
+  swing: number;
+}
+
 /** A genre is data, not code. Adding one is authoring a parameter set. */
 export interface GenrePreset {
   id: string;
@@ -54,6 +76,7 @@ export interface GenrePreset {
   /** Semitones of comfortable range either side of centerPitch. */
   registerSpread: number;
   leadInstrument: InstrumentId;
+  groove: Groove;
 }
 
 /** Everything the engine carries from one note to the next. */
@@ -93,5 +116,11 @@ export interface MappedParams {
   isRest: boolean;
   targetTension: number;
   advanceChord: boolean;
-  echoPrevious: boolean;
+  /**
+   * Erasing. Restricts candidates to pitches strictly below the previous one,
+   * so deleting text walks the melody downward and can never repeat a note.
+   * Replaced echoPrevious, which replayed the previous pitch verbatim and so
+   * produced exactly the robotic repetition this project exists to avoid.
+   */
+  descendOnly: boolean;
 }

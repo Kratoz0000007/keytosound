@@ -68,9 +68,13 @@ export class MusicEngine {
       return null;
     }
 
-    const pitch = params.echoPrevious
-      ? this.state.previousPitch
-      : selectNextPitch(this.state, params, this.preset, this.rng);
+    const pitch = selectNextPitch(this.state, params, this.preset, this.rng);
+
+    // Erasing has reached the bottom of the register: nothing left to undo.
+    if (pitch === null) {
+      this.advancePhrase();
+      return null;
+    }
 
     this.updateContour(pitch);
     this.state.previousPitch = pitch;

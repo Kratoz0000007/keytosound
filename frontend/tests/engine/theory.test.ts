@@ -4,6 +4,7 @@ import {
   scalePitchesInRange,
   isChordTone,
   noteName,
+  maxScaleStep,
   SCALES,
 } from '../../src/engine/theory';
 
@@ -53,6 +54,23 @@ describe('noteName', () => {
     expect(noteName(69)).toBe('A4');
     expect(noteName(61)).toBe('C#4');
     expect(noteName(72)).toBe('C5');
+  });
+});
+
+describe('maxScaleStep', () => {
+  it('reports a minor third for pentatonic scales', () => {
+    expect(maxScaleStep('majorPentatonic')).toBe(3);
+    expect(maxScaleStep('minorPentatonic')).toBe(3);
+  });
+
+  it('reports a whole tone for the seven-note modes', () => {
+    expect(maxScaleStep('dorian')).toBe(2);
+    expect(maxScaleStep('major')).toBe(2);
+  });
+
+  it('accounts for the wrap back to the octave', () => {
+    // minorPentatonic ends on 10, so the final gap is 10 -> 12, not 10 -> 0.
+    expect(maxScaleStep('minorPentatonic')).toBeLessThan(10);
   });
 });
 

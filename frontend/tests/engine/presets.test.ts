@@ -3,8 +3,8 @@ import { GENRES, DEFAULT_GENRE_ID } from '../../src/engine/presets';
 import { SCALES } from '../../src/engine/theory';
 
 describe('GENRES', () => {
-  it('ships exactly three genres', () => {
-    expect(Object.keys(GENRES)).toHaveLength(3);
+  it('ships five genres', () => {
+    expect(Object.keys(GENRES)).toHaveLength(5);
   });
 
   it('has a valid default', () => {
@@ -41,6 +41,27 @@ describe('GENRES', () => {
 
       it('has its id matching its key', () => {
         expect(preset.id).toBe(id);
+      });
+
+      it('has a groove whose steps sit on the 16th-note grid', () => {
+        const { kick, snare, hat, bass, swing } = preset.groove;
+        for (const steps of [kick, snare, hat, bass]) {
+          for (const step of steps) {
+            expect(Number.isInteger(step)).toBe(true);
+            expect(step).toBeGreaterThanOrEqual(0);
+            expect(step).toBeLessThan(16);
+          }
+          // Duplicate steps would double-trigger a voice on the same tick.
+          expect(new Set(steps).size).toBe(steps.length);
+        }
+        expect(swing).toBeGreaterThanOrEqual(0);
+        expect(swing).toBeLessThanOrEqual(0.75);
+      });
+
+      it('always has bass, even where it has no drums', () => {
+        // Empty drum arrays are legal (Classical); a silent bass is not, or
+        // the harmony loses its root.
+        expect(preset.groove.bass.length).toBeGreaterThan(0);
       });
     });
   }

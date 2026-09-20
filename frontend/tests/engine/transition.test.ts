@@ -37,7 +37,7 @@ function params(overrides: Partial<MappedParams> = {}): MappedParams {
     isRest: false,
     targetTension: 0.4,
     advanceChord: false,
-    echoPrevious: false,
+    descendOnly: false,
     ...overrides,
   };
 }
@@ -139,6 +139,33 @@ describe('selectNextPitch', () => {
       s = { ...s, previousPitch: pitch, recentPitches: emitted.slice(-8) };
     }
     expect(new Set(emitted).size).toBeGreaterThan(3);
+  });
+
+  it('only ever picks a lower pitch when descendOnly is set', () => {
+    const rng = createPrng(29);
+    for (let i = 0; i < 60; i++) {
+      const pitch = selectNextPitch(
+        state({ previousPitch: 72 }),
+        params({ descendOnly: true }),
+        preset,
+        rng,
+      );
+      expect(pitch).not.toBeNull();
+      expect(pitch!).toBeLessThan(72);
+    }
+  });
+
+  it('returns null when descending has nowhere left to go', () => {
+    // At the bottom of the register there is no candidate below, so erasing
+    // falls silent rather than inventing a note.
+    const floor = preset.centerPitch - preset.registerSpread * 2;
+    const pitch = selectNextPitch(
+      state({ previousPitch: floor }),
+      params({ descendOnly: true }),
+      preset,
+      createPrng(31),
+    );
+    expect(pitch).toBeNull();
   });
 
   it('a lower temperature produces less variety than a higher one', () => {

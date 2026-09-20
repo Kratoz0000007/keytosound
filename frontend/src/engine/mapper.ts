@@ -30,13 +30,16 @@ export function mapFeatures(
   _preset: GenrePreset,
 ): MappedParams {
   const energy = clamp(f.speed / SPEED_FOR_FULL_ENERGY, 0, 1);
+  const erasing = f.isBackspace;
 
   let velocity = 0.4 + energy * 0.4;
   if (f.isCapital) velocity += 0.12;
   if (f.punctuation === 'exclamation') velocity += 0.18;
+  // An erasure should read as undoing, not composing: half the weight.
+  if (erasing) velocity *= 0.5;
   velocity = clamp(velocity, 0.05, 1);
 
-  const forceResolution = f.punctuation === 'period';
+  const forceResolution = !erasing && f.punctuation === 'period';
   const isRest = f.punctuation === 'comma';
 
   let targetTension: number;
@@ -52,18 +55,21 @@ export function mapFeatures(
   // The ceiling is 8, not 12: at 12 an octave jump scores 0.37 and stops being
   // exceptional. A long word should widen the *arc* — that is gestureShape's
   // job — rather than licence one enormous interval.
-  const leapAllowance = clamp(4 + Math.min(f.wordLength, 8) * 0.5, 4, 8);
+  // Erasing steps tightly rather than plunging down the register.
+  const leapAllowance = erasing ? 3 : clamp(4 + Math.min(f.wordLength, 8) * 0.5, 4, 8);
 
   return {
-    durationBeats: durationFromInterval(f.interval),
-    subdivision: energy > 0.5 ? 16 : 8,
+    // Erasures are brief, so holding backspace does not stack long notes.
+    durationBeats: erasing ? 0.25 : durationFromInterval(f.interval),
+    subdivision: erasing || energy > 0.5 ? 16 : 8,
     velocity,
     leapAllowance,
-    gestureShape: shapeFromWord(f.wordLength, f.punctuation),
+    gestureShape: erasing ? 'fall' : shapeFromWord(f.wordLength, f.punctuation),
     forceResolution,
     isRest,
     targetTension,
-    advanceChord: f.wordLength > 0,
-    echoPrevious: f.isBackspace,
+    // Deleting must not drive the harmony forward.
+    advanceChord: !erasing && f.wordLength > 0,
+    descendOnly: erasing,
   };
 }

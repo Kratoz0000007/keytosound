@@ -124,9 +124,34 @@ describe('mapFeatures', () => {
     expect(boundary.advanceChord).toBe(true);
   });
 
-  it('echoes the previous note on backspace', () => {
-    const p = mapFeatures(baseFeatures({ isBackspace: true }), baseState(), preset);
-    expect(p.echoPrevious).toBe(true);
+  it('makes backspace a quiet, brief, descending gesture', () => {
+    const typing = mapFeatures(baseFeatures(), baseState(), preset);
+    const erasing = mapFeatures(baseFeatures({ isBackspace: true }), baseState(), preset);
+    expect(erasing.descendOnly).toBe(true);
+    expect(erasing.gestureShape).toBe('fall');
+    expect(erasing.velocity).toBeLessThan(typing.velocity);
+    expect(erasing.durationBeats).toBeLessThanOrEqual(0.25);
+    expect(erasing.leapAllowance).toBeLessThan(typing.leapAllowance);
+  });
+
+  it('does not advance the harmony while erasing', () => {
+    // Deleting a word must not push the chord progression forward, or holding
+    // backspace would race through the changes.
+    const erasing = mapFeatures(
+      baseFeatures({ isBackspace: true, wordLength: 5 }),
+      baseState(),
+      preset,
+    );
+    expect(erasing.advanceChord).toBe(false);
+  });
+
+  it('does not force a resolution while erasing', () => {
+    const erasing = mapFeatures(
+      baseFeatures({ isBackspace: true, punctuation: 'period' }),
+      baseState(),
+      preset,
+    );
+    expect(erasing.forceResolution).toBe(false);
   });
 
   it('lengthens the note after a long pause', () => {

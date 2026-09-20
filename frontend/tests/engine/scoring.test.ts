@@ -36,27 +36,41 @@ describe('scoreInterval', () => {
   });
 });
 
+/** maxScaleStep for the pentatonic scales the first three genres use. */
+const PENTATONIC_STEP = 3;
+/** maxScaleStep for the seven-note modes Jazz and Classical use. */
+const DIATONIC_STEP = 2;
+
 describe('scoreChordTone', () => {
   it('prefers chord tones, especially on strong beats', () => {
-    const strong = scoreChordTone(64, 62, cMajor, true);
-    const weak = scoreChordTone(64, 62, cMajor, false);
+    const strong = scoreChordTone(64, 62, cMajor, true, PENTATONIC_STEP);
+    const weak = scoreChordTone(64, 62, cMajor, false, PENTATONIC_STEP);
     expect(strong).toBeGreaterThan(weak);
   });
 
   it('scores a chord tone above a non-chord tone', () => {
-    expect(scoreChordTone(64, 62, cMajor, true)).toBeGreaterThan(
-      scoreChordTone(62, 60, cMajor, true),
+    expect(scoreChordTone(64, 62, cMajor, true, PENTATONIC_STEP)).toBeGreaterThan(
+      scoreChordTone(62, 60, cMajor, true, PENTATONIC_STEP),
     );
   });
 
   it('allows a non-chord tone approached by step', () => {
-    const byStep = scoreChordTone(62, 60, cMajor, false);
-    const byLeap = scoreChordTone(62, 55, cMajor, false);
+    const byStep = scoreChordTone(62, 60, cMajor, false, PENTATONIC_STEP);
+    const byLeap = scoreChordTone(62, 55, cMajor, false, PENTATONIC_STEP);
     expect(byStep).toBeGreaterThan(byLeap);
   });
 
   it('heavily penalises a non-chord tone reached by leap', () => {
-    expect(scoreChordTone(62, 50, cMajor, true)).toBeLessThan(0.1);
+    expect(scoreChordTone(62, 50, cMajor, true, PENTATONIC_STEP)).toBeLessThan(0.1);
+  });
+
+  it('treats a minor third as a step on pentatonic but not on a diatonic scale', () => {
+    // 63 is 3 semitones above 60 and not in C major. On pentatonic that is one
+    // scale step so it passes as a passing note; on a diatonic scale it is a
+    // leap to a dissonance and must be blocked. Hardcoding the step size would
+    // wave it through for Jazz and Classical.
+    expect(scoreChordTone(63, 60, cMajor, false, PENTATONIC_STEP)).toBeGreaterThan(0.1);
+    expect(scoreChordTone(63, 60, cMajor, false, DIATONIC_STEP)).toBeLessThan(0.1);
   });
 });
 

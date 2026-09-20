@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { MusicEngine, renderSession } from '../../src/engine/engine';
 import { GENRES } from '../../src/engine/presets';
-import { SCALES, pitchClass } from '../../src/engine/theory';
+import { SCALES, clashesWithChord, isChordTone, pitchClass } from '../../src/engine/theory';
 import type { TypingFeatures } from '../../src/typing/types';
 
 const preset = GENRES.lofi;
@@ -56,11 +56,33 @@ describe('MusicEngine', () => {
     expect(engine.step(features({ punctuation: 'comma' }))).toBeNull();
   });
 
-  it('repeats the previous pitch on backspace', () => {
+  it('descends on backspace instead of repeating', () => {
     const engine = new MusicEngine(preset, 42);
-    const first = engine.step(features())!;
-    const echo = engine.step(features({ isBackspace: true }))!;
-    expect(echo.pitch).toBe(first.pitch);
+    const typed = engine.step(features())!;
+    const erased = engine.step(features({ isBackspace: true }))!;
+    expect(erased.pitch).toBeLessThan(typed.pitch);
+  });
+
+  it('never repeats a pitch while holding backspace', () => {
+    // The whole point of replacing echoPrevious: deleting a long passage used
+    // to replay one note forever.
+    const engine = new MusicEngine(preset, 42);
+    for (let i = 0; i < 5; i++) engine.step(features());
+    const erased: number[] = [];
+    for (let i = 0; i < 30; i++) {
+      const event = engine.step(features({ isBackspace: true }));
+      if (event) erased.push(event.pitch);
+    }
+    expect(erased.length).toBeGreaterThan(0);
+    for (let i = 1; i < erased.length; i++) {
+      expect(erased[i]).toBeLessThan(erased[i - 1]);
+    }
+  });
+
+  it('falls silent once erasing reaches the bottom of the register', () => {
+    const engine = new MusicEngine(preset, 42);
+    for (let i = 0; i < 200; i++) engine.step(features({ isBackspace: true }));
+    expect(engine.step(features({ isBackspace: true }))).toBeNull();
   });
 
   it('advances the chord on a word boundary', () => {
@@ -163,6 +185,38 @@ describe('melodic quality', () => {
         }
         expect(longest).toBeLessThanOrEqual(4);
       });
+    });
+  }
+});
+
+/**
+ * Harmonic quality is a separate axis from melodic shape, and the seven-note
+ * scales Jazz and Classical use are where it can go wrong: adjacent diatonic
+ * degrees are 1-2 semitones apart, so a careless weighting fills the melody
+ * with minor seconds against the chord. Classical measured 21% before the
+ * clash penalty existed; the pentatonic genres sit around 5-7%.
+ */
+describe('harmonic quality', () => {
+  for (const id of Object.keys(GENRES)) {
+    it(`${id} rarely clashes by a semitone with the current chord`, () => {
+      const preset = GENRES[id];
+      const engine = new MusicEngine(preset, 4242);
+      let clashes = 0;
+      let notes = 0;
+
+      for (const ft of featuresFromText(PROSE)) {
+        const chordIndex = engine.getState().chordIndex;
+        const event = engine.step(ft);
+        if (!event) continue;
+        notes += 1;
+        const chord = preset.progression[chordIndex % preset.progression.length];
+        if (clashesWithChord(event.pitch, chord) && !isChordTone(event.pitch, chord)) {
+          clashes += 1;
+        }
+      }
+
+      expect(notes).toBeGreaterThan(50);
+      expect(clashes / notes).toBeLessThan(0.12);
     });
   }
 });

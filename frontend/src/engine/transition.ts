@@ -6,7 +6,7 @@ import {
   scoreRepetition,
   scoreTension,
 } from './scoring';
-import { isChordTone, scalePitchesInRange } from './theory';
+import { isChordTone, maxScaleStep, scalePitchesInRange } from './theory';
 import type { GenrePreset, MappedParams, MusicalState } from './types';
 
 /** Candidates are drawn from one octave either side of the previous note. */
@@ -43,19 +43,37 @@ export function generateCandidates(state: MusicalState, preset: GenrePreset): nu
 /**
  * Score every candidate on the six weighted terms, then sample from a softmax
  * over those scores. Randomness exists, but only inside musical constraints.
+ *
+ * Returns null only when erasing has walked the melody to the bottom of the
+ * register and there is nothing left below it — deletion then falls silent.
  */
 export function selectNextPitch(
   state: MusicalState,
   params: MappedParams,
   preset: GenrePreset,
   rng: () => number,
-): number {
+): number | null {
   const chord = state.progression[state.chordIndex % state.progression.length];
   const tonicChord = state.progression[0];
   const onStrongBeat = state.beatPosition < 0.25;
+  const maxStep = maxScaleStep(state.scale);
   const w = preset.weights;
 
   const all = generateCandidates(state, preset);
+
+  // Erasing walks strictly downward. A hard filter, not a weight: it is what
+  // guarantees backspace can never replay the same pitch twice in a row.
+  if (params.descendOnly) {
+    const below = all.filter((p) => p < state.previousPitch);
+    if (below.length === 0) return null;
+    return sampleSoftmax(
+      below,
+      below.map((p) => scoreCandidate(p)),
+      preset.temperature,
+      rng,
+    );
+  }
+
   // "Forced" resolution means forced. Scoring alone cannot guarantee it: a
   // conveniently adjacent non-tonic note can outweigh the tension term via
   // the interval term. Restricting the candidate set is what makes a phrase
@@ -67,10 +85,12 @@ export function selectNextPitch(
       })()
     : all;
 
-  const scores = candidates.map((candidate) => {
+  return sampleSoftmax(candidates, candidates.map(scoreCandidate), preset.temperature, rng);
+
+  function scoreCandidate(candidate: number): number {
     return (
       w.interval * scoreInterval(candidate, state.previousPitch, params.leapAllowance) +
-      w.chordTone * scoreChordTone(candidate, state.previousPitch, chord, onStrongBeat) +
+      w.chordTone * scoreChordTone(candidate, state.previousPitch, chord, onStrongBeat, maxStep) +
       w.contour *
         scoreContour(candidate, {
           previousPitch: state.previousPitch,
@@ -85,9 +105,7 @@ export function selectNextPitch(
       w.tension *
         scoreTension(candidate, chord, tonicChord, params.targetTension, params.forceResolution)
     );
-  });
-
-  return sampleSoftmax(candidates, scores, preset.temperature, rng);
+  }
 }
 
 function sampleSoftmax(
