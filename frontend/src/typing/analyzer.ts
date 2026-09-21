@@ -20,8 +20,8 @@ const PUNCTUATION: Record<string, PunctuationClass> = {
   '?': 'question',
 };
 
-const WORD_TERMINATORS = new Set([' ', '.', ',', '!', '?']);
-const SENTENCE_TERMINATORS = new Set(['.', '!', '?']);
+const WORD_TERMINATORS = new Set([' ', '.', ',', '!', '?', 'Enter']);
+const SENTENCE_TERMINATORS = new Set(['.', '!', '?', 'Enter']);
 
 export class TypingAnalyzer {
   private lastTimestamp: number | null = null;
@@ -37,6 +37,25 @@ export class TypingAnalyzer {
   }
 
   process(event: KeyEvent): TypingFeatures {
+    // Digits play the drums, not the melody. They must not disturb the word
+    // being typed or the speed reading, so they bypass all of the state below.
+    if (/^[0-9]$/.test(event.key)) {
+      return {
+        interval: 0,
+        speed: this.currentSpeed(),
+        wordLength: 0,
+        sentencePos: this.sentencePos,
+        pauseDuration: 0,
+        punctuation: 'none',
+        isCapital: false,
+        isBackspace: false,
+        timestamp: event.timestamp,
+        wordPrefix: this.wordBuffer.toLowerCase(),
+        isEnter: false,
+        digit: Number(event.key),
+      };
+    }
+
     const interval =
       this.lastTimestamp === null ? 0 : Math.max(0, event.timestamp - this.lastTimestamp);
     this.lastTimestamp = event.timestamp;
@@ -76,6 +95,10 @@ export class TypingAnalyzer {
       punctuation,
       isCapital,
       isBackspace,
+      timestamp: event.timestamp,
+      wordPrefix: this.wordBuffer.toLowerCase(),
+      isEnter: event.key === 'Enter',
+      digit: null,
     };
   }
 

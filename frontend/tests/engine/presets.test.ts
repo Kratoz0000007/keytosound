@@ -58,10 +58,14 @@ describe('GENRES', () => {
         expect(swing).toBeLessThanOrEqual(0.75);
       });
 
-      it('always has bass, even where it has no drums', () => {
-        // Empty drum arrays are legal (Classical); a silent bass is not, or
+      it('always has bass, even where it has no snare or hats', () => {
+        // Empty snare and hat arrays are legal (Classical); a silent bass is not, or
         // the harmony loses its root.
         expect(preset.groove.bass.length).toBeGreaterThan(0);
+      });
+
+      it('keeps an audible pulse, so switching to it never sounds like the beat stopped', () => {
+        expect(preset.groove.kick.length).toBeGreaterThan(0);
       });
     });
   }

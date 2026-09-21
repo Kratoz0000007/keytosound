@@ -4,6 +4,7 @@ import {
   scoreInterval,
   scoreRegister,
   scoreRepetition,
+  scoreTarget,
   scoreTension,
 } from './scoring';
 import { isChordTone, maxScaleStep, scalePitchesInRange } from './theory';
@@ -23,6 +24,14 @@ const MAX_PITCH = 96;
  */
 const REGISTER_LIMIT_FACTOR = 2;
 
+/** The playable register for a genre: [floor, ceiling] in MIDI pitches. */
+export function registerWindow(preset: GenrePreset): [number, number] {
+  return [
+    Math.max(MIN_PITCH, preset.centerPitch - preset.registerSpread * REGISTER_LIMIT_FACTOR),
+    Math.min(MAX_PITCH, preset.centerPitch + preset.registerSpread * REGISTER_LIMIT_FACTOR),
+  ];
+}
+
 export function generateCandidates(state: MusicalState, preset: GenrePreset): number[] {
   const registerFloor = preset.centerPitch - preset.registerSpread * REGISTER_LIMIT_FACTOR;
   const registerCeiling = preset.centerPitch + preset.registerSpread * REGISTER_LIMIT_FACTOR;
@@ -41,7 +50,7 @@ export function generateCandidates(state: MusicalState, preset: GenrePreset): nu
 }
 
 /**
- * Score every candidate on the six weighted terms, then sample from a softmax
+ * Score every candidate on the seven weighted terms, then sample from a softmax
  * over those scores. Randomness exists, but only inside musical constraints.
  *
  * Returns null only when erasing has walked the melody to the bottom of the
@@ -53,8 +62,10 @@ export function selectNextPitch(
   preset: GenrePreset,
   rng: () => number,
 ): number | null {
-  const chord = state.progression[state.chordIndex % state.progression.length];
-  const tonicChord = state.progression[0];
+  // Both read from Harmony, the clock the band also plays from, so the lead
+  // is always scored against the chord that is actually sounding.
+  const chord = state.currentChord;
+  const tonicChord = state.tonicChord;
   const onStrongBeat = state.beatPosition < 0.25;
   const maxStep = maxScaleStep(state.scale);
   const w = preset.weights;
@@ -103,7 +114,8 @@ export function selectNextPitch(
       w.register * scoreRegister(candidate, preset.centerPitch, preset.registerSpread) +
       w.repetition * scoreRepetition(candidate, state.recentPitches) +
       w.tension *
-        scoreTension(candidate, chord, tonicChord, params.targetTension, params.forceResolution)
+        scoreTension(candidate, chord, tonicChord, params.targetTension, params.forceResolution) +
+      w.target * scoreTarget(candidate, state.targetPitchClass)
     );
   }
 }

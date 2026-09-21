@@ -27,24 +27,33 @@ const SCALE_LABELS: Record<ScaleName, string> = {
 };
 
 interface Readout {
+  keyRoot: number | null;
   current: number | null;
   previous: number | null;
   wpm: number;
   chordIndex: number;
 }
 
-const EMPTY_READOUT: Readout = { current: null, previous: null, wpm: 0, chordIndex: 0 };
+const EMPTY_READOUT: Readout = {
+  keyRoot: null,
+  current: null,
+  previous: null,
+  wpm: 0,
+  chordIndex: 0,
+};
 
 export function TypingSurface() {
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const analyzerRef = useRef(new TypingAnalyzer());
   const musicRef = useRef(new MusicEngine(GENRES[DEFAULT_GENRE_ID], SEED));
-  const audioRef = useRef(new AudioEngine(GENRES[DEFAULT_GENRE_ID]));
+  // The band reads harmony and the beat from whichever engine is current.
+  const audioRef = useRef(new AudioEngine(GENRES[DEFAULT_GENRE_ID], () => musicRef.current));
   const recorderRef = useRef(new SessionRecorder());
   const playerRef = useRef(new ReplayPlayer());
 
   const [genreId, setGenreId] = useState(DEFAULT_GENRE_ID);
   const [running, setRunning] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [readout, setReadout] = useState<Readout>(EMPTY_READOUT);
   const [notes, setNotes] = useState<VisualNote[]>([]);
   const [title, setTitle] = useState('');
@@ -58,8 +67,22 @@ export function TypingSurface() {
     const features = analyzerRef.current.process(key);
     const event = musicRef.current.step(features);
     const state = musicRef.current.getState();
+
+    // A digit edits the loop. If the step it landed on has already gone by
+    // this bar, play the hit now so the press is heard immediately; otherwise
+    // the band plays it when it arrives.
+    const edit = musicRef.current.lastBeatEdit;
+    if (edit?.voice && edit.added && edit.stepTimeMs < features.timestamp) {
+      audioRef.current.hit(edit.voice);
+    }
+
     if (!event) {
-      setReadout((r) => ({ ...r, wpm: features.speed, chordIndex: state.chordIndex }));
+      setReadout((r) => ({
+        ...r,
+        keyRoot: state.keyRoot,
+        wpm: features.speed,
+        chordIndex: state.chordIndex,
+      }));
       return;
     }
     audioRef.current.play(event);
@@ -73,6 +96,7 @@ export function TypingSurface() {
       },
     ]);
     setReadout((r) => ({
+      keyRoot: state.keyRoot,
       current: event.pitch,
       previous: r.current,
       wpm: features.speed,
@@ -82,8 +106,11 @@ export function TypingSurface() {
 
   const handleKey = useCallback(
     (key: KeyEvent) => {
-      recorderRef.current.record(key);
-      consumeKey(key);
+      // Restamp on the transport's clock, the same timeline the band's bars
+      // are counted on. It skips paused time, which the browser clock would not.
+      const stamped = { key: key.key, timestamp: audioRef.current.sessionMs() };
+      recorderRef.current.record(stamped);
+      consumeKey(stamped);
     },
     [consumeKey],
   );
@@ -99,6 +126,19 @@ export function TypingSurface() {
     recorderRef.current.start(genreId, SEED);
     setRunning(true);
     areaRef.current?.focus();
+  };
+
+  const togglePause = () => {
+    if (paused) {
+      audioRef.current.resume();
+      setPaused(false);
+      areaRef.current?.focus();
+      return;
+    }
+    // A replay would keep feeding keystrokes into a silent engine.
+    playerRef.current.stop();
+    audioRef.current.pause();
+    setPaused(true);
   };
 
   const changeGenre = (id: string) => {
@@ -144,6 +184,8 @@ export function TypingSurface() {
     musicRef.current = new MusicEngine(preset, session.seed);
     analyzerRef.current.reset();
     audioRef.current.setGenre(preset);
+    audioRef.current.resume();
+    setPaused(false);
     setNotes([]);
     setReadout(EMPTY_READOUT);
     setStatus('Replaying...');
@@ -156,7 +198,12 @@ export function TypingSurface() {
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">keytosound</h1>
         <p className="text-sm text-neutral-500">
-          Type. The transition engine composes a melody over the band.
+          Type. Words become phrases; punctuation moves the harmony.
+        </p>
+        <p className="mt-1 text-xs text-neutral-500">
+          <kbd>,</kbd> pause on the dominant · <kbd>.</kbd> resolve home · <kbd>?</kbd> hang
+          unresolved · <kbd>Enter</kbd> change key · digits edit the beat: 1 kick · 2 snare · 3
+          hat · 4 open hat · 5 clap · 6 perc · 7 bass · 8 stab · 9 fx · 0 reset
         </p>
       </header>
 
@@ -167,6 +214,14 @@ export function TypingSurface() {
             className="rounded bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-700"
           >
             Start audio
+          </button>
+        )}
+        {running && (
+          <button
+            onClick={togglePause}
+            className="rounded border border-neutral-900 px-4 py-2 hover:bg-neutral-100"
+          >
+            {paused ? 'Resume beat' : 'Pause beat'}
           </button>
         )}
         <select
@@ -193,7 +248,7 @@ export function TypingSurface() {
         />
         <Stat
           label="Key / scale"
-          value={`${noteName(preset.keyRoot + 60).slice(0, -1)} ${SCALE_LABELS[preset.scale]}`}
+          value={`${noteName((readout.keyRoot ?? preset.keyRoot) + 60).slice(0, -1)} ${SCALE_LABELS[preset.scale]}`}
         />
         <Stat label="BPM" value={String(preset.bpm)} />
         <Stat label="Typing speed" value={`${Math.round(readout.wpm)} wpm`} />
@@ -205,8 +260,10 @@ export function TypingSurface() {
 
       <textarea
         ref={areaRef}
-        disabled={!running}
-        placeholder={running ? 'Start typing...' : 'Press Start audio first'}
+        disabled={!running || paused}
+        placeholder={
+          !running ? 'Press Start audio first' : paused ? 'Paused. Press Resume beat' : 'Start typing...'
+        }
         className="h-48 w-full resize-none rounded border border-neutral-300 p-4 font-mono text-lg outline-none focus:border-neutral-900 disabled:bg-neutral-50"
       />
 

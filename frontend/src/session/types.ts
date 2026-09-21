@@ -9,7 +9,7 @@ import type { KeyEvent } from '../typing/types';
 export interface RecordedSession {
   genreId: string;
   seed: number;
-  /** Timestamps are relative to the first keystroke, so replay is portable. */
+  /** Session time in ms: the transport clock, zero when the band started. */
   keystrokes: KeyEvent[];
 }
 

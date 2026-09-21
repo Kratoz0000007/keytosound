@@ -26,4 +26,15 @@ export interface TypingFeatures {
   punctuation: PunctuationClass;
   isCapital: boolean;
   isBackspace: boolean;
+  /**
+   * Session time of this keystroke, in ms. Measured on the audio transport's
+   * clock, so it skips paused time and lines up with the band's bars.
+   */
+  timestamp: number;
+  /** Lower-cased current word including this key; '' once a word ends. */
+  wordPrefix: string;
+  /** Enter starts a new paragraph, which modulates. */
+  isEnter: boolean;
+  /** 0-9 when a digit was pressed. Digits edit the beat, never the melody. */
+  digit: number | null;
 }

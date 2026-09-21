@@ -6,11 +6,34 @@ const minor7 = (root: number): Chord => ({ root, intervals: [0, 3, 7, 10] });
 const major7 = (root: number): Chord => ({ root, intervals: [0, 4, 7, 11] });
 const dominant7 = (root: number): Chord => ({ root, intervals: [0, 4, 7, 10] });
 
+/**
+ * Fills in the voices a preset leaves out. The digit keys can add any of the
+ * nine voices to any genre, so every one must exist, even if empty.
+ */
+function groove(partial: Partial<Groove>): Groove {
+  return {
+    kick: [],
+    snare: [],
+    hat: [],
+    openHat: [],
+    clap: [],
+    perc: [],
+    bass: [],
+    stab: [],
+    fx: [],
+    swing: 0,
+    ...partial,
+  };
+}
+
 const EVERY_8TH = [0, 2, 4, 6, 8, 10, 12, 14];
 const BACKBEAT = [4, 12];
 
-/** No percussion at all — see the Classical preset. */
-const NO_DRUMS: Groove = { kick: [], snare: [], hat: [], bass: [0, 8], swing: 0 };
+/**
+ * A timpani-like pulse on beats 1 and 3 and nothing else. With no percussion
+ * at all, switching to Classical sounded like the beat had stopped.
+ */
+const SOFT_PULSE: Groove = groove({ kick: [0, 8], bass: [0, 8] });
 
 export const GENRES: Record<string, GenrePreset> = {
   lofi: {
@@ -28,13 +51,15 @@ export const GENRES: Record<string, GenrePreset> = {
       register: 0.8,
       repetition: 0.6,
       tension: 0.7,
+      target: 1.2,
     },
     temperature: 0.4,
     centerPitch: 69, // A4
     registerSpread: 9,
     leadInstrument: 'electricPiano',
+    glideSeconds: 0.06, // short and soft
     // Late kick on step 10 and heavy swing give the dragging feel.
-    groove: { kick: [0, 10], snare: BACKBEAT, hat: EVERY_8TH, bass: [0, 8], swing: 0.35 },
+    groove: groove({ kick: [0, 10], snare: BACKBEAT, hat: EVERY_8TH, bass: [0, 8], swing: 0.35 }),
   },
 
   synthwave: {
@@ -52,19 +77,21 @@ export const GENRES: Record<string, GenrePreset> = {
       register: 1.0,
       repetition: 0.9,
       tension: 0.8,
+      target: 1.0,
     },
     temperature: 0.32,
     centerPitch: 72, // C5
     registerSpread: 11,
     leadInstrument: 'synthLead',
+    glideSeconds: 0.14, // long: the genre is built on sliding leads
     // Four on the floor, offbeat hats, driving root-note bass.
-    groove: {
+    groove: groove({
       kick: [0, 4, 8, 12],
       snare: BACKBEAT,
       hat: [2, 6, 10, 14],
       bass: [0, 4, 8, 12],
       swing: 0,
-    },
+    }),
   },
 
   eightbit: {
@@ -82,19 +109,21 @@ export const GENRES: Record<string, GenrePreset> = {
       register: 1.2,
       repetition: 1.1,
       tension: 0.9,
+      target: 1.0,
     },
     temperature: 0.24,
     centerPitch: 76, // E5
     registerSpread: 10,
     leadInstrument: 'eightBit',
+    glideSeconds: 0.03, // fast, like a chiptune pitch slide
     // Busy 16th hats, no swing: rigid and mechanical on purpose.
-    groove: {
+    groove: groove({
       kick: [0, 6],
       snare: BACKBEAT,
       hat: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
       bass: [0, 4, 8, 12],
       swing: 0,
-    },
+    }),
   },
 
   jazz: {
@@ -115,19 +144,21 @@ export const GENRES: Record<string, GenrePreset> = {
       register: 1.0,
       repetition: 0.8,
       tension: 1.1,
+      target: 1.4,
     },
     temperature: 0.3,
     centerPitch: 69, // A4
     registerSpread: 10,
     leadInstrument: 'electricPiano',
+    glideSeconds: 0.05, // subtle, like a bent note
     // Swung ride pattern, sparse kick: the drummer comps rather than drives.
-    groove: {
+    groove: groove({
       kick: [0],
       snare: [4, 12],
       hat: [0, 3, 4, 7, 8, 11, 12, 15],
       bass: [0, 4, 8, 12],
       swing: 0.5,
-    },
+    }),
   },
 
   classical: {
@@ -148,14 +179,16 @@ export const GENRES: Record<string, GenrePreset> = {
       register: 1.2,
       repetition: 0.7,
       tension: 1.2,
+      target: 1.6,
     },
     temperature: 0.2,
     centerPitch: 72, // C5
     registerSpread: 12,
     leadInstrument: 'piano',
-    // No percussion. A drum kit under a piano line would be absurd, and the
-    // groove model supports opting out rather than needing a special case.
-    groove: NO_DRUMS,
+    glideSeconds: 0, // a piano cannot glide; legato only
+    // A full drum kit under a piano line would be absurd, but no pulse at all
+    // reads as the band having stopped. A soft downbeat is the compromise.
+    groove: SOFT_PULSE,
   },
 };
 

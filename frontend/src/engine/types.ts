@@ -23,6 +23,14 @@ export interface Chord {
   intervals: number[];
 }
 
+/**
+ * How a note joins the one before it. Chosen by the engine, played by audio.
+ * - slur: glide in with no new attack (letters inside a word, landing, erasing)
+ * - phrase: a soft new attack that still glides in (the first letter of a word)
+ * - strike: a clean attack with no glide (punctuation)
+ */
+export type Articulation = 'slur' | 'phrase' | 'strike';
+
 export interface MusicalEvent {
   /** MIDI note number. */
   pitch: number;
@@ -31,9 +39,10 @@ export interface MusicalEvent {
   durationBeats: number;
   /** Grid this note should land on: 8 or 16. */
   subdivision: number;
+  articulation: Articulation;
 }
 
-/** Relative influence of each of the six scoring terms. */
+/** Relative influence of each of the seven scoring terms. */
 export interface ScoringWeights {
   interval: number;
   chordTone: number;
@@ -41,20 +50,29 @@ export interface ScoringWeights {
   register: number;
   repetition: number;
   tension: number;
+  /** Pull toward the cadence target set by punctuation, at word starts only. */
+  target: number;
 }
 
 /**
  * One bar of backing rhythm on a 16th-note grid. Each array holds the step
  * indices (0-15) where that voice fires. Empty arrays are legal and
- * meaningful: Classical has no drums at all, and a string quartet with a
- * kick drum would be absurd.
+ * meaningful: most genres start with no clap, stab or effect, and the user
+ * adds them with the digit keys.
  */
 export interface Groove {
   kick: number[];
   snare: number[];
   hat: number[];
+  openHat: number[];
+  clap: number[];
+  perc: number[];
   /** Steps where the bass restates the chord root. */
   bass: number[];
+  /** Short chord hits. */
+  stab: number[];
+  /** Riser / effect. */
+  fx: number[];
   /** 0 = straight, 0.5 = heavy swing. Delays odd-numbered 16ths. */
   swing: number;
 }
@@ -76,6 +94,11 @@ export interface GenrePreset {
   /** Semitones of comfortable range either side of centerPitch. */
   registerSpread: number;
   leadInstrument: InstrumentId;
+  /**
+   * Seconds the lead takes to slide between slurred notes. 0 for voices that
+   * cannot glide, like a piano: they connect by legato alone.
+   */
+  glideSeconds: number;
   groove: Groove;
 }
 
@@ -84,7 +107,14 @@ export interface MusicalState {
   keyRoot: number;
   scale: ScaleName;
   progression: Chord[];
+  /** Index into the progression of the chord now sounding; for display. */
   chordIndex: number;
+  /** The chord the band is playing at this moment, read from Harmony. */
+  currentChord: Chord;
+  /** The home chord of the current key; what a full stop resolves to. */
+  tonicChord: Chord;
+  /** Pitch class a punctuation mark wants the next word to start on. */
+  targetPitchClass: number | null;
   /** MIDI note number of the last note emitted. */
   previousPitch: number;
   contourDirection: ContourDirection;

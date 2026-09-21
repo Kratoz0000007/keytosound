@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { MusicEngine, renderSession } from '../../src/engine/engine';
 import { GENRES } from '../../src/engine/presets';
 import { SCALES, clashesWithChord, isChordTone, pitchClass } from '../../src/engine/theory';
+import { motifSteps } from '../../src/engine/motif';
+import { TypingAnalyzer } from '../../src/typing/analyzer';
 import type { TypingFeatures } from '../../src/typing/types';
 
 const preset = GENRES.lofi;
@@ -16,29 +18,35 @@ function features(overrides: Partial<TypingFeatures> = {}): TypingFeatures {
     punctuation: 'none',
     isCapital: false,
     isBackspace: false,
+    timestamp: 0,
+    wordPrefix: 'a',
+    isEnter: false,
+    digit: null,
     ...overrides,
   };
 }
 
-/** A deterministic stand-in for someone typing a sentence. */
-function sentenceFeatures(): TypingFeatures[] {
+/**
+ * Types text through the real analyzer with a deterministic, human-ish rhythm,
+ * the way live typing and replay both feed the engine.
+ */
+function featuresFromText(text: string): TypingFeatures[] {
+  const analyzer = new TypingAnalyzer();
   const out: TypingFeatures[] = [];
-  const words = [4, 7, 3, 9, 5];
-  for (let w = 0; w < words.length; w++) {
-    for (let c = 0; c < words[w]; c++) {
-      out.push(features({ interval: 120 + ((c * 37) % 180), sentencePos: w }));
-    }
-    const last = w === words.length - 1;
-    out.push(
-      features({
-        wordLength: words[w],
-        sentencePos: w,
-        punctuation: last ? 'period' : 'none',
-        interval: 200,
-      }),
-    );
+  let t = 0;
+  let i = 0;
+  for (const ch of text) {
+    const key = ch === '\n' ? 'Enter' : ch;
+    t += ' .,!?\n'.includes(ch) ? 220 : 120 + ((i * 37) % 160);
+    i += 1;
+    out.push(analyzer.process({ key, timestamp: t }));
   }
   return out;
+}
+
+/** A deterministic stand-in for someone typing a sentence. */
+function sentenceFeatures(): TypingFeatures[] {
+  return featuresFromText('rain falls softly on the quiet harbour tonight.');
 }
 
 describe('MusicEngine', () => {
@@ -85,11 +93,13 @@ describe('MusicEngine', () => {
     expect(engine.step(features({ isBackspace: true }))).toBeNull();
   });
 
-  it('advances the chord on a word boundary', () => {
+  it('takes its chord from the bar clock, not from word count', () => {
     const engine = new MusicEngine(preset, 42);
-    const before = engine.getState().chordIndex;
     engine.step(features({ wordLength: 5 }));
-    expect(engine.getState().chordIndex).toBe(before + 1);
+    expect(engine.getState().chordIndex).toBe(0);
+    engine.step(features({ timestamp: engine.barMs * 2 + 10 }));
+    expect(engine.getState().chordIndex).toBe(2);
+    expect(engine.getState().currentChord).toEqual(engine.harmonyAt(2).chord);
   });
 
   it('keeps every emitted pitch in the active scale', () => {
@@ -122,24 +132,6 @@ describe('MusicEngine', () => {
     expect(engine.step(features())!.pitch).toBe(first.pitch);
   });
 });
-
-/** Builds a feature stream from prose, the way the analyzer would. */
-function featuresFromText(text: string): TypingFeatures[] {
-  const out: TypingFeatures[] = [];
-  let buf = '';
-  for (const ch of text) {
-    if (' .,!?'.includes(ch)) {
-      const punctuation =
-        ch === '.' ? 'period' : ch === ',' ? 'comma' : ch === '!' ? 'exclamation' : ch === '?' ? 'question' : 'none';
-      out.push(features({ wordLength: buf.length, punctuation, interval: 200 }));
-      buf = '';
-    } else {
-      buf += ch;
-      out.push(features({ interval: 120 + ((buf.length * 37) % 160) }));
-    }
-  }
-  return out;
-}
 
 const PROSE =
   'the quick brown fox jumps over the lazy dog. typing should sound like music, ' +
@@ -205,11 +197,11 @@ describe('harmonic quality', () => {
       let notes = 0;
 
       for (const ft of featuresFromText(PROSE)) {
-        const chordIndex = engine.getState().chordIndex;
         const event = engine.step(ft);
         if (!event) continue;
         notes += 1;
-        const chord = preset.progression[chordIndex % preset.progression.length];
+        // The chord actually sounding when the note was chosen.
+        const chord = engine.getState().currentChord;
         if (clashesWithChord(event.pitch, chord) && !isChordTone(event.pitch, chord)) {
           clashes += 1;
         }
@@ -241,5 +233,160 @@ describe('determinism contract', () => {
     const a = renderSession(session, GENRES.lofi, 1234);
     const b = renderSession(session, GENRES.eightbit, 1234);
     expect(b).not.toEqual(a);
+  });
+});
+
+describe('sentence as score', () => {
+  const lofi = GENRES.lofi;
+
+  /** Pitches a word produced, located by its position in the text. */
+  function wordPitches(text: string, word: string, occurrence: number, seed = 7): number[] {
+    const engine = new MusicEngine(lofi, seed);
+    const feats = featuresFromText(text);
+    let start = -1;
+    let from = 0;
+    for (let n = 0; n <= occurrence; n++) {
+      start = text.indexOf(word, from);
+      from = start + 1;
+    }
+    const out: number[] = [];
+    feats.forEach((f, i) => {
+      const event = engine.step(f);
+      if (i >= start && i < start + word.length && event) out.push(event.pitch);
+    });
+    return out;
+  }
+
+  it('gives no letter a fixed note', () => {
+    const engine = new MusicEngine(lofi, 11);
+    const text = (PROSE + ' ').repeat(3);
+    const pitchesByLetter = new Map<string, Set<number>>();
+    featuresFromText(text).forEach((f, i) => {
+      const event = engine.step(f);
+      const ch = text[i];
+      if (!event || !/[a-z]/.test(ch)) return;
+      if (!pitchesByLetter.has(ch)) pitchesByLetter.set(ch, new Set());
+      pitchesByLetter.get(ch)!.add(event.pitch);
+    });
+    for (const letter of ['e', 't', 'o', 'a', 's']) {
+      expect(pitchesByLetter.get(letter)!.size).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('plays a repeated word with the same shape', () => {
+    const text = 'rain on the harbour. slow rain over the quiet town.';
+    const shape = (p: number[]) => p.slice(1).map((x, i) => Math.sign(x - p[i]));
+    const first = wordPitches(text, 'rain', 0);
+    const second = wordPitches(text, 'rain', 1);
+    expect(first).toHaveLength(4);
+    expect(second).toHaveLength(4);
+    // Direction of every move matches; the clash nudge may resize a step.
+    expect(shape(second)).toEqual(shape(first));
+  });
+
+  it('shares an opening between words that share a prefix', () => {
+    expect(motifSteps('rainbow').slice(0, 3)).toEqual(motifSteps('rain'));
+  });
+
+  it('never turns a digit into a melody note', () => {
+    const engine = new MusicEngine(lofi, 3);
+    for (const d of [1, 2, 5, 9, 0]) {
+      expect(engine.step(features({ digit: d, timestamp: 400 }))).toBeNull();
+    }
+  });
+
+  it('lets a digit edit the beat', () => {
+    const engine = new MusicEngine(lofi, 3);
+    const sixteenth = engine.barMs / 16;
+    expect(engine.beatHas('clap', 4)).toBe(false);
+    engine.step(features({ digit: 5, timestamp: sixteenth * 4 }));
+    expect(engine.beatHas('clap', 4)).toBe(true);
+    expect(engine.lastBeatEdit).toMatchObject({ voice: 'clap', added: true });
+  });
+
+  it('does not let digits disturb the word being typed', () => {
+    const plain = renderSession(featuresFromText('rain falls.'), lofi, 5);
+    const analyzer = new TypingAnalyzer();
+    const mixed: TypingFeatures[] = [];
+    let t = 0;
+    let i = 0;
+    for (const ch of 'ra1in fa5lls.') {
+      if (/[0-9]/.test(ch)) {
+        mixed.push(analyzer.process({ key: ch, timestamp: t + 5 }));
+        continue;
+      }
+      t += ' .,!?'.includes(ch) ? 220 : 120 + ((i * 37) % 160);
+      i += 1;
+      mixed.push(analyzer.process({ key: ch, timestamp: t }));
+    }
+    expect(renderSession(mixed, lofi, 5)).toEqual(plain);
+  });
+
+  it('resolves the band to the tonic after a full stop', () => {
+    const engine = new MusicEngine(lofi, 3);
+    const feats = featuresFromText('the night is long.');
+    feats.forEach((f) => engine.step(f));
+    const stopBar = Math.floor(feats[feats.length - 1].timestamp / engine.barMs);
+    const cadenceBar = [stopBar + 1, stopBar + 2].find(
+      (b) => engine.harmonyAt(b).cadence === 'full',
+    );
+    expect(cadenceBar).toBeDefined();
+    expect(engine.harmonyAt(cadenceBar!).chord).toEqual(lofi.progression[0]);
+  });
+
+  it('modulates on Enter', () => {
+    const engine = new MusicEngine(lofi, 3);
+    const feats = featuresFromText('first line\nsecond line of text here');
+    feats.forEach((f) => engine.step(f));
+    expect(engine.getState().keyRoot).not.toBe(lofi.keyRoot);
+  });
+
+  it('scores every note against the chord the band plays in that bar', () => {
+    const engine = new MusicEngine(lofi, 3);
+    for (const f of featuresFromText(PROSE)) {
+      const event = engine.step(f);
+      if (!event) continue;
+      const bar = Math.floor(f.timestamp / engine.barMs);
+      expect(engine.getState().currentChord).toEqual(engine.harmonyAt(bar).chord);
+    }
+  });
+});
+
+describe('articulation', () => {
+  const lofi = GENRES.lofi;
+
+  function articulations(text: string): { ch: string; articulation: string }[] {
+    const engine = new MusicEngine(lofi, 9);
+    const out: { ch: string; articulation: string }[] = [];
+    featuresFromText(text).forEach((f, i) => {
+      const event = engine.step(f);
+      if (event) out.push({ ch: text[i], articulation: event.articulation });
+    });
+    return out;
+  }
+
+  it('slurs the letters inside a word into one line', () => {
+    const notes = articulations('rain');
+    expect(notes.map((n) => n.articulation)).toEqual(['phrase', 'slur', 'slur', 'slur']);
+  });
+
+  it('starts every word with a soft phrase attack', () => {
+    const starts = articulations('rain falls on the harbour').filter((n) => n.articulation === 'phrase');
+    expect(starts.map((n) => n.ch)).toEqual(['r', 'f', 'o', 't', 'h']);
+  });
+
+  it('strikes punctuation cleanly', () => {
+    const period = articulations('rain falls.').find((n) => n.ch === '.');
+    expect(period?.articulation).toBe('strike');
+  });
+
+  it('slurs the landing note and the erase gesture', () => {
+    const engine = new MusicEngine(lofi, 9);
+    const feats = featuresFromText('rain ');
+    let landing = null;
+    for (const f of feats) landing = engine.step(f) ?? landing;
+    expect(landing?.articulation).toBe('slur');
+    const erased = engine.step(features({ isBackspace: true, timestamp: 2000 }));
+    expect(erased?.articulation).toBe('slur');
   });
 });

@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* Light only, for now: stop the browser applying its dark defaults. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #ffffff;
+  color: #171717;
+}

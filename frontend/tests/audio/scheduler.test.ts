@@ -3,7 +3,14 @@ import { Scheduler, nextGridTime, secondsPerBeat } from '../../src/audio/schedul
 import type { MusicalEvent } from '../../src/engine/types';
 
 function event(overrides: Partial<MusicalEvent> = {}): MusicalEvent {
-  return { pitch: 69, velocity: 0.8, durationBeats: 0.5, subdivision: 8, ...overrides };
+  return {
+    pitch: 69,
+    velocity: 0.8,
+    durationBeats: 0.5,
+    subdivision: 8,
+    articulation: 'slur',
+    ...overrides,
+  };
 }
 
 describe('secondsPerBeat', () => {

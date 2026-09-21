@@ -17,18 +17,19 @@ describe('SessionRecorder', () => {
     expect(recorder.count).toBe(2);
   });
 
-  it('rebases timestamps so the first keystroke is at zero', () => {
-    // The browser clock starts wherever it likes; a saved session must not
-    // depend on when in the page's life it happened to be recorded.
+  it('keeps session timestamps exactly as given', () => {
+    // They are measured on the band's transport clock, and harmony is derived
+    // from which bar each keystroke fell in. Rebasing to the first keystroke
+    // would shift every bar line and replay different chords.
     const recorder = new SessionRecorder();
     recorder.start('lofi', 42);
-    recorder.record({ key: 'a', timestamp: 91234.5 });
-    recorder.record({ key: 'b', timestamp: 91384.5 });
+    recorder.record({ key: 'a', timestamp: 1234.5 });
+    recorder.record({ key: 'b', timestamp: 1384.5 });
 
     const session = recorder.snapshot();
 
-    expect(session.keystrokes[0].timestamp).toBe(0);
-    expect(session.keystrokes[1].timestamp).toBe(150);
+    expect(session.keystrokes[0].timestamp).toBe(1234.5);
+    expect(session.keystrokes[1].timestamp).toBe(1384.5);
   });
 
   it('preserves the exact gaps between keystrokes', () => {
@@ -43,9 +44,9 @@ describe('SessionRecorder', () => {
 
     const stamps = recorder.snapshot().keystrokes.map((k) => k.timestamp);
 
-    let expected = 0;
+    let expected = 5000;
     for (let i = 0; i < gaps.length; i++) {
-      expected += i === 0 ? 0 : gaps[i];
+      expected += gaps[i];
       expect(stamps[i]).toBeCloseTo(expected, 6);
     }
   });

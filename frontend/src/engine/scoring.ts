@@ -1,4 +1,4 @@
-import { clashesWithChord, isChordTone } from './theory';
+import { clashesWithChord, isChordTone, pitchClass } from './theory';
 import type { Chord, ContourDirection, GestureShape } from './types';
 
 /** A leap wider than this triggers the reverse-by-step rule. */
@@ -132,4 +132,19 @@ export function scoreTension(
   }
   const noteTension = isChordTone(candidate, chord) ? 0 : 1;
   return clamp01(1 - Math.abs(noteTension - targetTension));
+}
+
+/**
+ * Term 7. Punctuation sets a destination for the next word's first note: the
+ * tonic after a full stop, the fifth after a comma, the second degree after a
+ * question. This is what makes a sentence's ending audible in the melody, not
+ * just in the band. Neutral when there is no target.
+ */
+export function scoreTarget(candidate: number, targetPitchClass: number | null): number {
+  if (targetPitchClass === null) return 1;
+  const distance = Math.abs(pitchClass(candidate) - targetPitchClass);
+  const circular = Math.min(distance, 12 - distance);
+  if (circular === 0) return 1;
+  if (circular <= 2) return 0.4;
+  return 0.1;
 }
