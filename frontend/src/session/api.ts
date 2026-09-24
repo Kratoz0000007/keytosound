@@ -1,3 +1,4 @@
+import type { Score } from './score';
 import type { CompositionDetail, CompositionSummary, RecordedSession } from './types';
 
 const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080';
@@ -56,4 +57,23 @@ export function loadComposition(id: string): Promise<CompositionDetail> {
 
 export function deleteComposition(id: string): Promise<void> {
   return request<void>(`/api/compositions/${id}`, { method: 'DELETE' });
+}
+
+/**
+ * Posts a rendered score and returns the MIDI file the server wrote. Not via
+ * request(): the response is binary, and the file name comes from a header.
+ */
+export async function exportMidi(
+  id: string,
+  score: Score,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await fetch(`${BASE}/api/compositions/${id}/midi`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(score),
+  });
+  if (!response.ok) throw new ApiError(`Export failed with ${response.status}`, response.status);
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const match = /filename="([^"]+)"/.exec(disposition);
+  return { blob: await response.blob(), filename: match?.[1] ?? 'composition.mid' };
 }

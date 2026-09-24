@@ -45,4 +45,18 @@ describe('engine purity', () => {
       });
     }
   }
+
+  // score.ts must stay pure the same way, but the rest of src/session (api.ts,
+  // recorder.ts) is legitimately impure — so it is named explicitly rather
+  // than pulled in via a directory.
+  const files = ['src/session/score.ts'];
+
+  for (const file of files) {
+    it(`${file} contains no impure references`, () => {
+      const contents = readFileSync(file, 'utf8');
+      for (const needle of FORBIDDEN) {
+        expect(contents).not.toContain(needle);
+      }
+    });
+  }
 });

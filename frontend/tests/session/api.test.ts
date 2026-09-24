@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   ApiError,
   deleteComposition,
+  exportMidi,
   listCompositions,
   loadComposition,
   saveComposition,
@@ -90,5 +91,56 @@ describe('deleteComposition', () => {
     const spy = mockFetch(204, null);
     await deleteComposition('xyz');
     expect(spy.mock.calls[0][1].method).toBe('DELETE');
+  });
+});
+
+describe('exportMidi', () => {
+  const score = {
+    bpm: 75,
+    leadInstrument: 'electricPiano' as const,
+    lead: [{ pitch: 69, start: 0.4, duration: 0.3, velocity: 0.7 }],
+    pad: [],
+    bass: [],
+    drums: [],
+  };
+
+  function mockMidi(status: number, disposition: string | null) {
+    const blob = new Blob(['MThd'], { type: 'audio/midi' });
+    const spy = vi.fn().mockResolvedValue({
+      ok: status >= 200 && status < 300,
+      status,
+      headers: { get: (name: string) => (name === 'Content-Disposition' ? disposition : null) },
+      blob: async () => blob,
+      json: async () => ({ message: 'nope' }),
+    });
+    vi.stubGlobal('fetch', spy);
+    return { spy, blob };
+  }
+
+  it('posts the score to the composition export endpoint', async () => {
+    const { spy } = mockMidi(200, 'attachment; filename="rain.mid"');
+    await exportMidi('abc', score);
+    const [url, init] = spy.mock.calls[0];
+    expect(url).toMatch(/\/api\/compositions\/abc\/midi$/);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual(score);
+  });
+
+  it('returns the file and the name the server chose', async () => {
+    const { blob } = mockMidi(200, 'attachment; filename="rain-at-night.mid"');
+    const result = await exportMidi('abc', score);
+    expect(result.blob).toBe(blob);
+    expect(result.filename).toBe('rain-at-night.mid');
+  });
+
+  it('falls back to a default name when the header is missing', async () => {
+    mockMidi(200, null);
+    expect((await exportMidi('abc', score)).filename).toBe('composition.mid');
+  });
+
+  it('throws an ApiError with the status on failure', async () => {
+    mockMidi(404, null);
+    await expect(exportMidi('abc', score)).rejects.toMatchObject({ status: 404 });
+    await expect(exportMidi('abc', score)).rejects.toBeInstanceOf(ApiError);
   });
 });

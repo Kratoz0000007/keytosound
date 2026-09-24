@@ -5,9 +5,10 @@ import type { CompositionSummary } from '../session/types';
 interface Props {
   refreshKey: number;
   onPlay: (id: string) => void;
+  onExport: (id: string) => void;
 }
 
-export function CompositionList({ refreshKey, onPlay }: Props) {
+export function CompositionList({ refreshKey, onPlay, onExport }: Props) {
   const [items, setItems] = useState<CompositionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,9 @@ export function CompositionList({ refreshKey, onPlay }: Props) {
           <span className="flex shrink-0 gap-2">
             <button onClick={() => onPlay(item.id)} className="rounded border px-2 py-1 text-sm">
               Replay
+            </button>
+            <button onClick={() => onExport(item.id)} className="rounded border px-2 py-1 text-sm">
+              Export MIDI
             </button>
             <button
               onClick={() => void remove(item.id)}

@@ -7,11 +7,13 @@ import type { ScaleName } from '../engine/types';
 import { TypingAnalyzer } from '../typing/analyzer';
 import { attachCapture } from '../typing/capture';
 import type { KeyEvent } from '../typing/types';
-import { loadComposition, saveComposition } from '../session/api';
+import { ApiError, exportMidi, loadComposition, saveComposition } from '../session/api';
 import { SessionRecorder } from '../session/recorder';
 import { sessionFromDetail } from '../session/render';
 import { ReplayPlayer } from '../session/replay';
+import { renderScore } from '../session/score';
 import { CompositionList } from './CompositionList';
+import { saveBlob } from './download';
 import { Visualizer } from './Visualizer';
 import type { VisualNote } from './visualizerLayout';
 
@@ -193,6 +195,25 @@ export function TypingSurface() {
     playerRef.current.play(session, consumeKey, () => setStatus('Replay finished.'));
   };
 
+  const exportComposition = async (id: string) => {
+    setStatus('Exporting MIDI...');
+    try {
+      const session = sessionFromDetail(await loadComposition(id));
+      const { blob, filename } = await exportMidi(id, renderScore(session));
+      saveBlob(blob, filename);
+      setStatus(`Exported ${filename}.`);
+    } catch (err) {
+      // ApiError carries the server's status, e.g. a 400 over-cap score or a
+      // 404 for a composition deleted in another tab; anything else is the
+      // network failure the old message described.
+      setStatus(
+        err instanceof ApiError
+          ? `Export failed (${err.status}).`
+          : 'Export failed — is the backend running on :8080?',
+      );
+    }
+  };
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
       <header>
@@ -286,7 +307,11 @@ export function TypingSurface() {
 
       {status && <p className="text-sm text-neutral-500">{status}</p>}
 
-      <CompositionList refreshKey={refreshKey} onPlay={(id) => void replay(id)} />
+      <CompositionList
+        refreshKey={refreshKey}
+        onPlay={(id) => void replay(id)}
+        onExport={(id) => void exportComposition(id)}
+      />
     </div>
   );
 }
