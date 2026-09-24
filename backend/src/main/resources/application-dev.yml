@@ -1,0 +1,6 @@
+# Active only under spring-boot:run (see the spring-boot-maven-plugin block in
+# pom.xml). Tests never load it, so they keep a throwaway database.
+keytosound:
+  db:
+    # Relative to the backend/ directory spring-boot:run runs from.
+    data-dir: .pgdata

@@ -9,3 +9,6 @@ target/
 # Sandbox-protected: git cannot traverse this directory, so tracking it
 # breaks every checkout and merge that has to add or remove a file in it.
 .claude/
+
+# The dev database's files (backend/.pgdata), written by spring-boot:run.
+.pgdata/
