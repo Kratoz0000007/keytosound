@@ -130,4 +130,19 @@ class CompositionControllerTest {
                         .content(body("blank key", "[{\"key\":\"\",\"timestampMs\":0}]")))
                 .andExpect(status().isBadRequest());
     }
+
+    /** The space bar is a keystroke. Rejecting it would make every sentence unsavable. */
+    @Test
+    void acceptsTheSpaceBarAsAKeystroke() throws Exception {
+        mockMvc.perform(post("/api/compositions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(
+                                "spaced",
+                                "[{\"key\":\"a\",\"timestampMs\":0},"
+                                        + "{\"key\":\" \",\"timestampMs\":80},"
+                                        + "{\"key\":\"b\",\"timestampMs\":160}]")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.keystrokes", hasSize(3)))
+                .andExpect(jsonPath("$.keystrokes[1].key").value(" "));
+    }
 }
