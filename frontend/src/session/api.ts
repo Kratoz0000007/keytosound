@@ -13,9 +13,12 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
+    // The session is an HttpOnly cookie set by :8080. Without this the
+    // browser leaves it off every cross-origin call from :5173.
+    credentials: 'include',
     ...init,
   });
   if (!response.ok) {
@@ -69,6 +72,7 @@ export async function exportMidi(
 ): Promise<{ blob: Blob; filename: string }> {
   const response = await fetch(`${BASE}/api/compositions/${id}/midi`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(score),
   });

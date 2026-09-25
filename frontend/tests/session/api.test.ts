@@ -94,6 +94,14 @@ describe('deleteComposition', () => {
   });
 });
 
+describe('credentials', () => {
+  it('sends the session cookie on JSON requests', async () => {
+    const spy = mockFetch(200, []);
+    await listCompositions();
+    expect(spy.mock.calls[0][1].credentials).toBe('include');
+  });
+});
+
 describe('exportMidi', () => {
   const score = {
     bpm: 75,
@@ -124,6 +132,12 @@ describe('exportMidi', () => {
     expect(url).toMatch(/\/api\/compositions\/abc\/midi$/);
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body)).toEqual(score);
+  });
+
+  it('sends the session cookie', async () => {
+    const { spy } = mockMidi(200, 'attachment; filename="rain.mid"');
+    await exportMidi('abc', score);
+    expect(spy.mock.calls[0][1].credentials).toBe('include');
   });
 
   it('returns the file and the name the server chose', async () => {

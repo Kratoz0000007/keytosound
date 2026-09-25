@@ -21,6 +21,11 @@ export interface CompositionSummary {
   createdAt: string;
 }
 
+export interface User {
+  id: string;
+  email: string;
+}
+
 export interface CompositionDetail {
   id: string;
   title: string;
