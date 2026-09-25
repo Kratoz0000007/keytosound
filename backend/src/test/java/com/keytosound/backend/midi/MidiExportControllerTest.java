@@ -6,7 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.keytosound.backend.auth.AuthTestSupport;
+import com.keytosound.backend.auth.TokenService;
+import jakarta.servlet.http.Cookie;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 // Spring Boot 4 moved this out of boot.test.autoconfigure.web.servlet.
@@ -26,6 +30,16 @@ class MidiExportControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TokenService tokens;
+
+    private Cookie session;
+
+    @BeforeEach
+    void signIn() {
+        session = AuthTestSupport.sessionFor(tokens, UUID.randomUUID());
+    }
+
     private static final String COMPOSITION =
             "{\"title\":\"Rain at Night!\",\"genreId\":\"lofi\",\"seed\":1,"
                     + "\"settings\":{\"genreId\":\"lofi\"},"
@@ -42,6 +56,7 @@ class MidiExportControllerTest {
 
     private String saveComposition() throws Exception {
         String response = mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(COMPOSITION))
                 .andExpect(status().isCreated())
@@ -55,6 +70,7 @@ class MidiExportControllerTest {
     void returnsAMidiFileNamedAfterTheTitle() throws Exception {
         String id = saveComposition();
         byte[] body = mockMvc.perform(post("/api/compositions/" + id + "/midi")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(score(69, "kick")))
                 .andExpect(status().isOk())
@@ -71,6 +87,7 @@ class MidiExportControllerTest {
     @Test
     void returns404ForAnUnknownComposition() throws Exception {
         mockMvc.perform(post("/api/compositions/" + UUID.randomUUID() + "/midi")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(score(69, "kick")))
                 .andExpect(status().isNotFound());
@@ -80,6 +97,7 @@ class MidiExportControllerTest {
     void rejectsAPitchOutsideTheMidiRange() throws Exception {
         String id = saveComposition();
         mockMvc.perform(post("/api/compositions/" + id + "/midi")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(score(200, "kick")))
                 .andExpect(status().isBadRequest());
@@ -89,6 +107,7 @@ class MidiExportControllerTest {
     void rejectsAnUnknownDrumVoice() throws Exception {
         String id = saveComposition();
         mockMvc.perform(post("/api/compositions/" + id + "/midi")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(score(69, "cowbell")))
                 .andExpect(status().isBadRequest());
@@ -101,6 +120,7 @@ class MidiExportControllerTest {
                 + "\"lead\":[{\"pitch\":69,\"start\":1e300,\"duration\":0.3,\"velocity\":0.7}],"
                 + "\"pad\":[],\"bass\":[],\"drums\":[]}";
         mockMvc.perform(post("/api/compositions/" + id + "/midi")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
@@ -111,6 +131,7 @@ class MidiExportControllerTest {
         String id = saveComposition();
         mockMvc.perform(post("/api/compositions/" + id + "/midi")
                         .header("Origin", "http://localhost:5173")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(score(69, "kick")))
                 .andExpect(status().isOk())

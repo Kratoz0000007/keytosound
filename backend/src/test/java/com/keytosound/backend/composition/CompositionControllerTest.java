@@ -11,7 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.keytosound.backend.auth.AuthTestSupport;
+import com.keytosound.backend.auth.TokenService;
+import jakarta.servlet.http.Cookie;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 // Spring Boot 4 moved this out of boot.test.autoconfigure.web.servlet.
@@ -30,6 +34,16 @@ class CompositionControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private TokenService tokens;
+
+    private Cookie session;
+
+    @BeforeEach
+    void signIn() {
+        session = AuthTestSupport.sessionFor(tokens, UUID.randomUUID());
+    }
 
     private static final String KEYS =
             "[{\"key\":\"t\",\"timestampMs\":0},"
@@ -51,6 +65,7 @@ class CompositionControllerTest {
 
     private String saveAndReturnId() throws Exception {
         String response = mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID))
                 .andExpect(status().isCreated())
@@ -63,6 +78,7 @@ class CompositionControllerTest {
     @Test
     void savesACompositionAndReturnsItsLocation() throws Exception {
         mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID))
                 .andExpect(status().isCreated())
@@ -76,7 +92,7 @@ class CompositionControllerTest {
     void loadsASavedComposition() throws Exception {
         String id = saveAndReturnId();
 
-        mockMvc.perform(get("/api/compositions/" + id))
+        mockMvc.perform(get("/api/compositions/" + id).cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.seed").value(20260919))
                 .andExpect(jsonPath("$.settings.genreId").value("lofi"))
@@ -87,7 +103,7 @@ class CompositionControllerTest {
     void listsSavedCompositions() throws Exception {
         saveAndReturnId();
 
-        mockMvc.perform(get("/api/compositions"))
+        mockMvc.perform(get("/api/compositions").cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", not(empty())))
                 .andExpect(jsonPath("$[0].keystrokeCount").value(greaterThan(0)));
@@ -97,19 +113,20 @@ class CompositionControllerTest {
     void deletesAComposition() throws Exception {
         String id = saveAndReturnId();
 
-        mockMvc.perform(delete("/api/compositions/" + id)).andExpect(status().isNoContent());
-        mockMvc.perform(get("/api/compositions/" + id)).andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/compositions/" + id).cookie(session)).andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/compositions/" + id).cookie(session)).andExpect(status().isNotFound());
     }
 
     @Test
     void returns404ForAnUnknownComposition() throws Exception {
-        mockMvc.perform(get("/api/compositions/" + UUID.randomUUID()))
+        mockMvc.perform(get("/api/compositions/" + UUID.randomUUID()).cookie(session))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void rejectsACompositionWithNoKeystrokes() throws Exception {
         mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("empty", "[]")))
                 .andExpect(status().isBadRequest());
@@ -118,6 +135,7 @@ class CompositionControllerTest {
     @Test
     void rejectsABlankTitle() throws Exception {
         mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("", KEYS)))
                 .andExpect(status().isBadRequest());
@@ -126,6 +144,7 @@ class CompositionControllerTest {
     @Test
     void rejectsAKeystrokeWithNoKey() throws Exception {
         mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("blank key", "[{\"key\":\"\",\"timestampMs\":0}]")))
                 .andExpect(status().isBadRequest());
@@ -135,6 +154,7 @@ class CompositionControllerTest {
     @Test
     void acceptsTheSpaceBarAsAKeystroke() throws Exception {
         mockMvc.perform(post("/api/compositions")
+                        .cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(
                                 "spaced",

@@ -1,0 +1,6 @@
+# Loaded on top of src/main/resources/application.yml: Boot reads
+# classpath:/config/ after classpath:/. A plain src/test/resources/application.yml
+# would replace the main file instead of adding to it.
+keytosound:
+  auth:
+    secret: test-only-secret-0123456789abcdef0123456789

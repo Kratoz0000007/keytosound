@@ -4,3 +4,9 @@ keytosound:
   db:
     # Relative to the backend/ directory spring-boot:run runs from.
     data-dir: .pgdata
+  auth:
+    # Dev only. Anyone holding this value can mint sessions, so a real
+    # deployment supplies its own through KEYTOSOUND_AUTH_SECRET.
+    secret: dev-only-secret-change-me-0123456789abcdef
+    # Plain http on localhost; some browsers drop a Secure cookie there.
+    cookie-secure: false
