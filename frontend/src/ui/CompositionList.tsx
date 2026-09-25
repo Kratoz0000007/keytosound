@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { deleteComposition, listCompositions } from '../session/api';
 import type { CompositionSummary } from '../session/types';
+import { isUnauthorized } from './authView';
 
 interface Props {
   refreshKey: number;
   onPlay: (id: string) => void;
   onExport: (id: string) => void;
+  /** The session ended mid-use. Must be stable: refresh depends on it. */
+  onUnauthorized: () => void;
 }
 
-export function CompositionList({ refreshKey, onPlay, onExport }: Props) {
+export function CompositionList({ refreshKey, onPlay, onExport, onUnauthorized }: Props) {
   const [items, setItems] = useState<CompositionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,19 +19,32 @@ export function CompositionList({ refreshKey, onPlay, onExport }: Props) {
     try {
       setItems(await listCompositions());
       setError(null);
-    } catch {
+    } catch (err) {
+      if (isUnauthorized(err)) {
+        onUnauthorized();
+        return;
+      }
       // The backend not running is the common case in development, and it
       // must not break the part of the app that makes music.
       setError('Backend unavailable — typing and audio still work.');
     }
-  }, []);
+  }, [onUnauthorized]);
 
   useEffect(() => {
     void refresh();
   }, [refresh, refreshKey]);
 
   const remove = async (id: string) => {
-    await deleteComposition(id);
+    try {
+      await deleteComposition(id);
+    } catch (err) {
+      if (isUnauthorized(err)) {
+        onUnauthorized();
+        return;
+      }
+      setError('Delete failed — is the backend running on :8080?');
+      return;
+    }
     void refresh();
   };
 

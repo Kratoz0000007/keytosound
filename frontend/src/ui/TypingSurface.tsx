@@ -12,8 +12,11 @@ import { SessionRecorder } from '../session/recorder';
 import { sessionFromDetail } from '../session/render';
 import { ReplayPlayer } from '../session/replay';
 import { renderScore } from '../session/score';
+import { AuthPanel } from './AuthPanel';
+import { isUnauthorized, saveAreaFor } from './authView';
 import { CompositionList } from './CompositionList';
 import { saveBlob } from './download';
+import { useAuth } from './useAuth';
 import { Visualizer } from './Visualizer';
 import type { VisualNote } from './visualizerLayout';
 
@@ -61,6 +64,22 @@ export function TypingSurface() {
   const [title, setTitle] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+
+  const auth = useAuth();
+  const { expire } = auth;
+  const [authOpen, setAuthOpen] = useState(false);
+  const saveArea = saveAreaFor(auth.status);
+
+  /**
+   * A 401 mid-session. The recorder is deliberately untouched, so the
+   * performance just typed can still be saved after logging back in: an
+   * expired token must never silently discard it.
+   */
+  const expireSession = useCallback(() => {
+    expire();
+    setAuthOpen(true);
+    setStatus('Your session ended. Log in again to save; your recording is kept.');
+  }, [expire]);
 
   const preset = GENRES[genreId];
 
@@ -165,7 +184,11 @@ export function TypingSurface() {
       setStatus(`Saved ${session.keystrokes.length} keystrokes.`);
       setTitle('');
       setRefreshKey((k) => k + 1);
-    } catch {
+    } catch (err) {
+      if (isUnauthorized(err)) {
+        expireSession();
+        return;
+      }
       setStatus('Save failed — is the backend running on :8080?');
     }
   };
@@ -174,7 +197,11 @@ export function TypingSurface() {
     let session;
     try {
       session = sessionFromDetail(await loadComposition(id));
-    } catch {
+    } catch (err) {
+      if (isUnauthorized(err)) {
+        expireSession();
+        return;
+      }
       setStatus('Could not load that composition.');
       return;
     }
@@ -203,6 +230,10 @@ export function TypingSurface() {
       saveBlob(blob, filename);
       setStatus(`Exported ${filename}.`);
     } catch (err) {
+      if (isUnauthorized(err)) {
+        expireSession();
+        return;
+      }
       // ApiError carries the server's status, e.g. a 400 over-cap score or a
       // 404 for a composition deleted in another tab; anything else is the
       // network failure the old message described.
@@ -290,28 +321,58 @@ export function TypingSurface() {
 
       <Visualizer notes={notes} />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Composition title"
-          className="flex-1 rounded border border-neutral-300 px-3 py-2"
-        />
+      {saveArea === 'login' && !authOpen && (
         <button
-          onClick={() => void save()}
-          className="rounded bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-700"
+          onClick={() => setAuthOpen(true)}
+          className="self-start rounded bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-700"
         >
-          Save
+          Log in to save
         </button>
-      </div>
+      )}
+
+      {saveArea === 'login' && authOpen && (
+        <AuthPanel
+          onLogin={auth.login}
+          onRegister={auth.register}
+          onClose={() => setAuthOpen(false)}
+        />
+      )}
+
+      {saveArea === 'controls' && (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Composition title"
+              className="flex-1 rounded border border-neutral-300 px-3 py-2"
+            />
+            <button
+              onClick={() => void save()}
+              className="rounded bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-700"
+            >
+              Save
+            </button>
+          </div>
+          <p className="text-sm text-neutral-500">
+            Signed in as {auth.user?.email} ·{' '}
+            <button onClick={() => void auth.logout()} className="underline hover:text-neutral-900">
+              Log out
+            </button>
+          </p>
+        </>
+      )}
 
       {status && <p className="text-sm text-neutral-500">{status}</p>}
 
-      <CompositionList
-        refreshKey={refreshKey}
-        onPlay={(id) => void replay(id)}
-        onExport={(id) => void exportComposition(id)}
-      />
+      {saveArea === 'controls' && (
+        <CompositionList
+          refreshKey={refreshKey}
+          onPlay={(id) => void replay(id)}
+          onExport={(id) => void exportComposition(id)}
+          onUnauthorized={expireSession}
+        />
+      )}
     </div>
   );
 }
