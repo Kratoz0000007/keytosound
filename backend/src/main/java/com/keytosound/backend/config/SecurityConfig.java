@@ -17,6 +17,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -56,6 +58,12 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e.authenticationEntryPoint(SecurityConfig::unauthorized))
                 .addFilterBefore(new JwtCookieAuthenticationFilter(tokens), UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    /** bcrypt today. The {bcrypt} prefix it stores lets a later algorithm change skip a data migration. */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     /** A 401 in the same {error, message, at} shape ApiExceptionHandler uses, never a redirect. */
