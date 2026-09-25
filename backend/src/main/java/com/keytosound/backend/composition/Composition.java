@@ -28,7 +28,7 @@ public class Composition {
     @Id
     private UUID id;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     @Column(nullable = false, length = 120)
@@ -64,8 +64,9 @@ public class Composition {
         // required by JPA
     }
 
-    public Composition(String title, String genreId, long seed, String settings) {
+    public Composition(UUID userId, String title, String genreId, long seed, String settings) {
         this.id = UUID.randomUUID();
+        this.userId = userId;
         this.title = title;
         this.genreId = genreId;
         this.seed = seed;

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.keytosound.backend.auth.AuthTestSupport;
 import com.keytosound.backend.auth.TokenService;
+import com.keytosound.backend.auth.UserAccountRepository;
 import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,11 +34,14 @@ class MidiExportControllerTest {
     @Autowired
     private TokenService tokens;
 
+    @Autowired
+    private UserAccountRepository users;
+
     private Cookie session;
 
     @BeforeEach
     void signIn() {
-        session = AuthTestSupport.sessionFor(tokens, UUID.randomUUID());
+        session = AuthTestSupport.sessionFor(tokens, AuthTestSupport.createUser(users));
     }
 
     private static final String COMPOSITION =

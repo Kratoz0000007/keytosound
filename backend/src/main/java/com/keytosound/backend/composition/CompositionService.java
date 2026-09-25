@@ -26,9 +26,9 @@ public class CompositionService {
     }
 
     @Transactional
-    public CompositionDetail save(SaveCompositionRequest request) {
+    public CompositionDetail save(UUID userId, SaveCompositionRequest request) {
         Composition composition = new Composition(
-                request.title(), request.genreId(), request.seed(), writeJson(request.settings()));
+                userId, request.title(), request.genreId(), request.seed(), writeJson(request.settings()));
 
         List<KeystrokeDto> keys = request.keystrokes();
         for (int i = 0; i < keys.size(); i++) {
@@ -39,27 +39,28 @@ public class CompositionService {
     }
 
     @Transactional(readOnly = true)
-    public List<CompositionSummary> list() {
-        return repository.findAllByOrderByCreatedAtDesc().stream()
+    public List<CompositionSummary> list(UUID userId) {
+        return repository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(c -> new CompositionSummary(
                         c.getId(), c.getTitle(), c.getGenreId(), c.getKeystrokes().size(), c.getCreatedAt()))
                 .toList();
     }
 
+    /** Another user's composition is a 404, never a 403: a 403 would confirm the id exists. */
     @Transactional(readOnly = true)
-    public CompositionDetail get(UUID id) {
-        return repository
-                .findByIdWithKeystrokes(id)
-                .map(this::toDetail)
-                .orElseThrow(() -> new NotFoundException("No composition " + id));
+    public CompositionDetail get(UUID userId, UUID id) {
+        return toDetail(owned(userId, id));
     }
 
     @Transactional
-    public void delete(UUID id) {
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("No composition " + id);
-        }
-        repository.deleteById(id);
+    public void delete(UUID userId, UUID id) {
+        repository.delete(owned(userId, id));
+    }
+
+    private Composition owned(UUID userId, UUID id) {
+        return repository
+                .findByIdAndUserIdWithKeystrokes(id, userId)
+                .orElseThrow(() -> new NotFoundException("No composition " + id));
     }
 
     private CompositionDetail toDetail(Composition composition) {

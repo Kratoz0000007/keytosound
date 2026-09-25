@@ -19,6 +19,17 @@ public final class AuthTestSupport {
         return new Cookie(AuthCookies.NAME, tokens.issue(userId));
     }
 
+    /**
+     * A real users row, so compositions saved by this user satisfy the foreign
+     * key. saveAndFlush, not save: Composition.userId is a plain column, not a
+     * JPA association, so Hibernate does not know to insert the user first
+     * when both land in one flush.
+     */
+    public static UUID createUser(UserAccountRepository users) {
+        return users.saveAndFlush(new UserAccount("user-" + UUID.randomUUID() + "@test.local", "{noop}unused"))
+                .getId();
+    }
+
     /** A token with chosen claims, signed with the app's real key. */
     public static String token(
             JwtEncoder encoder, UUID userId, String issuer, Instant issuedAt, Instant expiresAt) {

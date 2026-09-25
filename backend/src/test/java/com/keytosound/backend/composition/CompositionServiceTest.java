@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tools.jackson.databind.ObjectMapper;
+import com.keytosound.backend.auth.AuthTestSupport;
+import com.keytosound.backend.auth.UserAccountRepository;
 import com.keytosound.backend.composition.dto.CompositionDetail;
 import com.keytosound.backend.composition.dto.CompositionSummary;
 import com.keytosound.backend.composition.dto.KeystrokeDto;
@@ -12,6 +14,7 @@ import com.keytosound.backend.error.NotFoundException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +28,16 @@ class CompositionServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserAccountRepository users;
+
+    private UUID owner;
+
+    @BeforeEach
+    void createOwner() {
+        owner = AuthTestSupport.createUser(users);
+    }
+
     private SaveCompositionRequest request(String title, int keystrokes) throws Exception {
         List<KeystrokeDto> keys = IntStream.range(0, keystrokes)
                 .mapToObj(i -> new KeystrokeDto(String.valueOf((char) ('a' + i % 26)), i * 137.0))
@@ -35,7 +48,7 @@ class CompositionServiceTest {
 
     @Test
     void savesAndReturnsTheStoredComposition() throws Exception {
-        CompositionDetail saved = service.save(request("hello world", 12));
+        CompositionDetail saved = service.save(owner, request("hello world", 12));
 
         assertThat(saved.id()).isNotNull();
         assertThat(saved.title()).isEqualTo("hello world");
@@ -47,7 +60,7 @@ class CompositionServiceTest {
     void roundTripsTheKeystrokeStreamExactly() throws Exception {
         SaveCompositionRequest req = request("exact", 200);
 
-        CompositionDetail loaded = service.get(service.save(req).id());
+        CompositionDetail loaded = service.get(owner, service.save(owner, req).id());
 
         // The determinism contract depends on this being exact: a lost or
         // reordered keystroke produces different music on replay.
@@ -60,16 +73,16 @@ class CompositionServiceTest {
         var req = new SaveCompositionRequest(
                 "json", "jazz", 9L, settings, List.of(new KeystrokeDto("x", 0.0)));
 
-        CompositionDetail loaded = service.get(service.save(req).id());
+        CompositionDetail loaded = service.get(owner, service.save(owner, req).id());
 
         assertThat(loaded.settings()).isEqualTo(settings);
     }
 
     @Test
     void listsSummariesWithKeystrokeCounts() throws Exception {
-        service.save(request("counted", 7));
+        service.save(owner, request("counted", 7));
 
-        List<CompositionSummary> all = service.list();
+        List<CompositionSummary> all = service.list(owner);
 
         assertThat(all).isNotEmpty();
         assertThat(all.get(0).keystrokeCount()).isPositive();
@@ -77,21 +90,29 @@ class CompositionServiceTest {
 
     @Test
     void deletesAComposition() throws Exception {
-        UUID id = service.save(request("doomed", 3)).id();
+        UUID id = service.save(owner, request("doomed", 3)).id();
 
-        service.delete(id);
+        service.delete(owner, id);
 
-        assertThatThrownBy(() -> service.get(id)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service.get(owner, id)).isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void reportsMissingCompositions() {
-        assertThatThrownBy(() -> service.get(UUID.randomUUID())).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service.get(owner, UUID.randomUUID())).isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void rejectsDeletingSomethingThatIsNotThere() {
-        assertThatThrownBy(() -> service.delete(UUID.randomUUID()))
+        assertThatThrownBy(() -> service.delete(owner, UUID.randomUUID()))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void anotherUsersCompositionIsNotFound() throws Exception {
+        UUID id = service.save(owner, request("private", 3)).id();
+        UUID stranger = AuthTestSupport.createUser(users);
+
+        assertThatThrownBy(() -> service.get(stranger, id)).isInstanceOf(NotFoundException.class);
     }
 }

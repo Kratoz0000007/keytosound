@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * HTTP only. All behaviour lives in CompositionService so it can be tested
- * without standing up a web layer.
+ * without standing up a web layer. The owner always comes from the session,
+ * never from the request.
  */
 @RestController
 @RequestMapping("/api/compositions")
@@ -31,24 +33,25 @@ public class CompositionController {
     }
 
     @PostMapping
-    public ResponseEntity<CompositionDetail> save(@Valid @RequestBody SaveCompositionRequest request) {
-        CompositionDetail saved = service.save(request);
+    public ResponseEntity<CompositionDetail> save(
+            @AuthenticationPrincipal UUID userId, @Valid @RequestBody SaveCompositionRequest request) {
+        CompositionDetail saved = service.save(userId, request);
         return ResponseEntity.created(URI.create("/api/compositions/" + saved.id())).body(saved);
     }
 
     @GetMapping
-    public List<CompositionSummary> list() {
-        return service.list();
+    public List<CompositionSummary> list(@AuthenticationPrincipal UUID userId) {
+        return service.list(userId);
     }
 
     @GetMapping("/{id}")
-    public CompositionDetail get(@PathVariable UUID id) {
-        return service.get(id);
+    public CompositionDetail get(@AuthenticationPrincipal UUID userId, @PathVariable UUID id) {
+        return service.get(userId, id);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        service.delete(id);
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal UUID userId, @PathVariable UUID id) {
+        service.delete(userId, id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,8 +37,9 @@ public class MidiExportController {
     }
 
     @PostMapping("/{id}/midi")
-    public ResponseEntity<byte[]> export(@PathVariable UUID id, @Valid @RequestBody Score score) {
-        CompositionDetail composition = compositions.get(id);
+    public ResponseEntity<byte[]> export(
+            @AuthenticationPrincipal UUID userId, @PathVariable UUID id, @Valid @RequestBody Score score) {
+        CompositionDetail composition = compositions.get(userId, id);
         byte[] midi = writer.write(composition.title(), score);
         String filename = MidiFilenames.slug(composition.title()) + ".mid";
         return ResponseEntity.ok()
