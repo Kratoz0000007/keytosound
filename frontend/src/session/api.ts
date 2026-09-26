@@ -1,5 +1,10 @@
 import type { Score } from './score';
-import type { CompositionDetail, CompositionSummary, RecordedSession } from './types';
+import type {
+  CompositionAnalytics,
+  CompositionDetail,
+  CompositionSummary,
+  RecordedSession,
+} from './types';
 
 const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080';
 
@@ -60,6 +65,10 @@ export function loadComposition(id: string): Promise<CompositionDetail> {
 
 export function deleteComposition(id: string): Promise<void> {
   return request<void>(`/api/compositions/${id}`, { method: 'DELETE' });
+}
+
+export function getAnalytics(id: string): Promise<CompositionAnalytics> {
+  return request<CompositionAnalytics>(`/api/compositions/${id}/analytics`);
 }
 
 /**

@@ -3,6 +3,7 @@ import {
   ApiError,
   deleteComposition,
   exportMidi,
+  getAnalytics,
   listCompositions,
   loadComposition,
   saveComposition,
@@ -156,5 +157,18 @@ describe('exportMidi', () => {
     mockMidi(404, null);
     await expect(exportMidi('abc', score)).rejects.toMatchObject({ status: 404 });
     await expect(exportMidi('abc', score)).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
+describe('getAnalytics', () => {
+  it("fetches one composition's stats with the session cookie", async () => {
+    const spy = mockFetch(200, { summary: { keyCount: 0 } });
+
+    await getAnalytics('abc');
+
+    const [url, init] = spy.mock.calls[0];
+    expect(url).toMatch(/\/api\/compositions\/abc\/analytics$/);
+    expect(init.credentials).toBe('include');
+    expect(init.method).toBeUndefined();
   });
 });

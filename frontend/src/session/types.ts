@@ -35,3 +35,37 @@ export interface CompositionDetail {
   keystrokes: { key: string; timestampMs: number }[];
   createdAt: string;
 }
+
+/** Server-computed typing stats for one composition; see AnalyticsController. */
+export type PauseKind = 'word' | 'comma' | 'sentence' | 'hesitation';
+
+export interface CompositionAnalytics {
+  summary: {
+    keyCount: number;
+    durationMs: number;
+    averageWpm: number;
+    peakWpm: number | null;
+    heldKeysIgnored: number;
+  };
+  rhythm: {
+    bands: { fromMs: number; toMs: number; count: number }[];
+    medianGapMs: number | null;
+    steadiness: number | null;
+  };
+  sentences: { label: string; keyCount: number; wpm: number | null }[];
+  pauses: {
+    count: number;
+    totalMs: number;
+    longestMs: number;
+    byKind: Record<PauseKind, number>;
+    segments: { text: string; pauseAfterMs: number | null }[];
+  };
+  keys: {
+    top: { key: string; count: number }[];
+    backspaces: number;
+    correctionRate: number;
+    punctuation: Record<string, number>;
+    enters: number;
+    drums: number;
+  };
+}
