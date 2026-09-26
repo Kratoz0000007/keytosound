@@ -1,0 +1,195 @@
+/*
+ * What every theme shares. Layout lives in the JSX and is the same for every
+ * genre; a theme only restyles the slots below, under its own
+ * [data-theme='<id>'] selector (see synthwave.css).
+ *
+ * Slots
+ *   body                          page background, text colour, font
+ *   .fx-grain .fx-vignette .fx-scanlines
+ *                                 full-screen overlays; hidden unless a theme shows them
+ *   .app-title .tagline           header
+ *   .btn  .btn-start              Start audio / Resume beat: the next thing to press
+ *         .btn-primary            Save
+ *         .btn-secondary          Pause beat, Replay, Export MIDI
+ *         .btn-danger             Delete
+ *         .btn-sm                 the smaller buttons in the saved list
+ *                                 (a button's label is its inner <span>)
+ *   .genre-select                 wraps the native <select>
+ *   .chassis > .chassis-frame > .chassis-body
+ *                                 three nested layers around .hud and .terminal
+ *   .hud-panel .hud-cell .hud-label .hud-value .hud-value-live
+ *                                 stat readouts; .hud-panel[data-live='true'] while the beat runs.
+ *                                 Size .hud-value with min(<rem>, <n>cqi) so 11 characters fit.
+ *   .terminal-body .terminal-prompt .terminal-input .terminal-ghost .terminal-cursor
+ *   .visualizer                   the note canvas
+ *   .mascot-stage                 the genre mascot's box under the visualizer (see ui/mascots)
+ *   .panel .panel-heading .legend-heading .key-card .keycap .key-action
+ *                                 .key-card[data-pressed] for a moment after its key is struck
+ *   .field .status-line .track-row .track-title .track-meta .library-empty .notice-warn
+ *
+ * Variables a theme must set
+ *   --focus-ring                  keyboard focus outline
+ *   --viz-bg --viz-grid --viz-note --viz-playhead --viz-glow (blur, unitless px)
+ *   --viz-style                   optional: roll (default), matrix (a dot-matrix equalizer)
+ *                                 or scope (an oscilloscope trace)
+ *   --viz-decor --viz-accent      optional, for the scope: smoke or staves, and their colour
+ *
+ * Keystroke effects beyond CSS go in themes/fx (see createThemeFx). They
+ * signal the theme's CSS through attributes on .terminal: data-fx-flash
+ * (8-bit, set for 50ms), and data-fx-backlight, data-fx-scratch and
+ * data-fx-sweep (Lo-Fi, Jazz, Classical), which flip between a and b so
+ * identical a/b keyframes restart on every hit.
+ *                                 canvas colours, read by Visualizer.tsx
+ */
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--focus-ring, currentColor);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .fx-grain,
+  .fx-vignette,
+  .fx-scanlines {
+    display: none;
+    position: fixed;
+    pointer-events: none;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .btn > span {
+    display: inline-block;
+  }
+
+  .genre-select {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .genre-select select {
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .hud-panel {
+    display: grid;
+  }
+
+  /*
+   * Six readouts share one row on wide screens, where a cell is ~125px and
+   * "F# maj pent" is the longest value. The cell is a size container, so a
+   * theme can size .hud-value in cqi to fit; the ellipsis is the backstop.
+   */
+  .hud-cell {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  .hud-value {
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .terminal-body {
+    position: relative;
+  }
+
+  .terminal-prompt {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /*
+   * The ghost draws the placeholder with a blinking cursor, over the empty
+   * textarea. Themes must give .terminal-input and .terminal-ghost the same
+   * padding, font and line-height, or the ghost drifts off the first line.
+   */
+  .terminal-input {
+    display: block;
+    width: 100%;
+    resize: none;
+    background: transparent;
+    outline: none;
+  }
+
+  .terminal-input:disabled {
+    cursor: not-allowed;
+  }
+
+  /*
+   * The native placeholder stays for screen readers; the ghost is what shows.
+   * text-shadow too, or a theme's text glow draws a blurred copy of it.
+   */
+  .terminal-input::placeholder {
+    color: transparent;
+    text-shadow: none;
+  }
+
+  .terminal-ghost {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .terminal-input:placeholder-shown + .terminal-ghost {
+    visibility: visible;
+  }
+
+  .terminal-cursor {
+    display: inline-block;
+  }
+
+  /* Focused, the real caret takes over. */
+  .terminal-input:focus + .terminal-ghost .terminal-cursor {
+    display: none;
+  }
+
+  .visualizer {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .key-card {
+    display: flex;
+    align-items: center;
+  }
+
+  .keycap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .track-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Covers every theme's animations, including ones not written yet. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

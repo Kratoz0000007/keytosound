@@ -1,0 +1,719 @@
+/*
+ * Lo-Fi: 2 AM in Tokyo, late-night radio on. Rain streaks down the studio
+ * window over blurred city lights and a skyline; neon signs glow outside;
+ * the interface floats in front on frosted glass, warm amber readouts like
+ * a tape deck's display, neon pink for anything live.
+ *
+ * The three .fx layers are the view out of the window, at z-index -1
+ * behind the content, where the glass frosts them:
+ *   .fx-grain      the skyline, and the small 音 sign on the left
+ *   .fx-vignette   the bokeh, and the 深夜ラジオ ("late-night radio") sign
+ *   .fx-scanlines  the rain
+ */
+
+@layer components {
+  [data-theme='lofi'] {
+    --night: #0B0F1C;
+    --glass: rgba(22, 26, 48, 0.72);
+    --pad: #1A1F3A;
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #EEF0FF;
+    --text-dim: rgba(238, 240, 255, 0.6);
+    --pink: #FF7AC6; /* neon: live, typing, the sign */
+    --cyan: #67E8F9; /* focus, the beat */
+    --amber: #FFC58A; /* the desk lamp: readouts */
+    --violet: #A78BFA;
+
+    --sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.07), transparent 40%);
+    --card-shadow:
+      0 18px 40px -18px rgba(0, 0, 0, 0.8),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+
+    --font-display: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-jp: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif;
+
+    --focus-ring: var(--cyan);
+    --viz-bg: transparent; /* the glass shows through the piano roll */
+    --viz-grid: rgba(255, 255, 255, 0.07);
+    --viz-note: var(--pink);
+    --viz-playhead: var(--amber);
+    --viz-glow: 10;
+
+    color-scheme: dark;
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #0B0F1C 0%, #110F28 55%, #1B1233 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+
+    ::selection {
+      background: rgba(255, 122, 198, 0.35);
+      color: var(--text);
+    }
+
+    /* ---- Outside the window */
+
+    .fx-grain,
+    .fx-vignette,
+    .fx-scanlines {
+      display: block;
+      z-index: -1;
+    }
+
+    .fx-grain {
+      inset: auto 0 0 0;
+      height: 190px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 220' preserveAspectRatio='xMidYMax slice'%3E%3Cdefs%3E%3Cg id='b'%3E%3Crect x='-10' y='170' width='34' height='50'/%3E%3Crect x='28' y='177' width='94' height='43'/%3E%3Crect x='52' y='165' width='46' height='12'/%3E%3Crect x='123' y='183' width='108' height='37'/%3E%3Crect x='232' y='147' width='105' height='73'/%3E%3Crect x='263' y='131' width='44' height='16'/%3E%3Crect x='339' y='157' width='86' height='63'/%3E%3Crect x='357' y='143' width='51' height='14'/%3E%3Crect x='427' y='139' width='72' height='81'/%3E%3Crect x='450' y='122' width='27' height='17'/%3E%3Crect x='463' y='106' width='2' height='16'/%3E%3Crect x='499' y='158' width='82' height='62'/%3E%3Crect x='585' y='142' width='76' height='78'/%3E%3Crect x='608' y='123' width='31' height='19'/%3E%3Crect x='663' y='135' width='95' height='85'/%3E%3Crect x='762' y='87' width='57' height='133'/%3E%3Crect x='821' y='180' width='78' height='40'/%3E%3Crect x='843' y='172' width='35' height='8'/%3E%3Crect x='860' y='158' width='2' height='14'/%3E%3Crect x='903' y='179' width='94' height='41'/%3E%3Crect x='999' y='110' width='71' height='110'/%3E%3Crect x='1073' y='94' width='103' height='126'/%3E%3Crect x='1179' y='122' width='74' height='98'/%3E%3Crect x='1196' y='110' width='40' height='12'/%3E%3Crect x='1253' y='177' width='95' height='43'/%3E%3Crect x='1271' y='156' width='59' height='21'/%3E%3Crect x='1300' y='139' width='2' height='17'/%3E%3Crect x='1349' y='174' width='98' height='46'/%3E%3C/g%3E%3Cpattern id='c' width='13' height='15' patternUnits='userSpaceOnUse'%3E%3Crect x='4' y='5' width='3' height='4' fill='%23FFC58A' opacity='.5'/%3E%3C/pattern%3E%3Cpattern id='p' width='29' height='23' patternUnits='userSpaceOnUse'%3E%3Crect x='11' y='8' width='3' height='4' fill='%23FF7AC6' opacity='.45'/%3E%3C/pattern%3E%3C/defs%3E%3Cuse href='%23b' fill='%23080A16'/%3E%3Cuse href='%23b' fill='url(%23c)'/%3E%3Cuse href='%23b' fill='url(%23p)'/%3E%3C/svg%3E") bottom center / cover no-repeat,
+        linear-gradient(to top, rgba(255, 122, 198, 0.16), rgba(167, 139, 250, 0.06) 45%, transparent 80%);
+
+      /* A small boxed neon 音 ("sound"), cyan, over the rooftops on the left. */
+      &::after {
+        content: '音';
+        position: absolute;
+        bottom: 240px;
+        left: 3.5vw;
+        padding: 0.18em 0.26em;
+        border: 2px solid rgba(103, 232, 249, 0.6);
+        border-radius: 8px;
+        font-family: var(--font-jp);
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #E6FCFF;
+        text-shadow:
+          0 0 4px #67E8F9,
+          0 0 12px #67E8F9,
+          0 0 30px rgba(103, 232, 249, 0.7);
+        box-shadow:
+          0 0 16px rgba(103, 232, 249, 0.35),
+          inset 0 0 14px rgba(103, 232, 249, 0.25);
+      }
+    }
+
+    /* City lights out of focus: soft discs of neon, lamp and sodium. */
+    .fx-vignette {
+      inset: 0;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255, 122, 198, 0.2) 0 38px, transparent 72px),
+        radial-gradient(circle at 86% 30%, rgba(103, 232, 249, 0.16) 0 52px, transparent 92px),
+        radial-gradient(circle at 72% 74%, rgba(255, 197, 138, 0.18) 0 30px, transparent 62px),
+        radial-gradient(circle at 24% 62%, rgba(167, 139, 250, 0.16) 0 60px, transparent 104px),
+        radial-gradient(circle at 52% 6%, rgba(255, 197, 138, 0.12) 0 24px, transparent 50px),
+        radial-gradient(circle at 94% 86%, rgba(255, 122, 198, 0.15) 0 44px, transparent 82px),
+        radial-gradient(circle at 4% 92%, rgba(103, 232, 249, 0.13) 0 34px, transparent 66px),
+        radial-gradient(circle at 40% 40%, rgba(255, 122, 198, 0.08) 0 70px, transparent 130px);
+
+      /* 深夜ラジオ, "late-night radio", in pink neon down the right side. */
+      &::after {
+        content: '深夜ラジオ';
+        position: absolute;
+        top: 20%;
+        right: 3.2vw;
+        padding: 0.45em 0.32em;
+        border: 2px solid rgba(255, 122, 198, 0.55);
+        border-radius: 10px;
+        writing-mode: vertical-rl;
+        font-family: var(--font-jp);
+        font-size: 2.4rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.1em;
+        color: #FFE6F4;
+        text-shadow:
+          0 0 4px #FF7AC6,
+          0 0 12px #FF7AC6,
+          0 0 30px rgba(255, 122, 198, 0.8),
+          0 0 60px rgba(255, 122, 198, 0.45);
+        box-shadow:
+          0 0 18px rgba(255, 122, 198, 0.35),
+          inset 0 0 18px rgba(255, 122, 198, 0.2);
+        animation: lofi-sign 9s linear infinite;
+      }
+    }
+
+    /* The signs hang in the page margins, which only exist on wide screens. */
+    @media (max-width: 79.99rem) {
+      .fx-grain::after,
+      .fx-vignette::after {
+        display: none;
+      }
+    }
+
+    /*
+     * Rain: one 240px tile of streaks, falling one tile per loop in eight
+     * steps, so it moves at about 13fps, lo-fi on purpose, and the glass
+     * only re-frosts at that rate.
+     */
+    .fx-scanlines {
+      inset: -240px 0 0 0;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg stroke='%23C7D7FF' stroke-linecap='round'%3E%3Cline x1='179.6' y1='192.5' x2='177.5' y2='204.6' stroke-opacity='0.5' stroke-width='1'/%3E%3Cline x1='91.6' y1='152.2' x2='87.6' y2='174.5' stroke-opacity='0.3' stroke-width='1.4'/%3E%3Cline x1='221.9' y1='167.1' x2='215.9' y2='200.7' stroke-opacity='0.4' stroke-width='1'/%3E%3Cline x1='183.6' y1='79.7' x2='176.5' y2='119.2' stroke-opacity='0.3' stroke-width='1'/%3E%3Cline x1='94.6' y1='173.6' x2='91.4' y2='191.1' stroke-opacity='0.2' stroke-width='1'/%3E%3Cline x1='25' y1='135.9' x2='19.5' y2='166.2' stroke-opacity='0.2' stroke-width='1'/%3E%3Cline x1='16' y1='167.7' x2='12.7' y2='186' stroke-opacity='0.3' stroke-width='1'/%3E%3Cline x1='177.1' y1='184.5' x2='170.9' y2='218.8' stroke-opacity='0.2' stroke-width='1'/%3E%3Cline x1='153.9' y1='6.6' x2='147.1' y2='44' stroke-opacity='0.3' stroke-width='1.4'/%3E%3Cline x1='170.3' y1='159' x2='166' y2='183' stroke-opacity='0.4' stroke-width='1.4'/%3E%3Cline x1='174.1' y1='146.5' x2='168' y2='180.7' stroke-opacity='0.3' stroke-width='1'/%3E%3Cline x1='118.4' y1='151.8' x2='114.8' y2='172' stroke-opacity='0.4' stroke-width='1.4'/%3E%3Cline x1='120.9' y1='61' x2='115.7' y2='90.3' stroke-opacity='0.5' stroke-width='1'/%3E%3Cline x1='102.6' y1='125' x2='95.3' y2='165.4' stroke-opacity='0.5' stroke-width='1'/%3E%3Cline x1='56' y1='132.5' x2='53.6' y2='145.6' stroke-opacity='0.5' stroke-width='1.4'/%3E%3Cline x1='155.8' y1='165.1' x2='152.6' y2='183.2' stroke-opacity='0.4' stroke-width='1'/%3E%3Cline x1='190' y1='89.2' x2='187.6' y2='102.5' stroke-opacity='0.2' stroke-width='1'/%3E%3Cline x1='53.7' y1='103' x2='50' y2='123.6' stroke-opacity='0.4' stroke-width='1.4'/%3E%3Cline x1='26.5' y1='20.2' x2='22.4' y2='43' stroke-opacity='0.5' stroke-width='1'/%3E%3Cline x1='44.6' y1='14.9' x2='41.8' y2='30.3' stroke-opacity='0.4' stroke-width='1'/%3E%3Cline x1='101.6' y1='81.4' x2='94.9' y2='118.9' stroke-opacity='0.4' stroke-width='1.4'/%3E%3Cline x1='187.3' y1='8.9' x2='182.3' y2='36.7' stroke-opacity='0.2' stroke-width='1.4'/%3E%3Cline x1='161.8' y1='115.7' x2='154.6' y2='155.8' stroke-opacity='0.2' stroke-width='1.4'/%3E%3Cline x1='202.8' y1='139.5' x2='200.3' y2='153.2' stroke-opacity='0.3' stroke-width='1'/%3E%3Cline x1='67' y1='62.1' x2='63.3' y2='82.6' stroke-opacity='0.4' stroke-width='1'/%3E%3Cline x1='190.4' y1='168.4' x2='187.9' y2='181.9' stroke-opacity='0.2' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 240px 240px repeat;
+      opacity: 0.6;
+      animation: lofi-rain 0.6s steps(8) infinite;
+    }
+
+    /* ---- Header: the station ident. */
+
+    .app-title {
+      display: inline-block;
+      align-self: flex-start;
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      text-shadow: 0 0 34px rgba(255, 122, 198, 0.28);
+      cursor: default;
+
+      /* The name in katakana, spaced wide, like a city-pop sleeve. */
+      &::after {
+        content: 'キートゥサウンド';
+        display: block;
+        margin-top: 0.5em;
+        font-family: var(--font-jp);
+        font-size: 0.21em;
+        font-weight: 700;
+        letter-spacing: 0.62em;
+        color: var(--pink);
+        text-shadow: 0 0 10px rgba(255, 122, 198, 0.6);
+      }
+    }
+
+    /* An on-air light before the tagline: OFF AIR at rest, LIVE while the beat runs. */
+    .tagline {
+      font-size: 0.875rem;
+      line-height: 2;
+      color: var(--text-dim);
+
+      /* Inline, so the tagline flows on after it rather than dropping a line. */
+      &::before {
+        content: 'OFF AIR';
+        display: inline-block;
+        margin-right: 12px;
+        vertical-align: 1px;
+        line-height: 1.4;
+        padding: 3px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        color: var(--text-dim);
+      }
+    }
+
+    body:has(.terminal-input:not(:disabled)) .tagline::before {
+      content: '\25CF  LIVE';
+      border-color: transparent;
+      background: var(--pink);
+      color: var(--night);
+      animation: lofi-live 2s ease-in-out infinite;
+    }
+
+    /* ---- Buttons */
+
+    .btn {
+      padding: 11px 20px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease;
+
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+
+    .btn-start,
+    .btn-primary {
+      background: var(--pink);
+      color: var(--night);
+      box-shadow: 0 0 22px rgba(255, 122, 198, 0.4);
+
+      &:hover {
+        filter: brightness(1.08);
+        box-shadow: 0 0 32px rgba(255, 122, 198, 0.6);
+      }
+    }
+
+    /* Start pulses like a record light until pressed. */
+    .btn-start {
+      animation: lofi-live 2.4s ease-in-out infinite;
+
+      &:hover {
+        animation: none;
+      }
+    }
+
+    .btn-secondary {
+      background: var(--sheen), var(--glass);
+      color: var(--text);
+      border-color: var(--line);
+      backdrop-filter: blur(14px);
+
+      &:hover {
+        border-color: rgba(103, 232, 249, 0.6);
+        color: var(--cyan);
+      }
+    }
+
+    .btn-danger {
+      background: var(--glass);
+      color: var(--text-dim);
+      border-color: var(--line);
+
+      &:hover {
+        border-color: rgba(255, 122, 198, 0.6);
+        color: var(--pink);
+      }
+    }
+
+    .btn-sm {
+      padding: 7px 13px;
+      font-size: 0.6875rem;
+    }
+
+    /* ---- Genre picker */
+
+    .genre-select {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--sheen), var(--glass);
+      backdrop-filter: blur(14px);
+      transition: border-color 0.18s ease;
+
+      &:hover {
+        border-color: rgba(103, 232, 249, 0.5);
+      }
+
+      /* Keyboard focus only; a mouse click shouldn't ring it. */
+      &:has(select:focus-visible) {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.25);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 17px;
+        width: 6px;
+        height: 6px;
+        margin-top: -4px;
+        border-right: 1.5px solid var(--cyan);
+        border-bottom: 1.5px solid var(--cyan);
+        transform: rotate(45deg);
+        pointer-events: none;
+      }
+
+      & select {
+        padding: 11px 42px 11px 18px;
+        background: transparent;
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        outline: none;
+      }
+
+      & option {
+        background: #161A30;
+        color: var(--text);
+        text-transform: none;
+      }
+    }
+
+    /* ---- Frosted glass over the rainy city. */
+
+    .chassis-frame,
+    .panel,
+    .track-row,
+    .notice-warn,
+    .visualizer {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--sheen), var(--glass);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.18s ease;
+    }
+
+    .chassis-frame:hover,
+    .panel:hover,
+    .track-row:hover,
+    .visualizer:hover {
+      border-color: rgba(255, 122, 198, 0.35);
+    }
+
+    .chassis-frame {
+      overflow: hidden;
+    }
+
+    /* ---- HUD: a tape deck's amber display. */
+
+    .hud-panel {
+      background: transparent;
+    }
+
+    /* Hairlines between cells; the frame clips the ones on its outer edge. */
+    .hud-cell {
+      gap: 8px;
+      padding: 14px 16px 12px;
+      box-shadow:
+        1px 0 0 var(--line),
+        0 1px 0 var(--line);
+    }
+
+    .hud-label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* JetBrains Mono advances 0.6em, so 11 characters need 6.6em: at most 15cqi. */
+    .hud-value {
+      font-family: var(--font-mono);
+      font-size: min(1.625rem, 15cqi);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: 0;
+      color: var(--amber);
+      text-shadow: 0 0 14px rgba(255, 197, 138, 0.45);
+    }
+
+    .hud-value-live {
+      animation: lofi-note 0.5s ease-out;
+    }
+
+    /*
+     * ---- Terminal. On a beat, a neon wash swells out from behind it
+     * (::before, under the glass), like a monitor's light bar.
+     */
+
+    .terminal {
+      position: relative;
+      isolation: isolate;
+
+      &::before {
+        content: '';
+        position: absolute;
+        /* 14px at the sides: a phone's page gutter is 16px, and any more scrolls sideways. */
+        inset: -24px -14px;
+        z-index: -1;
+        border-radius: 36px;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(255, 122, 198, 0.5),
+          rgba(103, 232, 249, 0.2) 45%,
+          transparent 70%
+        );
+        filter: blur(14px);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      &[data-fx-backlight='a']::before {
+        animation: lofi-backlight-a 0.7s ease-out;
+      }
+
+      &[data-fx-backlight='b']::before {
+        animation: lofi-backlight-b 0.7s ease-out;
+      }
+    }
+
+    .terminal:focus-within .chassis-frame {
+      border-color: rgba(255, 122, 198, 0.55);
+      box-shadow:
+        var(--card-shadow),
+        0 0 0 2px rgba(255, 122, 198, 0.14),
+        0 0 40px -12px rgba(255, 122, 198, 0.5);
+    }
+
+    .terminal-prompt {
+      top: 16px;
+      left: 18px;
+      font-family: var(--font-mono);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      line-height: 1.8;
+      color: var(--pink);
+      text-shadow: 0 0 10px rgba(255, 122, 198, 0.7);
+    }
+
+    .terminal-input,
+    .terminal-ghost {
+      padding: 16px 20px 16px 42px;
+      font-family: var(--font-mono);
+      font-size: 1.0625rem;
+      line-height: 1.8;
+    }
+
+    .terminal-input {
+      height: 13rem;
+      color: var(--text);
+      caret-color: var(--pink);
+      scrollbar-color: var(--line) transparent;
+    }
+
+    .terminal-ghost {
+      color: var(--text-dim);
+    }
+
+    .terminal-cursor {
+      width: 2px;
+      height: 1.2em;
+      margin-left: 3px;
+      vertical-align: -0.25em;
+      background: var(--pink);
+      box-shadow: 0 0 10px rgba(255, 122, 198, 0.9);
+      animation: lofi-beam 1.4s ease-in-out infinite;
+    }
+
+    /* ---- Key legend: backlit rubber MIDI pads. */
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel-heading {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pink);
+    }
+
+    .key-card {
+      gap: 10px;
+      padding: 5px 10px 5px 5px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--pad);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+      transition: border-color 0.18s ease;
+
+      &:hover {
+        border-color: rgba(103, 232, 249, 0.4);
+      }
+
+      &:hover .key-action {
+        color: var(--text);
+      }
+    }
+
+    /* Harmony pads light neon pink, beat pads cyan. */
+    .panel > section:first-of-type .key-card[data-pressed] {
+      --flash: 255, 122, 198;
+    }
+
+    .panel > section:last-of-type .key-card[data-pressed] {
+      --flash: 103, 232, 249;
+    }
+
+    /* Lit at once on the strike, then easing back to dark. */
+    .key-card[data-pressed] {
+      animation: lofi-pad 0.5s ease-out;
+    }
+
+    .key-card[data-pressed] .keycap {
+      animation: lofi-key 0.5s ease-out;
+    }
+
+    .keycap {
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 7px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--night);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--cyan);
+    }
+
+    /* One line per pad, so a row of pads stays one height. */
+    .key-action {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 0.8125rem;
+      color: rgba(238, 240, 255, 0.75);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.18s ease;
+    }
+
+    /* ---- Saving and the saved list */
+
+    .field {
+      padding: 10px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(11, 15, 28, 0.6);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      outline: none;
+      transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+
+      &::placeholder {
+        color: var(--text-dim);
+      }
+
+      &:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.18);
+      }
+    }
+
+    .status-line {
+      font-size: 0.8125rem;
+      color: var(--amber);
+    }
+
+    .track-row {
+      gap: 12px 16px;
+      padding: 12px 16px;
+    }
+
+    .track-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .track-meta {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .library-empty {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    .notice-warn {
+      padding: 11px 16px;
+      border-left: 2px solid var(--amber);
+      font-size: 0.8125rem;
+      color: var(--amber);
+    }
+  }
+}
+
+@keyframes lofi-rain {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(240px);
+  }
+}
+
+/* A neon tube that mostly burns steady and now and then stutters. */
+@keyframes lofi-sign {
+  0%,
+  90%,
+  93%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  91.5%,
+  94.5% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes lofi-live {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(255, 122, 198, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(255, 122, 198, 0.75);
+  }
+}
+
+@keyframes lofi-note {
+  from {
+    color: #FF7AC6;
+    text-shadow: 0 0 18px rgba(255, 122, 198, 0.9);
+  }
+}
+
+@keyframes lofi-beam {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* The light bar: a wash that swells out from behind the terminal and fades. */
+@keyframes lofi-backlight-a {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes lofi-backlight-b {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes lofi-pad {
+  from {
+    background: rgba(var(--flash), 0.26);
+    border-color: rgb(var(--flash));
+    box-shadow:
+      0 0 18px rgba(var(--flash), 0.5),
+      inset 0 0 12px rgba(var(--flash), 0.35);
+  }
+}
+
+@keyframes lofi-key {
+  from {
+    background: rgb(var(--flash));
+    border-color: rgb(var(--flash));
+    color: #0B0F1C;
+  }
+}

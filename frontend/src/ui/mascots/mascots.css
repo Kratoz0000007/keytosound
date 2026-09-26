@@ -1,0 +1,967 @@
+/*
+ * Mascot motion. Three hooks on .mascot-stage drive everything:
+ *   data-state  idle | typing, for the looping animations
+ *   data-tap    a | b, flipped on every keystroke
+ *   data-hit    a | b, flipped on every beat (space or 1-8)
+ * and --m-tempo, the typing loop's length, set from the live wpm.
+ *
+ * Each reaction has an a and a b keyframes block that are identical: the
+ * flip swaps one name for the other, and a new animation name restarts the
+ * animation. Transform origins are in viewBox units (0 0 240 200).
+ */
+
+.mascot-stage {
+  position: relative;
+  height: 200px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mascot-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+@keyframes m-bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes m-breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ======================================================================
+ * Synthwave: the neon synth robot
+ * ==================================================================== */
+
+.m-synth .m-float {
+  animation: m-bob 3.2s ease-in-out infinite;
+}
+
+.m-synth-eye,
+.m-synth-antenna {
+  animation: m-breathe 2.4s ease-in-out infinite;
+}
+
+.m-synth-floor {
+  opacity: 0.3;
+  animation: m-breathe 2.4s ease-in-out infinite;
+}
+
+.m-synth-head {
+  transform-origin: 120px 124px;
+}
+
+.mascot-stage[data-state='typing'] .m-synth-head {
+  animation: m-synth-bang var(--m-tempo) ease-in-out infinite;
+}
+
+@keyframes m-synth-bang {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: translateY(4px) rotate(-8deg);
+  }
+  65% {
+    transform: rotate(3deg);
+  }
+}
+
+.m-synth .m-tap {
+  transform-origin: 120px 130px;
+}
+
+.mascot-stage[data-tap='a'] .m-synth .m-tap {
+  animation: m-synth-glitch-a 0.16s steps(3);
+}
+
+.mascot-stage[data-tap='b'] .m-synth .m-tap {
+  animation: m-synth-glitch-b 0.16s steps(3);
+}
+
+@keyframes m-synth-glitch-a {
+  0% {
+    transform: translateX(-4px) skewX(-8deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes m-synth-glitch-b {
+  0% {
+    transform: translateX(-4px) skewX(-8deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.m-synth-laser {
+  opacity: 0;
+  transform-origin: 99px 75px;
+}
+
+.mascot-stage[data-hit='a'] .m-synth-laser {
+  animation: m-synth-laser-a 0.4s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-synth-laser {
+  animation: m-synth-laser-b 0.4s ease-out;
+}
+
+@keyframes m-synth-laser-a {
+  0% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes m-synth-laser-b {
+  0% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+/* The RGB split goes on the <svg> itself: filter functions on SVG children are patchy. */
+.mascot-stage[data-hit='a'] .m-synth {
+  animation: m-synth-split-a 0.35s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-synth {
+  animation: m-synth-split-b 0.35s ease-out;
+}
+
+@keyframes m-synth-split-a {
+  from {
+    filter: drop-shadow(-6px 0 #00F0FF) drop-shadow(6px 0 #FF0055) brightness(1.5);
+  }
+}
+
+@keyframes m-synth-split-b {
+  from {
+    filter: drop-shadow(-6px 0 #00F0FF) drop-shadow(6px 0 #FF0055) brightness(1.5);
+  }
+}
+
+/* ======================================================================
+ * Lo-Fi: the studio cat
+ * ==================================================================== */
+
+.m-lofi-body {
+  transform-origin: 154px 100px;
+  animation: m-lofi-breathe 4s ease-in-out infinite;
+}
+
+@keyframes m-lofi-breathe {
+  50% {
+    transform: scale(1, 1.05);
+  }
+}
+
+.m-lofi-tail {
+  transform-origin: 186px 94px;
+  animation: m-lofi-sway 5s ease-in-out infinite;
+}
+
+@keyframes m-lofi-sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+/* Gazing out and up, toward the city. */
+.m-lofi-head {
+  transform-origin: 114px 92px;
+  animation: m-lofi-gaze 8s ease-in-out infinite;
+}
+
+@keyframes m-lofi-gaze {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+
+.m-lofi-awake {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.m-lofi-sleep {
+  transition: opacity 0.6s ease;
+}
+
+.mascot-stage[data-state='typing'] .m-lofi-awake {
+  opacity: 1;
+}
+
+.mascot-stage[data-state='typing'] .m-lofi-sleep {
+  opacity: 0;
+}
+
+.mascot-stage[data-state='typing'] .m-lofi-head {
+  animation: m-lofi-nod var(--m-tempo) ease-in-out infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-lofi-tail {
+  animation-duration: calc(var(--m-tempo) * 3);
+}
+
+@keyframes m-lofi-nod {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(3deg);
+  }
+}
+
+.m-lofi-ear-l {
+  --twitch: -14deg;
+  transform-origin: 106px 66px;
+}
+
+.m-lofi-ear-r {
+  --twitch: 14deg;
+  transform-origin: 124px 66px;
+}
+
+.mascot-stage[data-tap='a'] .m-lofi-ear {
+  animation: m-lofi-twitch-a 0.28s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-lofi-ear {
+  animation: m-lofi-twitch-b 0.28s ease-out;
+}
+
+@keyframes m-lofi-twitch-a {
+  35% {
+    transform: rotate(var(--twitch));
+  }
+}
+
+@keyframes m-lofi-twitch-b {
+  35% {
+    transform: rotate(var(--twitch));
+  }
+}
+
+.m-lofi-aura {
+  opacity: 0;
+  transform-origin: 158px 148px;
+}
+
+.mascot-stage[data-hit='a'] .m-lofi-aura {
+  animation: m-lofi-aura-a 0.55s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-lofi-aura {
+  animation: m-lofi-aura-b 0.55s ease-out;
+}
+
+@keyframes m-lofi-aura-a {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes m-lofi-aura-b {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.14);
+  }
+}
+
+.m-lofi-cone {
+  transform-origin: 158px 164px;
+}
+
+.mascot-stage[data-hit='a'] .m-lofi-cone {
+  animation: m-lofi-thump-a 0.22s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-lofi-cone {
+  animation: m-lofi-thump-b 0.22s ease-out;
+}
+
+@keyframes m-lofi-thump-a {
+  30% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes m-lofi-thump-b {
+  30% {
+    transform: scale(1.12);
+  }
+}
+
+/* ======================================================================
+ * 8-Bit: the chiptune ghost. Every move is stepped: no easing, ever.
+ * ==================================================================== */
+
+.m-pix .m-float {
+  animation: m-pix-bob 0.8s steps(1) infinite;
+}
+
+@keyframes m-pix-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.m-pix-shadow {
+  transform-origin: 120px 191px;
+  animation: m-pix-shadow 0.8s steps(1) infinite;
+}
+
+@keyframes m-pix-shadow {
+  50% {
+    transform: scaleX(0.75);
+  }
+}
+
+/* Fill lives on the wrapper, so the gold flash never touches the hem frames. */
+.m-pix-sprite {
+  fill: #39FF14;
+}
+
+.m-pix-frame-a {
+  animation: m-pix-frame-a 0.5s steps(1) infinite;
+}
+
+.m-pix-frame-b {
+  opacity: 0;
+  animation: m-pix-frame-b 0.5s steps(1) infinite;
+}
+
+@keyframes m-pix-frame-a {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes m-pix-frame-b {
+  50% {
+    opacity: 1;
+  }
+}
+
+.mascot-stage[data-state='typing'] .m-pix-frame-a,
+.mascot-stage[data-state='typing'] .m-pix-frame-b {
+  animation-duration: calc(var(--m-tempo) / 2);
+}
+
+.mascot-stage[data-state='typing'] .m-pix-dance {
+  animation: m-pix-dance var(--m-tempo) steps(1) infinite;
+}
+
+@keyframes m-pix-dance {
+  0% {
+    transform: translate(-6px, 0);
+  }
+  25% {
+    transform: translate(0, -8px);
+  }
+  50% {
+    transform: translate(6px, 0);
+  }
+  75% {
+    transform: translate(0, -8px);
+  }
+}
+
+/* Looking at the text while it types. */
+.mascot-stage[data-state='typing'] .m-pix-pupils {
+  transform: translateX(-8px);
+}
+
+.m-pix .m-tap {
+  transform-origin: 120px 172px;
+}
+
+.mascot-stage[data-tap='a'] .m-pix .m-tap {
+  animation: m-pix-squash-a 0.1s steps(1);
+}
+
+.mascot-stage[data-tap='b'] .m-pix .m-tap {
+  animation: m-pix-squash-b 0.1s steps(1);
+}
+
+@keyframes m-pix-squash-a {
+  from {
+    transform: scale(1.08, 0.92);
+  }
+}
+
+@keyframes m-pix-squash-b {
+  from {
+    transform: scale(1.08, 0.92);
+  }
+}
+
+.m-pix-spark {
+  opacity: 0;
+}
+
+.mascot-stage[data-tap='a'] .m-pix-spark {
+  animation: m-pix-spark-a 0.35s steps(4);
+}
+
+.mascot-stage[data-tap='b'] .m-pix-spark {
+  animation: m-pix-spark-b 0.35s steps(4);
+}
+
+@keyframes m-pix-spark-a {
+  from {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+@keyframes m-pix-spark-b {
+  from {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+/* Golden arcade mode: the whole sprite goes yellow, and glows, for a beat. */
+.mascot-stage[data-hit='a'] .m-pix-sprite {
+  animation: m-pix-gold-a 0.45s steps(1);
+}
+
+.mascot-stage[data-hit='b'] .m-pix-sprite {
+  animation: m-pix-gold-b 0.45s steps(1);
+}
+
+@keyframes m-pix-gold-a {
+  from {
+    fill: #FFE600;
+  }
+}
+
+@keyframes m-pix-gold-b {
+  from {
+    fill: #FFE600;
+  }
+}
+
+.mascot-stage[data-hit='a'] .m-pix {
+  animation: m-pix-glow-a 0.45s steps(1);
+}
+
+.mascot-stage[data-hit='b'] .m-pix {
+  animation: m-pix-glow-b 0.45s steps(1);
+}
+
+@keyframes m-pix-glow-a {
+  from {
+    filter: drop-shadow(0 0 8px #FFE600);
+  }
+}
+
+@keyframes m-pix-glow-b {
+  from {
+    filter: drop-shadow(0 0 8px #FFE600);
+  }
+}
+
+/* ======================================================================
+ * Jazz: the speakeasy cat
+ * ==================================================================== */
+
+.m-jazz-light {
+  animation: m-jazz-light 4s ease-in-out infinite;
+}
+
+@keyframes m-jazz-light {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.m-jazz-wisp {
+  opacity: 0;
+  animation: m-jazz-wisp 5s ease-out infinite;
+}
+
+.m-jazz-wisp-late {
+  animation-delay: 2.5s;
+}
+
+@keyframes m-jazz-wisp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+}
+
+.m-jazz-tail {
+  transform-origin: 156px 160px;
+  animation: m-jazz-tail 4.5s ease-in-out infinite;
+}
+
+@keyframes m-jazz-tail {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+.m-jazz-foot {
+  transform-origin: 146px 195px;
+  animation: m-jazz-tap 1.6s ease-in-out infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-jazz-foot {
+  animation-duration: var(--m-tempo);
+}
+
+@keyframes m-jazz-tap {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+}
+
+/* The sax hangs at its side, and comes up to play while you type. */
+.m-jazz-sax {
+  transform-origin: 164px 146px;
+  transform: rotate(38deg);
+  transition: transform 0.35s ease;
+}
+
+.mascot-stage[data-state='typing'] .m-jazz-sax {
+  transform: rotate(0deg);
+}
+
+.m-jazz-sax-play {
+  transform-origin: 164px 146px;
+}
+
+.mascot-stage[data-state='typing'] .m-jazz-sax-play {
+  animation: m-jazz-play var(--m-tempo) ease-in-out infinite;
+}
+
+@keyframes m-jazz-play {
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+
+.m-jazz .m-tap {
+  transform-origin: 140px 107px;
+}
+
+.mascot-stage[data-tap='a'] .m-jazz .m-tap {
+  animation: m-jazz-nod-a 0.25s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-jazz .m-tap {
+  animation: m-jazz-nod-b 0.25s ease-out;
+}
+
+@keyframes m-jazz-nod-a {
+  40% {
+    transform: rotate(4deg) translateY(1px);
+  }
+}
+
+@keyframes m-jazz-nod-b {
+  40% {
+    transform: rotate(4deg) translateY(1px);
+  }
+}
+
+.m-jazz-note {
+  opacity: 0;
+}
+
+.mascot-stage[data-tap='a'] .m-jazz-note {
+  animation: m-jazz-note-a 0.9s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-jazz-note {
+  animation: m-jazz-note-b 0.9s ease-out;
+}
+
+/* !important: the reaction shorthand above would reset the delay to 0. */
+.m-jazz-note-late {
+  animation-delay: 0.12s !important;
+}
+
+@keyframes m-jazz-note-a {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(12deg) scale(1);
+  }
+}
+
+@keyframes m-jazz-note-b {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(12deg) scale(1);
+  }
+}
+
+.m-jazz-ring {
+  opacity: 0;
+  transform-origin: 140px 194px;
+}
+
+.m-jazz-ring-late {
+  animation-delay: 0.12s !important;
+}
+
+.mascot-stage[data-hit='a'] .m-jazz-ring {
+  animation: m-jazz-ring-a 0.75s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-jazz-ring {
+  animation: m-jazz-ring-b 0.75s ease-out;
+}
+
+@keyframes m-jazz-ring-a {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(8, 3);
+  }
+}
+
+@keyframes m-jazz-ring-b {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(8, 3);
+  }
+}
+
+.m-jazz-beat-note {
+  opacity: 0;
+}
+
+.mascot-stage[data-hit='a'] .m-jazz-beat-note {
+  animation: m-jazz-note-a 0.8s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-jazz-beat-note {
+  animation: m-jazz-note-b 0.8s ease-out;
+}
+
+.mascot-stage[data-hit='a'] .m-jazz {
+  animation: m-jazz-glow-a 0.5s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-jazz {
+  animation: m-jazz-glow-b 0.5s ease-out;
+}
+
+@keyframes m-jazz-glow-a {
+  from {
+    filter: drop-shadow(0 0 12px rgba(230, 57, 70, 0.8));
+  }
+}
+
+@keyframes m-jazz-glow-b {
+  from {
+    filter: drop-shadow(0 0 12px rgba(230, 57, 70, 0.8));
+  }
+}
+
+/* ======================================================================
+ * Classical: the maestro owl
+ * ==================================================================== */
+
+.m-owl-body {
+  transform-origin: 116px 102px;
+  animation: m-owl-breathe 4s ease-in-out infinite;
+}
+
+@keyframes m-owl-breathe {
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.m-owl-head {
+  transform-origin: 116px 56px;
+  animation: m-owl-survey 7s ease-in-out infinite;
+}
+
+@keyframes m-owl-survey {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.m-owl-lid {
+  transform-box: fill-box;
+  transform-origin: center top;
+  transform: scaleY(0);
+  animation: m-owl-blink 5.5s ease-in-out infinite;
+}
+
+@keyframes m-owl-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(0);
+  }
+  95% {
+    transform: scaleY(1);
+  }
+}
+
+.m-owl-dust {
+  opacity: 0;
+  animation: m-owl-dust 3.6s ease-out infinite;
+}
+
+@keyframes m-owl-dust {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(4px, -34px);
+  }
+}
+
+/* At rest the baton is lowered; typing, it conducts a four-beat pattern. */
+.m-owl-arm {
+  transform-origin: 136px 64px;
+  animation: m-owl-rest 4s ease-in-out infinite;
+}
+
+@keyframes m-owl-rest {
+  0%,
+  100% {
+    transform: rotate(22deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+
+.mascot-stage[data-state='typing'] .m-owl-arm {
+  animation: m-owl-conduct var(--m-tempo) ease-in-out infinite;
+}
+
+@keyframes m-owl-conduct {
+  0%,
+  100% {
+    transform: rotate(4deg);
+  }
+  25% {
+    transform: rotate(-26deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-12deg);
+  }
+}
+
+.m-owl-trail {
+  opacity: 0;
+}
+
+.mascot-stage[data-state='typing'] .m-owl-trail {
+  animation: m-owl-trail var(--m-tempo) ease-in-out infinite;
+}
+
+@keyframes m-owl-trail {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  25% {
+    opacity: 0.85;
+  }
+}
+
+.m-owl .m-tap {
+  transform-origin: 116px 56px;
+}
+
+.mascot-stage[data-tap='a'] .m-owl .m-tap {
+  animation: m-owl-nod-a 0.3s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-owl .m-tap {
+  animation: m-owl-nod-b 0.3s ease-out;
+}
+
+@keyframes m-owl-nod-a {
+  40% {
+    transform: translateY(1.5px) rotate(2deg);
+  }
+}
+
+@keyframes m-owl-nod-b {
+  40% {
+    transform: translateY(1.5px) rotate(2deg);
+  }
+}
+
+.m-owl .m-hit {
+  transform-origin: 136px 64px;
+}
+
+.mascot-stage[data-hit='a'] .m-owl .m-hit {
+  animation: m-owl-swing-a 0.5s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-owl .m-hit {
+  animation: m-owl-swing-b 0.5s ease-out;
+}
+
+@keyframes m-owl-swing-a {
+  30% {
+    transform: rotate(-50deg);
+  }
+  65% {
+    transform: rotate(28deg);
+  }
+}
+
+@keyframes m-owl-swing-b {
+  30% {
+    transform: rotate(-50deg);
+  }
+  65% {
+    transform: rotate(28deg);
+  }
+}
+
+.m-owl-spark {
+  opacity: 0;
+}
+
+.mascot-stage[data-hit='a'] .m-owl-spark {
+  animation: m-owl-spark-a 0.9s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-owl-spark {
+  animation: m-owl-spark-b 0.9s ease-out;
+}
+
+@keyframes m-owl-spark-a {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg);
+  }
+}
+
+@keyframes m-owl-spark-b {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg);
+  }
+}

@@ -1,0 +1,790 @@
+/*
+ * Synthwave: Hotline Miami / 1989. Hex values are from
+ * hotline_miami_design_system.md; the glows are the same hexes at reduced
+ * alpha, as the design system writes them.
+ */
+
+@layer components {
+  [data-theme='synthwave'] {
+    --void: #0B0B12; /* color-bg-void */
+    --surface: #151522; /* color-bg-surface */
+    --surface-elevated: #1F1F33; /* color-bg-surface-elevated */
+    --pink: #FF0055;
+    --cyan: #00F0FF;
+    --yellow: #FFE600;
+    --orange: #FF5500;
+    --fg: #FFFFFF; /* color-text-primary */
+    --fg-secondary: #E0E0FF; /* color-text-secondary */
+    --fg-muted: #7A7A9E; /* color-text-muted */
+
+    --font-display: 'Press Start 2P', monospace;
+    --font-ui: 'Chakra Petch', sans-serif;
+    --font-terminal: 'VT323', monospace;
+
+    --focus-ring: var(--pink);
+    --viz-bg: var(--void);
+    --viz-grid: var(--surface-elevated);
+    --viz-note: var(--cyan);
+    --viz-playhead: var(--pink);
+    --viz-glow: 8;
+
+    /* Where the sky meets the grid, as a share of the viewport's height. */
+    --horizon: 54vh;
+
+    color-scheme: dark;
+
+    body {
+      min-height: 100vh;
+      background: var(--void);
+      color: var(--fg-secondary);
+      font-family: var(--font-ui);
+    }
+
+    ::selection {
+      background: var(--pink);
+      color: var(--fg);
+    }
+
+    /*
+     * ---- The scene behind the page: a retro sunset. Stars and a striped sun
+     * over wireframe mountains and palms, and a neon grid floor that drives
+     * toward you forever. All of it sits at z-index -1, behind the content.
+     *   .fx-grain     the sky, stars and sun glow; ::before the sun;
+     *                 ::after the mountains and palms
+     *   .fx-vignette  the floor; ::before the moving grid; ::after horizon haze
+     * And over everything, the CRT: .fx-scanlines is the scanlines, with the
+     * vignette as its ::before and VHS grain as its ::after.
+     */
+
+    .fx-grain,
+    .fx-vignette {
+      display: block;
+      z-index: -1;
+    }
+
+    .fx-grain {
+      inset: 0;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 600' preserveAspectRatio='xMidYMid slice'%3E%3Ccircle cx='10' cy='296.8' r='1.3' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='1179' cy='288.1' r='1.5' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='370.1' cy='407.1' r='1.1' fill='%23FF7AB0' opacity='0.3'/%3E%3Ccircle cx='832.5' cy='85.7' r='1.1' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='139.5' cy='0.2' r='1' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='39.9' cy='2.9' r='0.9' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='125.3' cy='209.3' r='0.9' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='1401.3' cy='87.3' r='0.6' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='245.5' cy='206.5' r='1.2' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='563.9' cy='310.7' r='0.7' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='955.1' cy='95.6' r='0.7' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='551.7' cy='20.8' r='0.9' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='69' cy='9.6' r='0.8' fill='%23FF7AB0' opacity='0.6'/%3E%3Ccircle cx='764.5' cy='294.1' r='1.5' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='1131.6' cy='93.4' r='0.6' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='1247.5' cy='81.3' r='0.8' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='956.6' cy='248.6' r='1.2' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='1006' cy='376.9' r='1.4' fill='%2300F0FF' opacity='0.8'/%3E%3Ccircle cx='139.8' cy='171.9' r='1.4' fill='%23FF7AB0' opacity='0.8'/%3E%3Ccircle cx='832.9' cy='139.3' r='1.5' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='887.4' cy='225.7' r='1.1' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='978.5' cy='3' r='1' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='483.6' cy='312.5' r='1.1' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='679.3' cy='261' r='0.6' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='1082' cy='18' r='0.9' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='1118.3' cy='306' r='0.6' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='969.8' cy='205.2' r='1.5' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='1026.7' cy='0.4' r='1.1' fill='%2300F0FF' opacity='0.8'/%3E%3Ccircle cx='997.8' cy='0.4' r='1.3' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='1025.2' cy='296.2' r='1.3' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='214.8' cy='364.4' r='0.6' fill='%23FF7AB0' opacity='0.8'/%3E%3Ccircle cx='395.4' cy='378.1' r='0.7' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='632.7' cy='551.4' r='1' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='750.5' cy='147' r='1.4' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='675.8' cy='1.2' r='0.7' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='578.7' cy='98.3' r='1.3' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='619.1' cy='354.2' r='1.3' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='1107.4' cy='169.3' r='0.9' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='988.7' cy='193.2' r='1.5' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='1308.9' cy='219.8' r='1' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='1031.8' cy='393.7' r='0.8' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='957' cy='3.7' r='1' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='756' cy='286.5' r='0.6' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='730.9' cy='1.6' r='1.2' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='191.3' cy='293.2' r='1' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='1301.3' cy='386.3' r='1.3' fill='%2300F0FF' opacity='0.8'/%3E%3Ccircle cx='526.5' cy='252.7' r='1.2' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='893.8' cy='6.8' r='0.7' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='865.3' cy='214.4' r='1.1' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='457' cy='170.9' r='0.6' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='229.3' cy='225.5' r='1.1' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='553.9' cy='403.5' r='1' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='1391.2' cy='55.6' r='0.8' fill='%23FF7AB0' opacity='0.5'/%3E%3Ccircle cx='941' cy='418.5' r='0.9' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='1125.3' cy='42.9' r='1.2' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='1142.1' cy='173.9' r='1.2' fill='%2300F0FF' opacity='0.4'/%3E%3Ccircle cx='1.9' cy='366.8' r='1.5' fill='%2300F0FF' opacity='0.4'/%3E%3Ccircle cx='102.7' cy='21.7' r='1' fill='%2300F0FF' opacity='0.3'/%3E%3Ccircle cx='857.8' cy='87.9' r='0.7' fill='%2300F0FF' opacity='0.5'/%3E%3Ccircle cx='267.5' cy='347.5' r='0.9' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='677.2' cy='84.3' r='0.8' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='252' cy='162.2' r='1.6' fill='%23FF7AB0' opacity='0.9'/%3E%3Ccircle cx='345.5' cy='509.6' r='0.6' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='769.8' cy='421.7' r='1.1' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='563.6' cy='63.7' r='0.7' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='959' cy='104.8' r='1.4' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='1299.8' cy='36.3' r='0.5' fill='%23FF7AB0' opacity='0.9'/%3E%3Ccircle cx='333' cy='434.8' r='1.2' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='1285' cy='113.9' r='1.6' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='1355.5' cy='73.4' r='0.7' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='869' cy='453.2' r='1.3' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='473.7' cy='79.8' r='0.8' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='426.1' cy='189.9' r='1' fill='%23FF7AB0' opacity='0.7'/%3E%3Ccircle cx='312.1' cy='187.4' r='0.6' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='352.5' cy='129.5' r='0.8' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='634.6' cy='395.6' r='1.4' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='472.6' cy='142.9' r='1.3' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='2.6' cy='528.7' r='0.9' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='646.6' cy='249.5' r='1.6' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='1078.1' cy='250.5' r='1.4' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='848.8' cy='181.4' r='1.5' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='8.9' cy='43.1' r='0.8' fill='%2300F0FF' opacity='0.4'/%3E%3Ccircle cx='645' cy='209.7' r='0.8' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='1190.6' cy='91.2' r='0.8' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='976.1' cy='126.5' r='1.5' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='1158.2' cy='479.8' r='1.3' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='776.2' cy='108.3' r='0.6' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='331' cy='2.4' r='0.9' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='875.3' cy='31.4' r='1.6' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='1205.8' cy='503.5' r='1' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='1260.8' cy='454.9' r='0.6' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='75.5' cy='154.8' r='0.6' fill='%2300F0FF' opacity='0.7'/%3E%3Ccircle cx='594.3' cy='15.1' r='1.1' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='835.1' cy='96.8' r='0.9' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='870.3' cy='32.7' r='1.5' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='1311.2' cy='78.5' r='0.9' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='103.9' cy='147.6' r='0.7' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='1368.1' cy='492.6' r='0.6' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='890.9' cy='413.7' r='1' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='71.2' cy='206.1' r='1.1' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='224.8' cy='396.4' r='1.3' fill='%2300F0FF' opacity='0.5'/%3E%3Ccircle cx='418.1' cy='235.3' r='0.6' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='634' cy='16.8' r='1.2' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='764.1' cy='100' r='0.6' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='1187.5' cy='385.6' r='1.6' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='718.4' cy='129.7' r='1.3' fill='%23FF7AB0' opacity='0.4'/%3E%3Ccircle cx='1436.5' cy='209' r='0.8' fill='%2300F0FF' opacity='0.3'/%3E%3Ccircle cx='1008.8' cy='27.3' r='1.5' fill='%2300F0FF' opacity='0.5'/%3E%3Ccircle cx='108.6' cy='77.2' r='1.1' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='197.8' cy='282.7' r='1.5' fill='%23FF7AB0' opacity='0.6'/%3E%3Ccircle cx='452.8' cy='263.7' r='0.5' fill='%23FF7AB0' opacity='0.7'/%3E%3Ccircle cx='569.2' cy='375.2' r='0.7' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='544.3' cy='105.2' r='0.6' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='856.6' cy='32.4' r='1.5' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='541.8' cy='163.8' r='1.5' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='839.8' cy='347' r='1' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='125.9' cy='249.5' r='1.6' fill='%23FF7AB0' opacity='0.9'/%3E%3Ccircle cx='915.3' cy='49.8' r='0.6' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='990.4' cy='473.7' r='0.8' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='575.7' cy='42.6' r='0.7' fill='%2300F0FF' opacity='0.8'/%3E%3Ccircle cx='397.7' cy='304.7' r='1.4' fill='%2300F0FF' opacity='0.3'/%3E%3Ccircle cx='1308.2' cy='93.9' r='0.6' fill='%2300F0FF' opacity='0.7'/%3E%3Ccircle cx='416.9' cy='541.9' r='1.5' fill='%2300F0FF' opacity='0.7'/%3E%3Ccircle cx='1118.1' cy='15.2' r='1' fill='%2300F0FF' opacity='0.6'/%3E%3Ccircle cx='1261.2' cy='35.8' r='1.2' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='355.4' cy='472.7' r='0.8' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='356.3' cy='54.9' r='1' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='169.9' cy='137.4' r='1.5' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='387.2' cy='510.3' r='1' fill='%2300F0FF' opacity='0.5'/%3E%3Ccircle cx='1203.7' cy='214.2' r='0.6' fill='%23FFFFFF' opacity='0.9'/%3E%3Ccircle cx='1270.3' cy='5.6' r='1.5' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='1051.3' cy='332.3' r='1.2' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='1038.8' cy='324.5' r='1' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='831.5' cy='323' r='0.7' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='364' cy='291' r='1.5' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='1371.1' cy='91.8' r='0.9' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='427.9' cy='340.8' r='1.2' fill='%23FFFFFF' opacity='0.7'/%3E%3Ccircle cx='327.6' cy='170.6' r='1.2' fill='%23FF7AB0' opacity='0.4'/%3E%3Ccircle cx='952.3' cy='33' r='0.9' fill='%2300F0FF' opacity='0.9'/%3E%3Ccircle cx='282.3' cy='421' r='1.3' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='207.6' cy='154.4' r='1.5' fill='%23FFFFFF' opacity='0.8'/%3E%3Ccircle cx='198.9' cy='12.8' r='1.2' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='278.6' cy='110.8' r='1.5' fill='%23FFFFFF' opacity='0.4'/%3E%3Ccircle cx='498.7' cy='327.1' r='1' fill='%23FF7AB0' opacity='0.9'/%3E%3Ccircle cx='421.8' cy='217.9' r='1.6' fill='%2300F0FF' opacity='0.5'/%3E%3Ccircle cx='977.4' cy='216.9' r='1.5' fill='%23FFFFFF' opacity='0.5'/%3E%3Ccircle cx='807.3' cy='4.3' r='0.8' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='320.9' cy='113.6' r='1' fill='%23FFFFFF' opacity='0.3'/%3E%3Ccircle cx='517.2' cy='34.2' r='0.6' fill='%23FFFFFF' opacity='0.6'/%3E%3Ccircle cx='959.7' cy='0.3' r='1' fill='%23FFFFFF' opacity='0.5'/%3E%3C/svg%3E") top center / 100% var(--horizon) no-repeat,
+        radial-gradient(circle at 78% var(--horizon), rgba(255, 0, 85, 0.45), rgba(255, 85, 0, 0.12) 22vmin, transparent 44vmin),
+        linear-gradient(
+          to bottom,
+          #07060F 0%,
+          #120A26 calc(var(--horizon) * 0.55),
+          #3A0C45 calc(var(--horizon) - 6vh),
+          #7A1250 var(--horizon),
+          #0B0B12 var(--horizon)
+        );
+
+      /* The sun: yellow to hot pink, cut by bands that widen toward the bottom. */
+      &::before {
+        content: '';
+        position: absolute;
+        top: calc(var(--horizon) - 26vmin);
+        left: 78%;
+        width: 36vmin;
+        height: 36vmin;
+        margin-left: -18vmin;
+        border-radius: 50%;
+        background: linear-gradient(to bottom, #FFE600 0%, #FFB000 30%, #FF5A3C 58%, #FF0055 85%);
+        --bands: linear-gradient(
+          to bottom,
+          #000 0 48%,
+          transparent 48% 51%,
+          #000 51% 58%,
+          transparent 58% 62%,
+          #000 62% 68%,
+          transparent 68% 73%,
+          #000 73% 79%,
+          transparent 79% 85%,
+          #000 85% 90%,
+          transparent 90% 97%,
+          #000 97%
+        );
+        -webkit-mask-image: var(--bands);
+        mask-image: var(--bands);
+        animation: synthwave-sun 5s ease-in-out infinite;
+      }
+
+      /* Mountains and palms, standing on the horizon. */
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: calc(100vh - var(--horizon));
+        height: 30vh;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 260' preserveAspectRatio='xMidYMax slice'%3E%3Cpolygon points='-20,260 -20,114 91,210.1 202.6,179.5 280.4,213.2 406.9,98.3 538.2,214.9 677.1,156.8 759.4,223.2 868.2,184.1 1016.1,215.7 1123,158.3 1247.5,225.4 1352.1,91.1 1444.4,216.3 1460,260' fill='%23150A28'/%3E%3Cline x1='-20' y1='114' x2='-20' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='-20' y1='114' x2='35.5' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='202.6' y1='179.5' x2='202.6' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='202.6' y1='179.5' x2='146.8' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='202.6' y1='179.5' x2='241.5' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='406.9' y1='98.3' x2='406.9' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='406.9' y1='98.3' x2='343.7' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='406.9' y1='98.3' x2='472.6' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='677.1' y1='156.8' x2='677.1' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='677.1' y1='156.8' x2='607.7' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='677.1' y1='156.8' x2='718.3' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='868.2' y1='184.1' x2='868.2' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='868.2' y1='184.1' x2='813.8' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='868.2' y1='184.1' x2='942.2' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='1123' y1='158.3' x2='1123' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='1123' y1='158.3' x2='1069.6' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='1123' y1='158.3' x2='1185.3' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='1352.1' y1='91.1' x2='1352.1' y2='260' stroke='%23FF0055' stroke-opacity='0.28' stroke-width='0.8'/%3E%3Cline x1='1352.1' y1='91.1' x2='1299.8' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cline x1='1352.1' y1='91.1' x2='1398.3' y2='260' stroke='%23FF0055' stroke-opacity='0.196' stroke-width='0.7'/%3E%3Cpolyline points='-20,114 91,210.1 202.6,179.5 280.4,213.2 406.9,98.3 538.2,214.9 677.1,156.8 759.4,223.2 868.2,184.1 1016.1,215.7 1123,158.3 1247.5,225.4 1352.1,91.1 1444.4,216.3' fill='none' stroke='%23FF0055' stroke-opacity='0.6' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpolygon points='-20,260 -20,191.8 44.7,244.3 144.8,159.1 239.2,252.2 294,195.6 370.6,241.3 446.2,224.4 521.2,247.5 603,224.8 693.9,240.8 802,221.3 898.9,247.3 1002.4,212.4 1074.9,240.5 1168.6,174.1 1288.8,247.3 1395,217.1 1460,260' fill='%230B0B12'/%3E%3Cline x1='-20' y1='191.8' x2='-20' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='-20' y1='191.8' x2='12.4' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='144.8' y1='159.1' x2='144.8' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='144.8' y1='159.1' x2='94.8' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='144.8' y1='159.1' x2='192' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='294' y1='195.6' x2='294' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='294' y1='195.6' x2='266.6' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='294' y1='195.6' x2='332.3' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='446.2' y1='224.4' x2='446.2' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='446.2' y1='224.4' x2='408.4' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='446.2' y1='224.4' x2='483.7' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='603' y1='224.8' x2='603' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='603' y1='224.8' x2='562.1' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='603' y1='224.8' x2='648.5' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='802' y1='221.3' x2='802' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='802' y1='221.3' x2='748' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='802' y1='221.3' x2='850.5' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='1002.4' y1='212.4' x2='1002.4' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='1002.4' y1='212.4' x2='950.7' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='1002.4' y1='212.4' x2='1038.7' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='1168.6' y1='174.1' x2='1168.6' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='1168.6' y1='174.1' x2='1121.8' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='1168.6' y1='174.1' x2='1228.7' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cline x1='1395' y1='217.1' x2='1395' y2='260' stroke='%2300F0FF' stroke-opacity='0.3' stroke-width='0.8'/%3E%3Cline x1='1395' y1='217.1' x2='1341.9' y2='260' stroke='%2300F0FF' stroke-opacity='0.21' stroke-width='0.7'/%3E%3Cpolyline points='-20,191.8 44.7,244.3 144.8,159.1 239.2,252.2 294,195.6 370.6,241.3 446.2,224.4 521.2,247.5 603,224.8 693.9,240.8 802,221.3 898.9,247.3 1002.4,212.4 1074.9,240.5 1168.6,174.1 1288.8,247.3 1395,217.1' fill='none' stroke='%2300F0FF' stroke-opacity='0.9' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M1070 260 Q1064.8 155.5 1044 70' fill='none' stroke='%230B0B12' stroke-width='9.5' stroke-linecap='round'/%3E%3Cpath d='M1070 260 Q1064.8 155.5 1044 70' fill='none' stroke='%23FF0055' stroke-opacity='0.5' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1002.6 59.5 965.9 88.5 Q1007.4 79.8 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1016.5 40.6 982.9 46.2 Q1010.3 56.5 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1036.9 26.3 1014.1 9.5 Q1021.2 34 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1061.5 27.3 1060.6 -0.6 Q1043.1 23 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1075.3 49.7 1097.4 34.7 Q1066.1 35.8 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1080.7 75 1119.9 79.5 Q1083.2 55.3 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1044 70 Q1076.3 96.4 1122.1 121.7 Q1089.8 76.1 1044 70 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1180 260 Q1183.6 183 1198 120' fill='none' stroke='%230B0B12' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M1180 260 Q1183.6 183 1198 120' fill='none' stroke='%23FF0055' stroke-opacity='0.5' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1167.5 112.3 1140.5 133.7 Q1171 127.2 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1177.8 98.3 1153 102.5 Q1173.2 110 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1192.8 87.8 1176 75.4 Q1181.2 93.5 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1210.9 88.5 1210.2 68 Q1197.4 85.3 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1221.1 105.1 1237.3 94 Q1214.3 94.8 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1225.1 123.7 1253.9 127 Q1226.9 109.2 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M1198 120 Q1221.8 139.5 1255.5 158.1 Q1231.7 124.5 1198 120 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M118 260 Q122.4 166.5 140 90' fill='none' stroke='%230B0B12' stroke-width='8.5' stroke-linecap='round'/%3E%3Cpath d='M118 260 Q122.4 166.5 140 90' fill='none' stroke='%23FF0055' stroke-opacity='0.5' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q102.9 80.6 70.2 106.6 Q107.2 98.8 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q115.4 63.7 85.3 68.7 Q109.9 77.9 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q133.7 50.9 113.3 35.8 Q119.6 57.8 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q155.6 51.8 154.8 26.8 Q139.2 47.9 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q168 71.9 187.8 58.4 Q159.8 59.4 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q172.8 94.5 207.9 98.5 Q175.1 76.9 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Cpath d='M140 90 Q168.9 113.6 209.8 136.3 Q180.9 95.5 140 90 Z' fill='%230B0B12' stroke='%23FF0055' stroke-opacity='0.55' stroke-width='0.8'/%3E%3Crect x='0' y='258' width='1440' height='2' fill='%23FF0055'/%3E%3C/svg%3E") bottom center / cover no-repeat;
+      }
+    }
+
+    /*
+     * The floor: a grid plane tipped back in 3D and slid toward you one cell
+     * per loop. Only its transform animates, so the compositor does the work.
+     */
+    .fx-vignette {
+      inset: var(--horizon) 0 0 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #1A0829, #0B0B12 60%);
+      perspective: calc((100vh - var(--horizon)) * 2.5);
+      perspective-origin: 50% 0;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -60%;
+        right: -60%;
+        height: 200%;
+        background-image:
+          linear-gradient(to right, rgba(255, 0, 85, 0.8) 0 2px, rgba(255, 0, 85, 0.18) 2px 5px, transparent 5px),
+          linear-gradient(to bottom, rgba(255, 0, 85, 0.8) 0 2px, rgba(255, 0, 85, 0.18) 2px 5px, transparent 5px);
+        background-position: center top;
+        background-size: 64px 64px;
+        transform-origin: 50% 0;
+        transform: rotateX(78deg);
+        animation: synthwave-drive 0.9s linear infinite;
+      }
+
+      /* Haze where the grid meets the sky, hiding its far, flickering lines. */
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 34%;
+        background: linear-gradient(to bottom, #7A1250 0%, rgba(122, 18, 80, 0.55) 18%, transparent 100%);
+      }
+    }
+
+    .fx-scanlines {
+      display: block;
+      inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+
+      /* Lighter than the design system's 85%, so the sunset still reaches the edges. */
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, transparent 65%, rgba(11, 11, 18, 0.6) 100%);
+      }
+
+      /* Oversized so the jumps in synthwave-grain never expose an edge. */
+      &::after {
+        content: '';
+        position: absolute;
+        inset: -50%;
+        opacity: 0.07;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        animation: synthwave-grain 0.5s steps(5) infinite;
+      }
+    }
+
+    /* ---- Header */
+
+    .app-title {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: clamp(1.625rem, 6.5vw, 3.25rem);
+      line-height: 1.1;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      color: var(--fg);
+      transform: skewX(-10deg);
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 24px rgba(255, 0, 85, 0.5);
+      cursor: default;
+
+      &:hover {
+        animation:
+          synthwave-glitch 0.2s steps(2) infinite,
+          synthwave-jitter 0.24s steps(3) infinite;
+      }
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+      color: var(--fg-secondary);
+    }
+
+    /* ---- Skewed action buttons. The inner span counter-skews the label. */
+
+    .btn {
+      padding: 12px 24px;
+      border: 2px solid transparent;
+      font-family: var(--font-ui);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transform: skewX(-10deg);
+      transition:
+        transform 0.1s ease-in-out,
+        box-shadow 0.1s ease-in-out,
+        background-color 0.1s ease-in-out,
+        color 0.1s ease-in-out,
+        border-color 0.1s ease-in-out;
+
+      & > span {
+        transform: skewX(10deg);
+      }
+
+      &:hover {
+        transform: translate(-2px, -2px) skewX(-10deg);
+      }
+
+      &:active {
+        transform: translate(2px, 2px) skewX(-10deg);
+      }
+    }
+
+    /* Acid yellow, pulsing, for the one thing to press next. */
+    .btn-start {
+      background: var(--yellow);
+      color: var(--void);
+      border-color: var(--pink);
+      box-shadow: 5px 5px 0 var(--pink);
+      animation: synthwave-attract 2s ease-in-out infinite;
+
+      &:hover {
+        background: var(--pink);
+        color: var(--fg);
+        border-color: var(--yellow);
+        box-shadow:
+          5px 5px 0 var(--yellow),
+          0 0 24px rgba(255, 0, 85, 0.6);
+        animation: none;
+      }
+
+      &:active {
+        box-shadow:
+          2px 2px 0 var(--yellow),
+          0 0 32px rgba(255, 0, 85, 0.8);
+        animation: none;
+      }
+    }
+
+    .btn-primary {
+      background: var(--pink);
+      color: var(--fg);
+      border-color: var(--cyan);
+      box-shadow: 5px 5px 0 var(--cyan);
+
+      &:hover {
+        background: var(--cyan);
+        color: var(--void);
+        border-color: var(--pink);
+        box-shadow: 5px 5px 0 var(--pink);
+      }
+
+      &:active {
+        box-shadow: 2px 2px 0 var(--pink);
+      }
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 4px 4px 0 rgba(0, 240, 255, 0.35);
+
+      &:hover {
+        background: var(--cyan);
+        color: var(--void);
+        box-shadow: 4px 4px 0 var(--pink);
+      }
+
+      &:active {
+        box-shadow: 2px 2px 0 var(--pink);
+      }
+    }
+
+    .btn-danger {
+      background: var(--surface);
+      color: var(--orange);
+      border-color: var(--orange);
+      box-shadow: 4px 4px 0 rgba(255, 85, 0, 0.35);
+
+      &:hover {
+        background: var(--orange);
+        color: var(--void);
+        box-shadow: 4px 4px 0 var(--pink);
+      }
+
+      &:active {
+        box-shadow: 2px 2px 0 var(--pink);
+      }
+    }
+
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 0.75rem;
+    }
+
+    /* ---- Genre picker: the frame skews, the native select inside does not. */
+
+    .genre-select {
+      border: 2px solid var(--cyan);
+      background: var(--surface);
+      box-shadow: 4px 4px 0 rgba(0, 240, 255, 0.35);
+      transform: skewX(-10deg);
+
+      &:focus-within {
+        border-color: var(--pink);
+        box-shadow: 4px 4px 0 var(--pink);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 16px;
+        margin-top: -3px;
+        border: 6px solid transparent;
+        border-top-color: var(--cyan);
+        border-bottom-width: 0;
+        pointer-events: none;
+      }
+
+      & select {
+        padding: 10px 44px 10px 18px;
+        background: transparent;
+        color: var(--cyan);
+        font-family: var(--font-ui);
+        font-size: 0.9375rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        transform: skewX(10deg);
+        outline: none;
+      }
+
+      & option {
+        background: var(--surface);
+        color: var(--fg-secondary);
+      }
+    }
+
+    /*
+     * ---- Chassis: a frame with its top-right and bottom-left corners cut.
+     *
+     * clip-path also clips borders and box-shadows, hence the three layers:
+     * .chassis carries the glow as a drop-shadow filter, which follows the
+     * clipped shape; .chassis-frame paints the 2px border as its background;
+     * .chassis-body is clipped again 2px inside it.
+     */
+
+    .chassis {
+      --cut: 16px;
+      --chassis-color: var(--pink);
+      --notch-color: var(--cyan);
+      --chassis-glow: rgba(255, 0, 85, 0.35);
+      position: relative;
+      filter: drop-shadow(0 0 12px var(--chassis-glow));
+
+      /* Notch: a bracket standing off the header's top-left corner. */
+      &::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        width: 18px;
+        height: 18px;
+        border-top: 2px solid var(--notch-color);
+        border-left: 2px solid var(--notch-color);
+        pointer-events: none;
+      }
+
+      /* Notch: a raised tab on the header edge, just short of the cut. */
+      &::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: calc(var(--cut) + 8px);
+        width: 36px;
+        height: 4px;
+        background: var(--notch-color);
+        pointer-events: none;
+      }
+    }
+
+    .chassis-frame {
+      padding: 2px;
+      background: var(--chassis-color);
+      clip-path: polygon(
+        0 0,
+        calc(100% - var(--cut)) 0,
+        100% var(--cut),
+        100% 100%,
+        var(--cut) 100%,
+        0 calc(100% - var(--cut))
+      );
+      transition: background-color 0.1s ease-in-out;
+    }
+
+    /*
+     * For the border to measure 2px square to the diagonal too, the inner cut
+     * is shorter by 4px - 2px * sqrt(2).
+     */
+    .chassis-body {
+      --inner-cut: calc(var(--cut) - 1.17px);
+      clip-path: polygon(
+        0 0,
+        calc(100% - var(--inner-cut)) 0,
+        100% var(--inner-cut),
+        100% 100%,
+        var(--inner-cut) 100%,
+        0 calc(100% - var(--inner-cut))
+      );
+    }
+
+    /* ---- HUD: one instrument panel, readouts separated by 2px rules. */
+
+    .hud-panel {
+      position: relative;
+      gap: 2px;
+      padding-top: 4px;
+      background: var(--surface-elevated);
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 4px;
+        background: linear-gradient(90deg, #FF0055, #00F0FF, #FFE600);
+      }
+
+      /* While the beat runs, the readouts are live and glow. */
+      &[data-live='true'] .hud-value {
+        filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.4));
+      }
+    }
+
+    .hud-cell {
+      gap: 6px;
+      padding: 12px 16px 10px;
+      background:
+        repeating-linear-gradient(to bottom, rgba(0, 240, 255, 0.05) 0 1px, transparent 1px 3px),
+        var(--surface);
+    }
+
+    .hud-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    /* VT323 advances 0.4em, so 11 characters need 4.4em: at most 22cqi. */
+    .hud-value {
+      font-family: var(--font-terminal);
+      font-size: min(2.25rem, 22cqi);
+      line-height: 1;
+      color: var(--yellow);
+      text-shadow: 0 0 8px rgba(255, 230, 0, 0.55);
+    }
+
+    .hud-value-live {
+      color: var(--pink);
+      text-shadow: 0 0 10px rgba(255, 0, 85, 0.7);
+      animation: synthwave-flash 0.35s ease-out;
+    }
+
+    /* ---- Terminal: the typing surface, cyan at rest and pink in use. */
+
+    .terminal {
+      --chassis-color: var(--cyan);
+      --notch-color: var(--pink);
+      --chassis-glow: rgba(0, 240, 255, 0.25);
+
+      &:focus-within {
+        --chassis-color: var(--pink);
+        --notch-color: var(--cyan);
+        --chassis-glow: rgba(255, 0, 85, 0.45);
+      }
+
+      &:focus-within .terminal-body {
+        box-shadow: inset 0 0 24px rgba(255, 0, 85, 0.1);
+      }
+
+      &:has(.terminal-input:disabled) {
+        --chassis-color: var(--surface-elevated);
+        --chassis-glow: transparent;
+      }
+    }
+
+    .terminal-body {
+      background:
+        repeating-linear-gradient(to bottom, rgba(0, 240, 255, 0.04) 0 1px, transparent 1px 3px),
+        var(--void);
+      box-shadow: inset 0 0 24px rgba(0, 240, 255, 0.08);
+    }
+
+    .terminal-prompt {
+      top: 14px;
+      left: 18px;
+      font-family: var(--font-terminal);
+      font-size: 1.75rem;
+      line-height: 1.25;
+      color: var(--pink);
+      text-shadow: 0 0 8px rgba(255, 0, 85, 0.7);
+    }
+
+    .terminal-input,
+    .terminal-ghost {
+      padding: 14px 20px 14px 46px;
+      font-family: var(--font-terminal);
+      font-size: 1.75rem;
+      line-height: 1.25;
+    }
+
+    .terminal-input {
+      height: 13rem;
+      color: var(--cyan);
+      caret-color: var(--yellow);
+      text-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
+      scrollbar-color: var(--surface-elevated) transparent;
+    }
+
+    .terminal-ghost {
+      color: var(--fg-muted);
+    }
+
+    .terminal-cursor {
+      width: 0.5em;
+      height: 0.9em;
+      margin-left: 6px;
+      vertical-align: -0.1em;
+      background: var(--yellow);
+      box-shadow: 0 0 8px rgba(255, 230, 0, 0.7);
+      animation: synthwave-blink 1s steps(1) infinite;
+    }
+
+    .visualizer {
+      border: 2px solid var(--surface-elevated);
+    }
+
+    /* ---- Quiet panels: the key legend and the saved list. */
+
+    .panel {
+      background: var(--surface);
+      border: 2px solid var(--surface-elevated);
+      padding: 20px;
+    }
+
+    .panel-heading {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .keycap {
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 6px;
+      background: var(--void);
+      border: 2px solid var(--surface-elevated);
+      border-bottom-width: 4px;
+      font-family: var(--font-terminal);
+      font-size: 1.375rem;
+      line-height: 1;
+      color: var(--yellow);
+    }
+
+    /* Legend text sits back at half strength; a hovered card brings its line forward. */
+    .legend-heading,
+    .key-action {
+      opacity: 0.5;
+    }
+
+    .key-action {
+      font-size: 0.875rem;
+      color: var(--fg-secondary);
+    }
+
+    .key-card {
+      gap: 12px;
+      padding: 4px 10px 4px 4px;
+      background: var(--void);
+
+      &:hover {
+        background: var(--surface-elevated);
+        box-shadow: 3px 3px 0 #FF0055;
+      }
+
+      &:hover .keycap {
+        border-color: var(--pink);
+      }
+
+      &:hover .key-action {
+        opacity: 1;
+      }
+    }
+
+    .field {
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 2px solid var(--surface-elevated);
+      color: var(--fg);
+      font-size: 1rem;
+      outline: none;
+      transition:
+        border-color 0.1s ease-in-out,
+        box-shadow 0.1s ease-in-out;
+
+      &::placeholder {
+        color: var(--fg-muted);
+      }
+
+      &:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 12px rgba(255, 0, 85, 0.35);
+      }
+    }
+
+    .status-line {
+      font-family: var(--font-terminal);
+      font-size: 1.375rem;
+      line-height: 1.25;
+      color: var(--fg-secondary);
+    }
+
+    .track-row {
+      gap: 12px 16px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-left: 4px solid var(--pink);
+      transition: background-color 0.1s ease-in-out;
+
+      &:hover {
+        background: var(--surface-elevated);
+      }
+    }
+
+    .track-title {
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    .track-meta {
+      font-size: 0.875rem;
+      color: var(--fg-muted);
+    }
+
+    .library-empty {
+      color: var(--fg-muted);
+    }
+
+    .notice-warn {
+      padding: 10px 14px;
+      background: var(--surface);
+      border-left: 4px solid var(--yellow);
+      color: var(--yellow);
+    }
+  }
+}
+
+@keyframes synthwave-glitch {
+  0% {
+    text-shadow: 3px 3px 0 #FF0055, -3px -3px 0 #00F0FF;
+  }
+  25% {
+    text-shadow: -3px 3px 0 #FF0055, 3px -3px 0 #00F0FF;
+  }
+  50% {
+    text-shadow: 3px -3px 0 #FF0055, -3px 3px 0 #00F0FF;
+  }
+  75% {
+    text-shadow: -2px -2px 0 #FF0055, 2px 2px 0 #00F0FF;
+  }
+  100% {
+    text-shadow: 3px 3px 0 #FF0055, -3px -3px 0 #00F0FF;
+  }
+}
+
+/* Carries the title's skew, since an animated transform replaces it. */
+@keyframes synthwave-jitter {
+  0%,
+  100% {
+    transform: skewX(-10deg) translate(0, 0);
+  }
+  33% {
+    transform: skewX(-10deg) translate(-2px, 1px);
+  }
+  66% {
+    transform: skewX(-10deg) translate(2px, -1px);
+  }
+}
+
+/* neon-pulse from the design system, with the button's block shadow kept. */
+@keyframes synthwave-attract {
+  0%,
+  100% {
+    box-shadow: 5px 5px 0 #FF0055, 0 0 5px #FF0055, 0 0 15px #FF0055;
+  }
+  50% {
+    box-shadow: 5px 5px 0 #FF0055, 0 0 10px #FF0055, 0 0 30px #FF0055, 0 0 45px #FF0055;
+  }
+}
+
+@keyframes synthwave-flash {
+  from {
+    color: #FFFFFF;
+    text-shadow: 0 0 6px #FFFFFF, 0 0 18px #FF0055, 0 0 32px #FF0055;
+  }
+}
+
+@keyframes synthwave-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes synthwave-grain {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-5%, 3%);
+  }
+  40% {
+    transform: translate(4%, -6%);
+  }
+  60% {
+    transform: translate(-3%, 5%);
+  }
+  80% {
+    transform: translate(6%, 2%);
+  }
+}
+
+/* One grid cell toward the viewer per loop; the next cell takes its place. */
+@keyframes synthwave-drive {
+  from {
+    transform: rotateX(78deg) translateY(0);
+  }
+  to {
+    transform: rotateX(78deg) translateY(64px);
+  }
+}
+
+/* The sun breathes: a slow swell of heat. */
+@keyframes synthwave-sun {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
