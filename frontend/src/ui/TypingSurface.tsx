@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AudioEngine } from '../audio/audioEngine';
 import { MusicEngine } from '../engine/engine';
 import { GENRES, DEFAULT_GENRE_ID } from '../engine/presets';
@@ -12,8 +12,13 @@ import { SessionRecorder } from '../session/recorder';
 import { sessionFromDetail } from '../session/render';
 import { ReplayPlayer } from '../session/replay';
 import { renderScore } from '../session/score';
+import { createThemeFx, type ThemeFx } from '../themes/fx';
+import { themeFor } from '../themes/themes';
 import { CompositionList } from './CompositionList';
 import { saveBlob } from './download';
+import { KeyLegend, type StruckKey } from './KeyLegend';
+import { Mascot } from './mascots/Mascot';
+import { isBeatKey } from './mascots/motion';
 import { Visualizer } from './Visualizer';
 import type { VisualNote } from './visualizerLayout';
 
@@ -34,6 +39,8 @@ interface Readout {
   previous: number | null;
   wpm: number;
   chordIndex: number;
+  /** Counts played notes, so a repeated pitch still flashes the readout. */
+  seq: number;
 }
 
 const EMPTY_READOUT: Readout = {
@@ -42,10 +49,12 @@ const EMPTY_READOUT: Readout = {
   previous: null,
   wpm: 0,
   chordIndex: 0,
+  seq: 0,
 };
 
 export function TypingSurface() {
   const areaRef = useRef<HTMLTextAreaElement>(null);
+  const fxRef = useRef<ThemeFx | null>(null);
   const analyzerRef = useRef(new TypingAnalyzer());
   const musicRef = useRef(new MusicEngine(GENRES[DEFAULT_GENRE_ID], SEED));
   // The band reads harmony and the beat from whichever engine is current.
@@ -61,11 +70,35 @@ export function TypingSurface() {
   const [title, setTitle] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+  const [lastKey, setLastKey] = useState<StruckKey | null>(null);
 
   const preset = GENRES[genreId];
+  const theme = themeFor(genreId);
+
+  // On <html>, not a wrapper, so the page background and scrollbar follow the
+  // theme too. A layout effect, so it lands before paint and before the
+  // Visualizer's own effect reads the theme's colours.
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  // A theme's keystroke effects, if it has any, live as long as the theme.
+  useEffect(() => {
+    const fx = createThemeFx(theme);
+    fxRef.current = fx;
+    return () => {
+      fx?.dispose();
+      fxRef.current = null;
+    };
+  }, [theme]);
 
   /** Runs for both live typing and replay — replay is not a special case. */
   const consumeKey = useCallback((key: KeyEvent) => {
+    setLastKey((k) => ({
+      key: key.key,
+      seq: (k?.seq ?? 0) + 1,
+      beats: (k?.beats ?? 0) + (isBeatKey(key.key) ? 1 : 0),
+    }));
     const features = analyzerRef.current.process(key);
     const event = musicRef.current.step(features);
     const state = musicRef.current.getState();
@@ -103,6 +136,7 @@ export function TypingSurface() {
       previous: r.current,
       wpm: features.speed,
       chordIndex: state.chordIndex,
+      seq: r.seq + 1,
     }));
   }, []);
 
@@ -113,6 +147,7 @@ export function TypingSurface() {
       const stamped = { key: key.key, timestamp: audioRef.current.sessionMs() };
       recorderRef.current.record(stamped);
       consumeKey(stamped);
+      if (areaRef.current) fxRef.current?.onKey(key.key, areaRef.current);
     },
     [consumeKey],
   );
@@ -214,113 +249,156 @@ export function TypingSurface() {
     }
   };
 
+  const terminalMessage = !running
+    ? 'Press Start audio first'
+    : paused
+      ? 'Paused. Press Resume beat'
+      : 'Start typing...';
+
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight">keytosound</h1>
-        <p className="text-sm text-neutral-500">
-          Type. Words become phrases; punctuation moves the harmony.
-        </p>
-        <p className="mt-1 text-xs text-neutral-500">
-          <kbd>,</kbd> pause on the dominant · <kbd>.</kbd> resolve home · <kbd>?</kbd> hang
-          unresolved · <kbd>Enter</kbd> change key · digits edit the beat: 1 kick · 2 snare · 3
-          hat · 4 open hat · 5 clap · 6 perc · 7 bass · 8 stab · 9 fx · 0 reset
-        </p>
-      </header>
+    <>
+      <div className="fx-grain" aria-hidden="true" />
+      <div className="fx-vignette" aria-hidden="true" />
+      <div className="fx-scanlines" aria-hidden="true" />
 
-      <div className="flex flex-wrap items-center gap-3">
-        {!running && (
-          <button
-            onClick={start}
-            className="rounded bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-700"
-          >
-            Start audio
-          </button>
-        )}
-        {running && (
-          <button
-            onClick={togglePause}
-            className="rounded border border-neutral-900 px-4 py-2 hover:bg-neutral-100"
-          >
-            {paused ? 'Resume beat' : 'Pause beat'}
-          </button>
-        )}
-        <select
-          value={genreId}
-          onChange={(e) => changeGenre(e.target.value)}
-          className="rounded border border-neutral-300 px-3 py-2"
-        >
-          {Object.values(GENRES).map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
+        <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div className="flex flex-col gap-4">
+            <h1 className="app-title">keytosound</h1>
+            <p className="tagline max-w-prose">
+              Type. Words become phrases; punctuation moves the harmony.
+            </p>
+          </div>
 
-      <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-        <Stat
-          label="Current note"
-          value={readout.current === null ? '—' : noteName(readout.current)}
-        />
-        <Stat
-          label="Previous note"
-          value={readout.previous === null ? '—' : noteName(readout.previous)}
-        />
-        <Stat
-          label="Key / scale"
-          value={`${noteName((readout.keyRoot ?? preset.keyRoot) + 60).slice(0, -1)} ${SCALE_LABELS[preset.scale]}`}
-        />
-        <Stat label="BPM" value={String(preset.bpm)} />
-        <Stat label="Typing speed" value={`${Math.round(readout.wpm)} wpm`} />
-        <Stat
-          label="Chord"
-          value={`${(readout.chordIndex % preset.progression.length) + 1} / ${preset.progression.length}`}
-        />
-      </dl>
+          <div className="flex flex-wrap items-center gap-5 pb-1">
+            {!running && (
+              <button onClick={start} className="btn btn-start">
+                <span>Start audio</span>
+              </button>
+            )}
+            {running && (
+              <button
+                onClick={togglePause}
+                className={paused ? 'btn btn-start' : 'btn btn-secondary'}
+              >
+                <span>{paused ? 'Resume beat' : 'Pause beat'}</span>
+              </button>
+            )}
+            <label className="genre-select">
+              <span className="sr-only">Genre</span>
+              <select value={genreId} onChange={(e) => changeGenre(e.target.value)}>
+                {Object.values(GENRES).map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </header>
 
-      <textarea
-        ref={areaRef}
-        disabled={!running || paused}
-        placeholder={
-          !running ? 'Press Start audio first' : paused ? 'Paused. Press Resume beat' : 'Start typing...'
-        }
-        className="h-48 w-full resize-none rounded border border-neutral-300 p-4 font-mono text-lg outline-none focus:border-neutral-900 disabled:bg-neutral-50"
-      />
+        <div className="chassis hud">
+          <div className="chassis-frame">
+            <dl
+              data-live={running && !paused}
+              className="chassis-body hud-panel grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+            >
+              <Stat
+                label="Current note"
+                value={readout.current === null ? '—' : noteName(readout.current)}
+                flashKey={readout.seq}
+              />
+              <Stat
+                label="Previous note"
+                value={readout.previous === null ? '—' : noteName(readout.previous)}
+              />
+              <Stat
+                label="Key / scale"
+                value={`${noteName((readout.keyRoot ?? preset.keyRoot) + 60).slice(0, -1)} ${SCALE_LABELS[preset.scale]}`}
+              />
+              <Stat label="BPM" value={String(preset.bpm)} />
+              <Stat label="Typing speed" value={`${Math.round(readout.wpm)} wpm`} />
+              <Stat
+                label="Chord"
+                value={`${(readout.chordIndex % preset.progression.length) + 1} / ${preset.progression.length}`}
+              />
+            </dl>
+          </div>
+        </div>
 
-      <Visualizer notes={notes} />
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="flex min-w-0 flex-col gap-6">
+            <div className="chassis terminal">
+              <div className="chassis-frame">
+                <div className="chassis-body terminal-body">
+                  <span className="terminal-prompt" aria-hidden="true">
+                    &gt;
+                  </span>
+                  <textarea
+                    ref={areaRef}
+                    disabled={!running || paused}
+                    placeholder={terminalMessage}
+                    aria-label="Typing area"
+                    spellCheck={false}
+                    className="terminal-input"
+                  />
+                  <p className="terminal-ghost" aria-hidden="true">
+                    {terminalMessage}
+                    <span className="terminal-cursor" />
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Composition title"
-          className="flex-1 rounded border border-neutral-300 px-3 py-2"
-        />
-        <button
-          onClick={() => void save()}
-          className="rounded bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-700"
-        >
-          Save
-        </button>
-      </div>
+            <Visualizer notes={notes} theme={theme} />
+            <Mascot theme={theme} wpm={readout.wpm} lastKey={lastKey} />
+          </div>
 
-      {status && <p className="text-sm text-neutral-500">{status}</p>}
+          <KeyLegend lastKey={lastKey} />
+        </div>
 
-      <CompositionList
-        refreshKey={refreshKey}
-        onPlay={(id) => void replay(id)}
-        onExport={(id) => void exportComposition(id)}
-      />
-    </div>
+        <section aria-labelledby="saved-heading" className="flex flex-col gap-4">
+          <h2 id="saved-heading" className="panel-heading">
+            Saved compositions
+          </h2>
+          <div className="flex flex-wrap items-center gap-4">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Composition title"
+              aria-label="Composition title"
+              className="field min-w-48 flex-1"
+            />
+            <button onClick={() => void save()} className="btn btn-primary">
+              <span>Save</span>
+            </button>
+          </div>
+          <p role="status" className="status-line">
+            {status}
+          </p>
+          <CompositionList
+            refreshKey={refreshKey}
+            onPlay={(id) => void replay(id)}
+            onExport={(id) => void exportComposition(id)}
+          />
+        </section>
+      </main>
+    </>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, flashKey }: { label: string; value: string; flashKey?: number }) {
+  // A flashKey marks the live readout: changing it remounts the value, which
+  // replays the flash so each new note registers even at the same pitch.
   return (
-    <div className="rounded border border-neutral-200 px-3 py-2">
-      <dt className="text-xs uppercase tracking-wide text-neutral-500">{label}</dt>
-      <dd className="font-mono text-base">{value}</dd>
+    <div className="hud-cell">
+      <dt className="hud-label">{label}</dt>
+      <dd
+        key={flashKey}
+        className={flashKey === undefined ? 'hud-value' : 'hud-value hud-value-live'}
+      >
+        {value}
+      </dd>
     </div>
   );
 }

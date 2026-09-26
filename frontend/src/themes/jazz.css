@@ -1,0 +1,648 @@
+/*
+ * Jazz: a speakeasy after midnight. Crimson lamplight falling from above,
+ * velvet-maroon booths, a neon sign for a title, ivory piano keys, brass,
+ * and a record turning under the notes.
+ */
+
+@layer components {
+  [data-theme='jazz'] {
+    --bg: #0D090B; /* crimson charcoal */
+    --card: #180F12; /* smoky velvet maroon */
+    --pad: #1E1216;
+    --line: #331A20;
+    --cream: #FCEFE3;
+    --crimson: #E63946; /* neon */
+    --gold: #FFB703; /* brass */
+    --amber: #FB8500; /* readouts */
+    --muted: #9E8087; /* dusty rose */
+
+    --card-shadow:
+      0 15px 35px -10px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    --neon-glow:
+      0 0 12px #E63946,
+      0 0 25px rgba(230, 57, 70, 0.4);
+
+    --font-neon: 'Neonderthaw', 'Playfair Display', cursive;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-deco: 'Josefin Sans', sans-serif;
+
+    --focus-ring: var(--gold);
+    --viz-bg: transparent; /* the record shows through, see .visualizer */
+    --viz-grid: var(--line);
+    --viz-style: scope; /* a warm red oscilloscope trace, smoke rising behind it */
+    --viz-decor: smoke;
+    --viz-note: var(--crimson);
+    --viz-playhead: var(--crimson);
+    --viz-accent: rgba(158, 128, 135, 0.35);
+    --viz-glow: 8;
+
+    color-scheme: dark;
+
+    /* A dim stage lamp, glowing crimson from the top centre. */
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(120, 20, 30, 0.25), transparent 70%),
+        var(--bg);
+      color: var(--cream);
+      font-family: var(--font-deco);
+    }
+
+    ::selection {
+      background: rgba(230, 57, 70, 0.45);
+      color: var(--cream);
+    }
+
+    /*
+     * ---- The sign: a white-hot tube in a crimson halo. It flickers on once
+     * when the theme loads, then burns steady.
+     */
+
+    .app-title {
+      display: inline-block;
+      align-self: flex-start;
+      /* The script's descenders hang low; give the tagline room beneath. */
+      padding: 0 0.1em 0.12em;
+      font-family: var(--font-neon);
+      font-size: clamp(3.5rem, 12vw, 6rem);
+      font-weight: 400;
+      line-height: 1;
+      color: var(--cream);
+      text-shadow: var(--neon-glow);
+      animation: jazz-neon-on 1.6s linear 0.2s both;
+      cursor: default;
+    }
+
+    .tagline {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    /* ---- Buttons */
+
+    .btn {
+      padding: 12px 22px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-family: var(--font-deco);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition:
+        border-color 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease,
+        transform 0.25s ease;
+
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+
+    /* An amber switch warming into red neon, dark lettering for legibility. */
+    .btn-start,
+    .btn-primary {
+      background: linear-gradient(135deg, var(--amber), var(--crimson));
+      color: var(--bg);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        0 0 18px rgba(230, 57, 70, 0.5);
+
+      &:hover {
+        filter: brightness(1.1);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.25),
+          0 0 28px rgba(230, 57, 70, 0.7);
+      }
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--cream);
+      border-color: var(--line);
+      box-shadow: var(--card-shadow);
+
+      &:hover {
+        border-color: var(--crimson);
+        color: var(--crimson);
+        box-shadow:
+          var(--card-shadow),
+          0 0 14px rgba(230, 57, 70, 0.35);
+      }
+    }
+
+    .btn-danger {
+      background: var(--card);
+      color: var(--muted);
+      border-color: var(--line);
+
+      &:hover {
+        border-color: var(--crimson);
+        color: var(--crimson);
+      }
+    }
+
+    .btn-sm {
+      padding: 8px 12px;
+      font-size: 0.6875rem;
+    }
+
+    /* ---- Genre picker */
+
+    .genre-select {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.25s ease;
+
+      &:hover {
+        border-color: rgba(230, 57, 70, 0.5);
+      }
+
+      /* Keyboard focus only; a mouse click shouldn't ring it. */
+      &:has(select:focus-visible) {
+        border-color: var(--gold);
+        box-shadow:
+          var(--card-shadow),
+          0 0 0 3px rgba(255, 183, 3, 0.3);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 18px;
+        width: 7px;
+        height: 7px;
+        margin-top: -5px;
+        border-right: 1.5px solid var(--gold);
+        border-bottom: 1.5px solid var(--gold);
+        transform: rotate(45deg);
+        pointer-events: none;
+      }
+
+      & select {
+        padding: 12px 46px 12px 18px;
+        background: transparent;
+        color: var(--cream);
+        font-family: var(--font-deco);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        outline: none;
+      }
+
+      & option {
+        background: var(--card);
+        color: var(--cream);
+        text-transform: none;
+      }
+    }
+
+    /* ---- Cards: velvet booths, a maroon hairline that warms red on hover. */
+
+    .chassis-frame,
+    .panel,
+    .track-row,
+    .notice-warn,
+    .visualizer {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.25s ease;
+    }
+
+    .chassis-frame:hover,
+    .panel:hover,
+    .track-row:hover,
+    .visualizer:hover {
+      border-color: rgba(230, 57, 70, 0.5);
+    }
+
+    .chassis-frame {
+      overflow: hidden;
+    }
+
+    /* Brass: light catching the top edge of each instrument. */
+    .chassis {
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 24px;
+        right: 24px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 183, 3, 0.55), transparent);
+        pointer-events: none;
+      }
+    }
+
+    /* ---- HUD */
+
+    .hud-panel {
+      background: transparent;
+    }
+
+    /* Hairlines between cells; the frame clips the ones on its outer edge. */
+    .hud-cell {
+      gap: 8px;
+      padding: 16px 18px 14px;
+      box-shadow:
+        1px 0 0 var(--line),
+        0 1px 0 var(--line);
+    }
+
+    .hud-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /*
+     * Playfair's default figures are old-style, where 0 reads as o and 120
+     * drops below the line; a readout wants lining figures.
+     */
+    .hud-value {
+      font-family: var(--font-serif);
+      font-size: min(1.875rem, 18cqi);
+      font-weight: 700;
+      font-variant-numeric: lining-nums tabular-nums;
+      line-height: 1.1;
+      letter-spacing: 0;
+      color: var(--amber);
+      text-shadow: 0 0 14px rgba(251, 133, 0, 0.4);
+    }
+
+    .hud-value-live {
+      animation: jazz-note 0.6s ease-out;
+    }
+
+    /* ---- Terminal: a leather desktop under a red lamp. */
+
+    .terminal .chassis-frame {
+      border-left: 2px solid var(--crimson);
+    }
+
+    .terminal:focus-within .chassis-frame {
+      border-color: var(--crimson);
+      box-shadow:
+        var(--card-shadow),
+        0 0 0 3px rgba(230, 57, 70, 0.18),
+        0 0 36px -8px rgba(230, 57, 70, 0.45);
+    }
+
+    .terminal-body {
+      background: radial-gradient(ellipse 60% 90% at 12% 0%, rgba(251, 133, 0, 0.1), transparent 70%);
+
+      /* The needle scratch: a bright hairline dragged across the record on Space or Enter. */
+      &::after {
+        content: '';
+        position: absolute;
+        top: 58%;
+        left: -10%;
+        width: 55%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(252, 239, 227, 0.9), rgba(255, 183, 3, 0.6), transparent);
+        opacity: 0;
+        transform: rotate(-3deg);
+        pointer-events: none;
+      }
+    }
+
+    .terminal[data-fx-scratch='a'] {
+      & .chassis-frame {
+        animation: jazz-shake-a 0.04s steps(1);
+      }
+
+      & .terminal-body::after {
+        animation: jazz-scratch-a 0.26s ease-out;
+      }
+    }
+
+    .terminal[data-fx-scratch='b'] {
+      & .chassis-frame {
+        animation: jazz-shake-b 0.04s steps(1);
+      }
+
+      & .terminal-body::after {
+        animation: jazz-scratch-b 0.26s ease-out;
+      }
+    }
+
+    /* A > reads as a computer prompt; this desk doesn't need one. */
+    .terminal-prompt {
+      display: none;
+    }
+
+    .terminal-input,
+    .terminal-ghost {
+      padding: 18px 24px;
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      line-height: 1.6;
+    }
+
+    .terminal-input {
+      height: 13rem;
+      color: var(--cream);
+      caret-color: var(--crimson);
+      scrollbar-color: var(--line) transparent;
+    }
+
+    .terminal-ghost {
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .terminal-cursor {
+      width: 2px;
+      height: 1.15em;
+      margin-left: 4px;
+      vertical-align: -0.2em;
+      border-radius: 1px;
+      background: var(--crimson);
+      box-shadow: 0 0 10px rgba(230, 57, 70, 0.9);
+      animation: jazz-beam 1.6s ease-in-out infinite;
+    }
+
+    /*
+     * The record: faint grooves centred on the playhead at the right edge,
+     * so the notes play off the vinyl. The canvas draws no background here
+     * (--viz-bg is transparent), so this shows through.
+     */
+    .visualizer {
+      background:
+        repeating-radial-gradient(circle at 100% 50%, #150D10 0 2px, #180F12 2px 5px);
+    }
+
+    /* ---- Pads with backlit brass keys */
+
+    .panel {
+      padding: 20px;
+    }
+
+    .panel-heading {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .key-card {
+      gap: 10px;
+      padding: 5px 10px 5px 5px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--pad);
+      box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+        0 4px 10px -4px rgba(0, 0, 0, 0.8);
+      transition: border-color 0.25s ease;
+
+      &:hover {
+        border-color: rgba(230, 57, 70, 0.5);
+      }
+
+      &:hover .key-action {
+        color: var(--cream);
+      }
+
+      /* A struck pad flashes solid gold with dark lettering, for 100ms. */
+      &[data-pressed] {
+        animation: jazz-pad 0.1s steps(1);
+      }
+
+      &[data-pressed] .keycap {
+        animation: jazz-key 0.1s steps(1);
+      }
+
+      &[data-pressed] .key-action {
+        animation: jazz-pad-label 0.1s steps(1);
+      }
+    }
+
+    /* A backlit brass key: dark maroon, a brass edge, gold lettering. */
+    .keycap {
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 8px;
+      border: 1px solid rgba(255, 183, 3, 0.5);
+      border-radius: 7px;
+      background: #1A0F13;
+      box-shadow:
+        inset 0 0 10px rgba(255, 183, 3, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.6);
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 800;
+      font-variant-numeric: lining-nums;
+      line-height: 1;
+      color: var(--gold);
+      text-shadow: 0 0 8px rgba(255, 183, 3, 0.45);
+    }
+
+    /* One line per pad, so a row of pads stays one height. */
+    .key-action {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 0.875rem;
+      color: rgba(252, 239, 227, 0.85);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.25s ease;
+    }
+
+    /* ---- The mascot's stage: a booth under its own crimson lamp. */
+
+    /* Clipped: the spotlight is drawn from above the box, and must start at its edge. */
+    .mascot-stage {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background:
+        radial-gradient(ellipse 45% 90% at 50% 0%, rgba(230, 57, 70, 0.14), transparent 70%),
+        var(--card);
+      box-shadow: var(--card-shadow);
+    }
+
+    /* ---- Saving and the saved list */
+
+    .field {
+      padding: 11px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--cream);
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      outline: none;
+      transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+
+      &::placeholder {
+        font-style: italic;
+        color: var(--muted);
+      }
+
+      &:focus {
+        border-color: var(--crimson);
+        box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.2);
+      }
+    }
+
+    .status-line {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .track-row {
+      gap: 12px 16px;
+      padding: 12px 18px;
+    }
+
+    .track-title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--cream);
+    }
+
+    .track-meta {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .library-empty {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .notice-warn {
+      padding: 11px 18px;
+      border-left: 2px solid var(--gold);
+      color: var(--gold);
+    }
+  }
+}
+
+/* A neon sign striking: two stutters, a dip, then steady. */
+@keyframes jazz-neon-on {
+  0% {
+    opacity: 0.08;
+  }
+  6% {
+    opacity: 1;
+  }
+  9% {
+    opacity: 0.15;
+  }
+  14% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0.3;
+  }
+  24%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes jazz-note {
+  from {
+    color: #FFB703;
+    text-shadow: 0 0 22px rgba(255, 183, 3, 0.9);
+  }
+}
+
+/* The beam breathes rather than blinks. */
+@keyframes jazz-beam {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Held for the whole 100ms by steps(1), then gone at once. */
+@keyframes jazz-pad {
+  from {
+    background: #FFB703;
+    border-color: #FFB703;
+    box-shadow: 0 0 22px rgba(255, 183, 3, 0.55);
+  }
+}
+
+@keyframes jazz-key {
+  from {
+    background: #0D090B;
+    border-color: #0D090B;
+    color: #FFB703;
+    text-shadow: none;
+  }
+}
+
+@keyframes jazz-pad-label {
+  from {
+    color: #0D090B;
+  }
+}
+
+/* A 40ms needle-jump: one pixel over and up, then back. */
+@keyframes jazz-shake-a {
+  from {
+    transform: translate(1px, -1px);
+  }
+}
+
+@keyframes jazz-shake-b {
+  from {
+    transform: translate(1px, -1px);
+  }
+}
+
+@keyframes jazz-scratch-a {
+  0% {
+    opacity: 1;
+    transform: translateX(0) rotate(-3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(160%) rotate(-3deg);
+  }
+}
+
+@keyframes jazz-scratch-b {
+  0% {
+    opacity: 1;
+    transform: translateX(0) rotate(-3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(160%) rotate(-3deg);
+  }
+}

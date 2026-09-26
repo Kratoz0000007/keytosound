@@ -19,7 +19,7 @@ export function CompositionList({ refreshKey, onPlay, onExport }: Props) {
     } catch {
       // The backend not running is the common case in development, and it
       // must not break the part of the app that makes music.
-      setError('Backend unavailable — typing and audio still work.');
+      setError('Saving needs the backend on :8080. Typing and audio work without it.');
     }
   }, []);
 
@@ -32,33 +32,34 @@ export function CompositionList({ refreshKey, onPlay, onExport }: Props) {
     void refresh();
   };
 
-  if (error) return <p className="text-sm text-neutral-500">{error}</p>;
+  if (error) return <p className="notice-warn">{error}</p>;
   if (items.length === 0) {
-    return <p className="text-sm text-neutral-500">No saved compositions yet.</p>;
+    return (
+      <p className="library-empty">
+        Nothing saved yet. Type a take, give it a title and press Save.
+      </p>
+    );
   }
 
   return (
-    <ul className="divide-y divide-neutral-200 rounded border border-neutral-200">
+    <ul className="flex flex-col gap-3">
       {items.map((item) => (
-        <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-2">
-          <span className="truncate">
-            <span className="font-medium">{item.title}</span>{' '}
-            <span className="text-xs text-neutral-500">
+        <li key={item.id} className="track-row">
+          <span className="min-w-0 truncate">
+            <span className="track-title">{item.title}</span>{' '}
+            <span className="track-meta">
               {item.genreId} · {item.keystrokeCount} keys
             </span>
           </span>
-          <span className="flex shrink-0 gap-2">
-            <button onClick={() => onPlay(item.id)} className="rounded border px-2 py-1 text-sm">
-              Replay
+          <span className="flex shrink-0 gap-4">
+            <button onClick={() => onPlay(item.id)} className="btn btn-secondary btn-sm">
+              <span>Replay</span>
             </button>
-            <button onClick={() => onExport(item.id)} className="rounded border px-2 py-1 text-sm">
-              Export MIDI
+            <button onClick={() => onExport(item.id)} className="btn btn-secondary btn-sm">
+              <span>Export MIDI</span>
             </button>
-            <button
-              onClick={() => void remove(item.id)}
-              className="rounded border px-2 py-1 text-sm"
-            >
-              Delete
+            <button onClick={() => void remove(item.id)} className="btn btn-danger btn-sm">
+              <span>Delete</span>
             </button>
           </span>
         </li>
