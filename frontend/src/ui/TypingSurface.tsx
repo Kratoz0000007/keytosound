@@ -12,6 +12,7 @@ import { SessionRecorder } from '../session/recorder';
 import { sessionFromDetail } from '../session/render';
 import { ReplayPlayer } from '../session/replay';
 import { renderScore } from '../session/score';
+import { AnalyticsPanel } from './AnalyticsPanel';
 import { AuthPanel } from './AuthPanel';
 import { isUnauthorized, saveAreaFor } from './authView';
 import { CompositionList } from './CompositionList';
@@ -68,6 +69,7 @@ export function TypingSurface() {
   const auth = useAuth();
   const { expire } = auth;
   const [authOpen, setAuthOpen] = useState(false);
+  const [stats, setStats] = useState<{ id: string; title: string } | null>(null);
   const saveArea = saveAreaFor(auth.status);
 
   /**
@@ -76,6 +78,7 @@ export function TypingSurface() {
    * expired token must never silently discard it.
    */
   const expireSession = useCallback(() => {
+    setStats(null);
     expire();
     setAuthOpen(true);
     setStatus('Your session ended. Log in again to save; your recording is kept.');
@@ -356,7 +359,13 @@ export function TypingSurface() {
           </div>
           <p className="text-sm text-neutral-500">
             Signed in as {auth.user?.email} ·{' '}
-            <button onClick={() => void auth.logout()} className="underline hover:text-neutral-900">
+            <button
+              onClick={() => {
+                setStats(null);
+                void auth.logout();
+              }}
+              className="underline hover:text-neutral-900"
+            >
               Log out
             </button>
           </p>
@@ -370,6 +379,17 @@ export function TypingSurface() {
           refreshKey={refreshKey}
           onPlay={(id) => void replay(id)}
           onExport={(id) => void exportComposition(id)}
+          onStats={(id, title) => setStats({ id, title })}
+          onUnauthorized={expireSession}
+        />
+      )}
+
+      {saveArea === 'controls' && stats && (
+        <AnalyticsPanel
+          key={stats.id}
+          id={stats.id}
+          title={stats.title}
+          onClose={() => setStats(null)}
           onUnauthorized={expireSession}
         />
       )}

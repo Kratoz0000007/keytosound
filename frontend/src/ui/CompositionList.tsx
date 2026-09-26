@@ -7,11 +7,12 @@ interface Props {
   refreshKey: number;
   onPlay: (id: string) => void;
   onExport: (id: string) => void;
+  onStats: (id: string, title: string) => void;
   /** The session ended mid-use. Must be stable: refresh depends on it. */
   onUnauthorized: () => void;
 }
 
-export function CompositionList({ refreshKey, onPlay, onExport, onUnauthorized }: Props) {
+export function CompositionList({ refreshKey, onPlay, onExport, onStats, onUnauthorized }: Props) {
   const [items, setItems] = useState<CompositionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +70,12 @@ export function CompositionList({ refreshKey, onPlay, onExport, onUnauthorized }
             </button>
             <button onClick={() => onExport(item.id)} className="rounded border px-2 py-1 text-sm">
               Export MIDI
+            </button>
+            <button
+              onClick={() => onStats(item.id, item.title)}
+              className="rounded border px-2 py-1 text-sm"
+            >
+              Stats
             </button>
             <button
               onClick={() => void remove(item.id)}
