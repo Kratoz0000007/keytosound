@@ -1,6 +1,7 @@
 /*
- * Mascot motion. Three hooks on .mascot-stage drive everything:
- *   data-state  idle | typing, for the looping animations
+ * Mascot motion. These hooks on .mascot-stage drive everything:
+ *   data-state      idle | typing, for the looping animations
+ *   data-overdrive  present while typing past 80 wpm
  *   data-tap    a | b, flipped on every keystroke
  *   data-hit    a | b, flipped on every beat (space or 1-8)
  * and --m-tempo, the typing loop's length, set from the live wpm.
@@ -37,495 +38,564 @@
 }
 
 /* ======================================================================
- * Synthwave: the neon synth robot
+ * Synthwave: the cyber dragon skater
  * ==================================================================== */
 
-.m-synth .m-float {
-  animation: m-bob 3.2s ease-in-out infinite;
+/* It hovers on its board, the floor glow tightening as it rises. */
+.m-dragon-hover {
+  animation: m-dragon-hover 2.4s ease-in-out infinite;
 }
 
-.m-synth-eye,
-.m-synth-antenna {
-  animation: m-breathe 2.4s ease-in-out infinite;
-}
-
-.m-synth-floor {
-  opacity: 0.3;
-  animation: m-breathe 2.4s ease-in-out infinite;
-}
-
-.m-synth-head {
-  transform-origin: 120px 124px;
-}
-
-.mascot-stage[data-state='typing'] .m-synth-head {
-  animation: m-synth-bang var(--m-tempo) ease-in-out infinite;
-}
-
-@keyframes m-synth-bang {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  35% {
-    transform: translateY(4px) rotate(-8deg);
-  }
-  65% {
-    transform: rotate(3deg);
-  }
-}
-
-.m-synth .m-tap {
-  transform-origin: 120px 130px;
-}
-
-.mascot-stage[data-tap='a'] .m-synth .m-tap {
-  animation: m-synth-glitch-a 0.16s steps(3);
-}
-
-.mascot-stage[data-tap='b'] .m-synth .m-tap {
-  animation: m-synth-glitch-b 0.16s steps(3);
-}
-
-@keyframes m-synth-glitch-a {
-  0% {
-    transform: translateX(-4px) skewX(-8deg);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateX(3px);
-  }
-}
-
-@keyframes m-synth-glitch-b {
-  0% {
-    transform: translateX(-4px) skewX(-8deg);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateX(3px);
-  }
-}
-
-.m-synth-laser {
-  opacity: 0;
-  transform-origin: 99px 75px;
-}
-
-.mascot-stage[data-hit='a'] .m-synth-laser {
-  animation: m-synth-laser-a 0.4s ease-out;
-}
-
-.mascot-stage[data-hit='b'] .m-synth-laser {
-  animation: m-synth-laser-b 0.4s ease-out;
-}
-
-@keyframes m-synth-laser-a {
-  0% {
-    opacity: 1;
-    transform: scaleX(0);
-  }
-  30% {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(1);
-  }
-}
-
-@keyframes m-synth-laser-b {
-  0% {
-    opacity: 1;
-    transform: scaleX(0);
-  }
-  30% {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(1);
-  }
-}
-
-/* The RGB split goes on the <svg> itself: filter functions on SVG children are patchy. */
-.mascot-stage[data-hit='a'] .m-synth {
-  animation: m-synth-split-a 0.35s ease-out;
-}
-
-.mascot-stage[data-hit='b'] .m-synth {
-  animation: m-synth-split-b 0.35s ease-out;
-}
-
-@keyframes m-synth-split-a {
-  from {
-    filter: drop-shadow(-6px 0 #00F0FF) drop-shadow(6px 0 #FF0055) brightness(1.5);
-  }
-}
-
-@keyframes m-synth-split-b {
-  from {
-    filter: drop-shadow(-6px 0 #00F0FF) drop-shadow(6px 0 #FF0055) brightness(1.5);
-  }
-}
-
-/* ======================================================================
- * Lo-Fi: the studio cat
- * ==================================================================== */
-
-.m-lofi-body {
-  transform-origin: 154px 100px;
-  animation: m-lofi-breathe 4s ease-in-out infinite;
-}
-
-@keyframes m-lofi-breathe {
-  50% {
-    transform: scale(1, 1.05);
-  }
-}
-
-.m-lofi-tail {
-  transform-origin: 186px 94px;
-  animation: m-lofi-sway 5s ease-in-out infinite;
-}
-
-@keyframes m-lofi-sway {
-  0%,
-  100% {
-    transform: rotate(-6deg);
-  }
-  50% {
-    transform: rotate(8deg);
-  }
-}
-
-/* Gazing out and up, toward the city. */
-.m-lofi-head {
-  transform-origin: 114px 92px;
-  animation: m-lofi-gaze 8s ease-in-out infinite;
-}
-
-@keyframes m-lofi-gaze {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  50% {
-    transform: rotate(-5deg);
-  }
-}
-
-.m-lofi-awake {
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-.m-lofi-sleep {
-  transition: opacity 0.6s ease;
-}
-
-.mascot-stage[data-state='typing'] .m-lofi-awake {
-  opacity: 1;
-}
-
-.mascot-stage[data-state='typing'] .m-lofi-sleep {
-  opacity: 0;
-}
-
-.mascot-stage[data-state='typing'] .m-lofi-head {
-  animation: m-lofi-nod var(--m-tempo) ease-in-out infinite;
-}
-
-.mascot-stage[data-state='typing'] .m-lofi-tail {
-  animation-duration: calc(var(--m-tempo) * 3);
-}
-
-@keyframes m-lofi-nod {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(2px) rotate(3deg);
-  }
-}
-
-.m-lofi-ear-l {
-  --twitch: -14deg;
-  transform-origin: 106px 66px;
-}
-
-.m-lofi-ear-r {
-  --twitch: 14deg;
-  transform-origin: 124px 66px;
-}
-
-.mascot-stage[data-tap='a'] .m-lofi-ear {
-  animation: m-lofi-twitch-a 0.28s ease-out;
-}
-
-.mascot-stage[data-tap='b'] .m-lofi-ear {
-  animation: m-lofi-twitch-b 0.28s ease-out;
-}
-
-@keyframes m-lofi-twitch-a {
-  35% {
-    transform: rotate(var(--twitch));
-  }
-}
-
-@keyframes m-lofi-twitch-b {
-  35% {
-    transform: rotate(var(--twitch));
-  }
-}
-
-.m-lofi-aura {
-  opacity: 0;
-  transform-origin: 158px 148px;
-}
-
-.mascot-stage[data-hit='a'] .m-lofi-aura {
-  animation: m-lofi-aura-a 0.55s ease-out;
-}
-
-.mascot-stage[data-hit='b'] .m-lofi-aura {
-  animation: m-lofi-aura-b 0.55s ease-out;
-}
-
-@keyframes m-lofi-aura-a {
-  0% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.14);
-  }
-}
-
-@keyframes m-lofi-aura-b {
-  0% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.14);
-  }
-}
-
-.m-lofi-cone {
-  transform-origin: 158px 164px;
-}
-
-.mascot-stage[data-hit='a'] .m-lofi-cone {
-  animation: m-lofi-thump-a 0.22s ease-out;
-}
-
-.mascot-stage[data-hit='b'] .m-lofi-cone {
-  animation: m-lofi-thump-b 0.22s ease-out;
-}
-
-@keyframes m-lofi-thump-a {
-  30% {
-    transform: scale(1.12);
-  }
-}
-
-@keyframes m-lofi-thump-b {
-  30% {
-    transform: scale(1.12);
-  }
-}
-
-/* ======================================================================
- * 8-Bit: the chiptune ghost. Every move is stepped: no easing, ever.
- * ==================================================================== */
-
-.m-pix .m-float {
-  animation: m-pix-bob 0.8s steps(1) infinite;
-}
-
-@keyframes m-pix-bob {
+@keyframes m-dragon-hover {
   50% {
     transform: translateY(-6px);
   }
 }
 
-.m-pix-shadow {
-  transform-origin: 120px 191px;
-  animation: m-pix-shadow 0.8s steps(1) infinite;
+.m-dragon-floor {
+  transform-origin: 125px 192px;
+  animation: m-dragon-floor 2.4s ease-in-out infinite;
 }
 
-@keyframes m-pix-shadow {
+@keyframes m-dragon-floor {
   50% {
-    transform: scaleX(0.75);
+    opacity: 0.3;
+    transform: scaleX(0.85);
   }
 }
 
-/* Fill lives on the wrapper, so the gold flash never touches the hem frames. */
-.m-pix-sprite {
-  fill: #39FF14;
+.m-dragon-wings {
+  transform-origin: 118px 98px;
+  animation: m-dragon-wings 2.4s ease-in-out infinite;
 }
 
-.m-pix-frame-a {
-  animation: m-pix-frame-a 0.5s steps(1) infinite;
-}
-
-.m-pix-frame-b {
-  opacity: 0;
-  animation: m-pix-frame-b 0.5s steps(1) infinite;
-}
-
-@keyframes m-pix-frame-a {
+@keyframes m-dragon-wings {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
   50% {
-    opacity: 0;
+    transform: rotate(6deg);
   }
 }
 
-@keyframes m-pix-frame-b {
-  50% {
-    opacity: 1;
-  }
+/* The headphones pulse pink with the music; faster while it rides. */
+.m-dragon-phones {
+  animation: m-dragon-phones 1.2s ease-in-out infinite;
 }
 
-.mascot-stage[data-state='typing'] .m-pix-frame-a,
-.mascot-stage[data-state='typing'] .m-pix-frame-b {
+.mascot-stage[data-state='typing'] .m-dragon-phones {
   animation-duration: calc(var(--m-tempo) / 2);
 }
 
-.mascot-stage[data-state='typing'] .m-pix-dance {
-  animation: m-pix-dance var(--m-tempo) steps(1) infinite;
+@keyframes m-dragon-phones {
+  50% {
+    fill: #FF66A0;
+    filter: drop-shadow(0 0 6px #FF0055);
+  }
 }
 
-@keyframes m-pix-dance {
-  0% {
-    transform: translate(-6px, 0);
-  }
-  25% {
-    transform: translate(0, -8px);
+/*
+ * Typing, it carves: board and rider lean hard one way then the other, at
+ * the typing tempo, the wings beating with it.
+ */
+.m-dragon-tilt {
+  transform-origin: 125px 170px;
+}
+
+.mascot-stage[data-state='typing'] .m-dragon-tilt {
+  animation: m-dragon-carve var(--m-tempo) ease-in-out infinite;
+}
+
+@keyframes m-dragon-carve {
+  0%,
+  100% {
+    transform: rotate(-7deg) translateX(-4px);
   }
   50% {
-    transform: translate(6px, 0);
-  }
-  75% {
-    transform: translate(0, -8px);
+    transform: rotate(6deg) translateX(4px);
   }
 }
 
-/* Looking at the text while it types. */
-.mascot-stage[data-state='typing'] .m-pix-pupils {
-  transform: translateX(-8px);
+.mascot-stage[data-state='typing'] .m-dragon-wings {
+  animation-duration: var(--m-tempo);
 }
 
-.m-pix .m-tap {
-  transform-origin: 120px 172px;
+/*
+ * Past 80 wpm: a kickflip every other beat of the typing tempo. The board
+ * pops up and spins a full turn under the rider, who hops to clear it.
+ */
+.m-dragon-board {
+  transform-origin: 125px 168px;
 }
 
-.mascot-stage[data-tap='a'] .m-pix .m-tap {
-  animation: m-pix-squash-a 0.1s steps(1);
+.mascot-stage[data-overdrive] .m-dragon-board {
+  animation: m-dragon-kickflip calc(var(--m-tempo) * 2) ease-in-out infinite;
 }
 
-.mascot-stage[data-tap='b'] .m-pix .m-tap {
-  animation: m-pix-squash-b 0.1s steps(1);
-}
-
-@keyframes m-pix-squash-a {
-  from {
-    transform: scale(1.08, 0.92);
+@keyframes m-dragon-kickflip {
+  0%,
+  60%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: translateY(-16px) scaleY(0);
+  }
+  30% {
+    transform: translateY(-22px) scaleY(-1);
+  }
+  45% {
+    transform: translateY(-14px) scaleY(0);
   }
 }
 
-@keyframes m-pix-squash-b {
-  from {
-    transform: scale(1.08, 0.92);
+.mascot-stage[data-overdrive] .m-dragon-rider {
+  animation: m-dragon-hop calc(var(--m-tempo) * 2) ease-in-out infinite;
+}
+
+@keyframes m-dragon-hop {
+  0%,
+  60%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translateY(-26px);
   }
 }
 
-.m-pix-spark {
+/* A keystroke: a quick crouch into the board. */
+.m-dragon .m-tap {
+  transform-origin: 125px 165px;
+}
+
+.mascot-stage[data-tap='a'] .m-dragon .m-tap {
+  animation: m-dragon-crouch-a 0.18s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-dragon .m-tap {
+  animation: m-dragon-crouch-b 0.18s ease-out;
+}
+
+@keyframes m-dragon-crouch-a {
+  40% {
+    transform: scale(1.02, 0.96);
+  }
+}
+
+@keyframes m-dragon-crouch-b {
+  40% {
+    transform: scale(1.02, 0.96);
+  }
+}
+
+/*
+ * The wheels' neon trail: sparks streaming back across the floor while it
+ * rides, leaving faster and more often as wpm climbs.
+ */
+.m-dragon-spark {
   opacity: 0;
 }
 
-.mascot-stage[data-tap='a'] .m-pix-spark {
-  animation: m-pix-spark-a 0.35s steps(4);
+.mascot-stage[data-state='typing'] .m-dragon-spark {
+  animation: m-dragon-spark calc(var(--m-tempo) * 0.8) linear infinite;
 }
 
-.mascot-stage[data-tap='b'] .m-pix-spark {
-  animation: m-pix-spark-b 0.35s steps(4);
-}
-
-@keyframes m-pix-spark-a {
-  from {
+@keyframes m-dragon-spark {
+  0% {
     opacity: 1;
     transform: translate(0, 0);
   }
-  to {
+  100% {
     opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scaleX(3);
+  }
+}
+
+.mascot-stage[data-state='typing'] .m-dragon-wheel {
+  filter: drop-shadow(0 0 5px #39FF14);
+}
+
+/*
+ * On a beat the jaws drop open and a cone of plasma bursts out, flinging
+ * blobs ahead, while an RGB split flashes across the whole frame.
+ */
+.m-dragon-jaw {
+  transform-origin: 152px 77px;
+}
+
+.mascot-stage[data-hit='a'] .m-dragon-jaw {
+  animation: m-dragon-jaw-a 0.5s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-dragon-jaw {
+  animation: m-dragon-jaw-b 0.5s ease-out;
+}
+
+@keyframes m-dragon-jaw-a {
+  15%,
+  60% {
+    transform: rotate(22deg);
+  }
+}
+
+@keyframes m-dragon-jaw-b {
+  15%,
+  60% {
+    transform: rotate(22deg);
+  }
+}
+
+.m-dragon-plasma {
+  opacity: 0;
+  transform-origin: 0 0;
+}
+
+.mascot-stage[data-hit='a'] .m-dragon-plasma {
+  animation: m-dragon-plasma-a 0.5s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-dragon-plasma {
+  animation: m-dragon-plasma-b 0.5s ease-out;
+}
+
+@keyframes m-dragon-plasma-a {
+  0% {
+    opacity: 1;
+    transform: scale(0.1, 0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25, 1.4);
+  }
+}
+
+@keyframes m-dragon-plasma-b {
+  0% {
+    opacity: 1;
+    transform: scale(0.1, 0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25, 1.4);
+  }
+}
+
+.mascot-stage[data-hit='a'] .m-dragon-blob {
+  animation: m-dragon-blob-a 0.5s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-dragon-blob {
+  animation: m-dragon-blob-b 0.5s ease-out;
+}
+
+@keyframes m-dragon-blob-a {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
     transform: translate(var(--dx), var(--dy));
   }
 }
 
-@keyframes m-pix-spark-b {
+@keyframes m-dragon-blob-b {
   from {
-    opacity: 1;
     transform: translate(0, 0);
   }
   to {
-    opacity: 0;
     transform: translate(var(--dx), var(--dy));
   }
 }
 
-/* Golden arcade mode: the whole sprite goes yellow, and glows, for a beat. */
-.mascot-stage[data-hit='a'] .m-pix-sprite {
-  animation: m-pix-gold-a 0.45s steps(1);
+.mascot-stage[data-hit='a'] .m-dragon {
+  animation: m-dragon-rgb-a 0.3s steps(3);
 }
 
-.mascot-stage[data-hit='b'] .m-pix-sprite {
-  animation: m-pix-gold-b 0.45s steps(1);
+.mascot-stage[data-hit='b'] .m-dragon {
+  animation: m-dragon-rgb-b 0.3s steps(3);
 }
 
-@keyframes m-pix-gold-a {
+@keyframes m-dragon-rgb-a {
   from {
-    fill: #FFE600;
+    filter: drop-shadow(-6px 0 #00F0FF) drop-shadow(6px 0 #FF0055) brightness(1.4);
   }
 }
 
-@keyframes m-pix-gold-b {
+@keyframes m-dragon-rgb-b {
   from {
-    fill: #FFE600;
-  }
-}
-
-.mascot-stage[data-hit='a'] .m-pix {
-  animation: m-pix-glow-a 0.45s steps(1);
-}
-
-.mascot-stage[data-hit='b'] .m-pix {
-  animation: m-pix-glow-b 0.45s steps(1);
-}
-
-@keyframes m-pix-glow-a {
-  from {
-    filter: drop-shadow(0 0 8px #FFE600);
-  }
-}
-
-@keyframes m-pix-glow-b {
-  from {
-    filter: drop-shadow(0 0 8px #FFE600);
+    filter: drop-shadow(-6px 0 #00F0FF) drop-shadow(6px 0 #FF0055) brightness(1.4);
   }
 }
 
 /* ======================================================================
- * Jazz: the speakeasy cat
+ * Lo-Fi: Pikachu and Squirtle, vibing
+ * ==================================================================== */
+
+/* At rest they sway slowly to the room, never quite together. */
+.m-pika {
+  transform-origin: 70px 176px;
+  animation: m-poke-sway 4s ease-in-out infinite;
+}
+
+.m-squirt {
+  transform-origin: 176px 188px;
+  animation: m-poke-sway 4s ease-in-out -2s infinite;
+}
+
+@keyframes m-poke-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg);
+  }
+  50% {
+    transform: rotate(1.5deg);
+  }
+}
+
+/*
+ * Typing, they nod along at the typing tempo, Squirtle half a beat behind
+ * Pikachu, so one head is always on its way down.
+ */
+.m-pika-head {
+  transform-origin: 68px 116px;
+}
+
+.m-squirt-head {
+  transform-origin: 176px 120px;
+}
+
+.mascot-stage[data-state='typing'] .m-pika-head {
+  animation: m-poke-nod var(--m-tempo) ease-in-out infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-squirt-head {
+  animation: m-poke-nod var(--m-tempo) ease-in-out calc(var(--m-tempo) / -2) infinite;
+}
+
+@keyframes m-poke-nod {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(3px);
+  }
+}
+
+/* Pikachu's raised paw waves: lazily at rest, in time while typing. */
+.m-pika-wave {
+  transform-origin: 90px 128px;
+  animation: m-pika-wave 2.4s ease-in-out infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-pika-wave {
+  animation-duration: var(--m-tempo);
+}
+
+@keyframes m-pika-wave {
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+
+/* Squirtle's arm swings and its tail sways, faster while typing. */
+.m-squirt-arm {
+  transform-origin: 156px 134px;
+  animation: m-squirt-arm 2.8s ease-in-out infinite;
+}
+
+.m-squirt-tail {
+  transform-origin: 198px 166px;
+  animation: m-squirt-tail 3.2s ease-in-out infinite;
+}
+
+.mascot-stage[data-state='typing'] :is(.m-squirt-arm, .m-squirt-tail) {
+  animation-duration: var(--m-tempo);
+}
+
+@keyframes m-squirt-arm {
+  50% {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes m-squirt-tail {
+  50% {
+    transform: rotate(-8deg);
+  }
+}
+
+/* Each keystroke flicks Pikachu's ears. */
+.m-pika-ear-l {
+  transform-origin: 50px 73px;
+}
+
+.m-pika-ear-r {
+  transform-origin: 84px 73px;
+}
+
+.mascot-stage[data-tap='a'] .m-pika-ear-l {
+  animation: m-pika-flick-l-a 0.28s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-pika-ear-l {
+  animation: m-pika-flick-l-b 0.28s ease-out;
+}
+
+.mascot-stage[data-tap='a'] .m-pika-ear-r {
+  animation: m-pika-flick-r-a 0.28s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-pika-ear-r {
+  animation: m-pika-flick-r-b 0.28s ease-out;
+}
+
+@keyframes m-pika-flick-l-a {
+  35% {
+    transform: rotate(-9deg);
+  }
+}
+
+@keyframes m-pika-flick-l-b {
+  35% {
+    transform: rotate(-9deg);
+  }
+}
+
+@keyframes m-pika-flick-r-a {
+  35% {
+    transform: rotate(9deg);
+  }
+}
+
+@keyframes m-pika-flick-r-b {
+  35% {
+    transform: rotate(9deg);
+  }
+}
+
+/* Notes float up between them while they vibe. */
+.m-poke-note {
+  opacity: 0;
+  font-family: 'Segoe UI Symbol', 'Noto Music', 'Apple Symbols', serif;
+}
+
+.mascot-stage[data-state='typing'] .m-poke-note {
+  animation: m-poke-note calc(var(--m-tempo) * 3) ease-out infinite;
+}
+
+@keyframes m-poke-note {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.1);
+  }
+}
+
+/* On a beat: Pikachu's cheeks crackle, and Squirtle blows bubbles. */
+.m-pika-spark {
+  opacity: 0;
+}
+
+.mascot-stage[data-hit='a'] .m-pika-spark {
+  animation: m-pika-spark-a 0.35s steps(3);
+}
+
+.mascot-stage[data-hit='b'] .m-pika-spark {
+  animation: m-pika-spark-b 0.35s steps(3);
+}
+
+@keyframes m-pika-spark-a {
+  0% {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #FFF36B);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes m-pika-spark-b {
+  0% {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #FFF36B);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.m-squirt-bubble {
+  opacity: 0;
+}
+
+.mascot-stage[data-hit='a'] .m-squirt-bubble {
+  animation: m-squirt-bubble-a 0.9s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-squirt-bubble {
+  animation: m-squirt-bubble-b 0.9s ease-out;
+}
+
+@keyframes m-squirt-bubble-a {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.2);
+  }
+}
+
+@keyframes m-squirt-bubble-b {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.2);
+  }
+}
+
+/* ======================================================================
+ * Jazz: the speakeasy sax cat
  * ==================================================================== */
 
 .m-jazz-light {
   animation: m-jazz-light 4s ease-in-out infinite;
+}
+
+.m-jazz-breathe {
+  animation: m-jazz-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes m-jazz-breathe {
+  50% {
+    transform: translateY(-1.2px);
+  }
 }
 
 @keyframes m-jazz-light {
@@ -617,6 +687,56 @@
   }
 }
 
+/* The paw on the keys, pressing in time with the typing. */
+.m-jazz-paw {
+  transform-origin: 164px 146px;
+}
+
+.mascot-stage[data-state='typing'] .m-jazz-paw {
+  animation: m-jazz-paw var(--m-tempo) ease-in-out infinite;
+}
+
+@keyframes m-jazz-paw {
+  50% {
+    transform: translate(-1.5px, 2px);
+  }
+}
+
+/* Dark brass at rest; each keystroke lights them amber, top to bottom. */
+.m-jazz-valve {
+  fill: #8A6A1C;
+}
+
+.mascot-stage[data-tap='a'] .m-jazz-valve {
+  animation: m-jazz-valve-a 0.22s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-jazz-valve {
+  animation: m-jazz-valve-b 0.22s ease-out;
+}
+
+.m-jazz-valve-2 {
+  animation-delay: 0.04s !important;
+}
+
+.m-jazz-valve-3 {
+  animation-delay: 0.08s !important;
+}
+
+@keyframes m-jazz-valve-a {
+  from {
+    fill: #F59E0B;
+    filter: drop-shadow(0 0 3px #F59E0B);
+  }
+}
+
+@keyframes m-jazz-valve-b {
+  from {
+    fill: #F59E0B;
+    filter: drop-shadow(0 0 3px #F59E0B);
+  }
+}
+
 .m-jazz .m-tap {
   transform-origin: 140px 107px;
 }
@@ -695,6 +815,10 @@
   animation-delay: 0.12s !important;
 }
 
+.m-jazz-ring-later {
+  animation-delay: 0.24s !important;
+}
+
 .mascot-stage[data-hit='a'] .m-jazz-ring {
   animation: m-jazz-ring-a 0.75s ease-out;
 }
@@ -747,221 +871,500 @@
 
 @keyframes m-jazz-glow-a {
   from {
-    filter: drop-shadow(0 0 12px rgba(230, 57, 70, 0.8));
+    filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.6));
   }
 }
 
 @keyframes m-jazz-glow-b {
   from {
-    filter: drop-shadow(0 0 12px rgba(230, 57, 70, 0.8));
+    filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.6));
   }
 }
 
 /* ======================================================================
- * Classical: the maestro owl
+ * Classical: the angry bird listening meme, starring Red
  * ==================================================================== */
 
-.m-owl-body {
-  transform-origin: 116px 102px;
-  animation: m-owl-breathe 4s ease-in-out infinite;
+/* Leaning in toward the terminal, from the feet. */
+.m-red-lean {
+  transform-origin: 152px 174px;
+  transform: rotate(-6deg);
 }
 
-@keyframes m-owl-breathe {
+.m-red-body {
+  transform-origin: 152px 174px;
+  animation: m-red-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes m-red-breathe {
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+.m-red-aura {
+  transform-origin: 138px 98px;
+  animation: m-red-aura 2.4s ease-in-out infinite;
+}
+
+@keyframes m-red-aura {
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+/*
+ * The ear, pivoting where it joins the head. At rest it pulses as it
+ * listens; typing, it vibrates hard with every sound pouring into it.
+ */
+.m-red-ear-hit,
+.m-red-ear-live {
+  transform-origin: 124px 114px;
+}
+
+.m-red-ear-live {
+  animation: m-red-ear-listen 1.6s ease-in-out infinite;
+}
+
+@keyframes m-red-ear-listen {
   50% {
     transform: scale(1.02);
   }
 }
 
-.m-owl-head {
-  transform-origin: 116px 56px;
-  animation: m-owl-survey 7s ease-in-out infinite;
+.mascot-stage[data-state='typing'] .m-red-ear-live {
+  animation: m-red-ear-vibrate 80ms linear infinite;
 }
 
-@keyframes m-owl-survey {
+@keyframes m-red-ear-vibrate {
   0%,
   100% {
-    transform: rotate(-4deg);
-  }
-  50% {
-    transform: rotate(5deg);
-  }
-}
-
-.m-owl-lid {
-  transform-box: fill-box;
-  transform-origin: center top;
-  transform: scaleY(0);
-  animation: m-owl-blink 5.5s ease-in-out infinite;
-}
-
-@keyframes m-owl-blink {
-  0%,
-  92%,
-  100% {
-    transform: scaleY(0);
-  }
-  95% {
-    transform: scaleY(1);
-  }
-}
-
-.m-owl-dust {
-  opacity: 0;
-  animation: m-owl-dust 3.6s ease-out infinite;
-}
-
-@keyframes m-owl-dust {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
+    transform: rotate(0deg);
   }
   25% {
-    opacity: 0.9;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(4px, -34px);
-  }
-}
-
-/* At rest the baton is lowered; typing, it conducts a four-beat pattern. */
-.m-owl-arm {
-  transform-origin: 136px 64px;
-  animation: m-owl-rest 4s ease-in-out infinite;
-}
-
-@keyframes m-owl-rest {
-  0%,
-  100% {
-    transform: rotate(22deg);
-  }
-  50% {
-    transform: rotate(16deg);
-  }
-}
-
-.mascot-stage[data-state='typing'] .m-owl-arm {
-  animation: m-owl-conduct var(--m-tempo) ease-in-out infinite;
-}
-
-@keyframes m-owl-conduct {
-  0%,
-  100% {
-    transform: rotate(4deg);
-  }
-  25% {
-    transform: rotate(-26deg);
-  }
-  50% {
-    transform: rotate(10deg);
+    transform: rotate(1.8deg) scale(1.01);
   }
   75% {
-    transform: rotate(-12deg);
+    transform: rotate(-1.8deg) scale(1.01);
   }
 }
 
-.m-owl-trail {
-  opacity: 0;
+/* On a beat the ear swells to 1.18 for 80ms, a comic shockwave pulse. */
+.mascot-stage[data-hit='a'] .m-red-ear-hit {
+  animation: m-red-ear-pop-a 80ms steps(1);
 }
 
-.mascot-stage[data-state='typing'] .m-owl-trail {
-  animation: m-owl-trail var(--m-tempo) ease-in-out infinite;
+.mascot-stage[data-hit='b'] .m-red-ear-hit {
+  animation: m-red-ear-pop-b 80ms steps(1);
 }
 
-@keyframes m-owl-trail {
+@keyframes m-red-ear-pop-a {
+  from {
+    transform: scale(1.18);
+  }
+}
+
+@keyframes m-red-ear-pop-b {
+  from {
+    transform: scale(1.18);
+  }
+}
+
+/* Glints twinkling in the lit bowl of the ear. */
+.m-red-glint {
+  animation: m-red-glint 1.8s ease-in-out infinite;
+}
+
+@keyframes m-red-glint {
   0%,
   100% {
-    opacity: 0.12;
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Typing, the brows furrow in concentration, and twitch on every stroke. */
+.m-red-brows {
+  transform-origin: 173px 106px;
+  transition: transform 0.2s ease;
+}
+
+.mascot-stage[data-state='typing'] .m-red-brows {
+  transform: translateY(3px) scaleX(0.94);
+}
+
+.m-red .m-tap {
+  transform-origin: 173px 106px;
+}
+
+.mascot-stage[data-tap='a'] .m-red .m-tap {
+  animation: m-red-twitch-a 0.14s ease-out;
+}
+
+.mascot-stage[data-tap='b'] .m-red .m-tap {
+  animation: m-red-twitch-b 0.14s ease-out;
+}
+
+@keyframes m-red-twitch-a {
+  40% {
+    transform: translateY(1.5px);
+  }
+}
+
+@keyframes m-red-twitch-b {
+  40% {
+    transform: translateY(1.5px);
+  }
+}
+
+/* Light pouring down the stave into the canal, faster as wpm climbs. */
+.m-red-pulse {
+  stroke-dasharray: 4 22;
+  animation: m-red-pour 1.4s linear infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-red-pulse {
+  animation-duration: calc(var(--m-tempo) * 0.5);
+}
+
+@keyframes m-red-pour {
+  from {
+    stroke-dashoffset: 26;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Notes ride the stream in, shrinking as they vanish into the canal: a
+ * lazy trickle at rest, a stream at the typing tempo while you type.
+ */
+.m-red-rider {
+  opacity: 0;
+  font-family: 'Segoe UI Symbol', 'Noto Music', 'Apple Symbols', serif;
+  animation: m-red-sink 1.8s ease-in infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-red-rider {
+  animation-duration: var(--m-tempo);
+}
+
+/* Gold motes on the air, drawn slowly into the canal. */
+.m-red-mote {
+  opacity: 0;
+  animation: m-red-sink 2.5s ease-in infinite;
+}
+
+@keyframes m-red-sink {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1.1);
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+  }
+}
+
+/* The beat's soundwaves, fired out of the canal. */
+.m-red-ring {
+  opacity: 0;
+  transform-origin: 118px 88.75px;
+}
+
+.m-red-ring-late {
+  animation-delay: 0.08s !important;
+}
+
+.m-red-ring-later {
+  animation-delay: 0.16s !important;
+}
+
+.mascot-stage[data-hit='a'] .m-red-ring {
+  animation: m-red-ring-a 0.6s ease-out;
+}
+
+.mascot-stage[data-hit='b'] .m-red-ring {
+  animation: m-red-ring-b 0.6s ease-out;
+}
+
+@keyframes m-red-ring-a {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(7);
+  }
+}
+
+@keyframes m-red-ring-b {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(7);
+  }
+}
+
+/* ======================================================================
+ * 8-Bit: the invader daemon. Every move is stepped: no easing, ever.
+ * ==================================================================== */
+
+/* Phosphor green, glowing; past 80 wpm it burns alert yellow. */
+.m-daemon-sprite {
+  color: #00FF41;
+  fill: currentColor;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.mascot-stage[data-overdrive] .m-daemon-sprite {
+  color: #FFF500;
+}
+
+/* The bob and the legs share one loop, so they stay in step: slow at rest, the typing tempo while typing. */
+.m-daemon-bob,
+.m-daemon-frame-a,
+.m-daemon-frame-b {
+  animation-duration: 0.8s;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+.mascot-stage[data-state='typing'] :is(.m-daemon-bob, .m-daemon-frame-a, .m-daemon-frame-b) {
+  animation-duration: var(--m-tempo);
+}
+
+.m-daemon-bob {
+  animation-name: m-daemon-bob;
+}
+
+@keyframes m-daemon-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.m-daemon-frame-a {
+  animation-name: m-daemon-frame-a;
+}
+
+.m-daemon-frame-b {
+  animation-name: m-daemon-frame-b;
+}
+
+@keyframes m-daemon-frame-a {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes m-daemon-frame-b {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.m-daemon-shadow {
+  animation: m-daemon-shadow 0.8s steps(1) infinite;
+}
+
+.mascot-stage[data-state='typing'] .m-daemon-shadow {
+  animation-duration: var(--m-tempo);
+}
+
+@keyframes m-daemon-shadow {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Overdrive: it can't hold still. */
+.mascot-stage[data-overdrive] .m-daemon-jitter {
+  animation: m-daemon-jitter 60ms steps(1) infinite;
+}
+
+@keyframes m-daemon-jitter {
+  0% {
+    transform: translate(2px, 0);
   }
   25% {
-    opacity: 0.85;
+    transform: translate(-2px, 2px);
+  }
+  50% {
+    transform: translate(2px, -2px);
+  }
+  75% {
+    transform: translate(-2px, 0);
   }
 }
 
-.m-owl .m-tap {
-  transform-origin: 116px 56px;
+/* Each keystroke: a hop, the eyes flare yellow, and four pixels knocked loose. */
+.mascot-stage[data-tap='a'] .m-daemon .m-tap {
+  animation: m-daemon-hop-a 0.12s steps(1);
 }
 
-.mascot-stage[data-tap='a'] .m-owl .m-tap {
-  animation: m-owl-nod-a 0.3s ease-out;
+.mascot-stage[data-tap='b'] .m-daemon .m-tap {
+  animation: m-daemon-hop-b 0.12s steps(1);
 }
 
-.mascot-stage[data-tap='b'] .m-owl .m-tap {
-  animation: m-owl-nod-b 0.3s ease-out;
-}
-
-@keyframes m-owl-nod-a {
-  40% {
-    transform: translateY(1.5px) rotate(2deg);
+@keyframes m-daemon-hop-a {
+  from {
+    transform: translateY(-4px);
   }
 }
 
-@keyframes m-owl-nod-b {
-  40% {
-    transform: translateY(1.5px) rotate(2deg);
+@keyframes m-daemon-hop-b {
+  from {
+    transform: translateY(-4px);
   }
 }
 
-.m-owl .m-hit {
-  transform-origin: 136px 64px;
+.mascot-stage[data-tap='a'] .m-daemon-pupils {
+  animation: m-daemon-eyes-a 0.12s steps(1);
 }
 
-.mascot-stage[data-hit='a'] .m-owl .m-hit {
-  animation: m-owl-swing-a 0.5s ease-out;
+.mascot-stage[data-tap='b'] .m-daemon-pupils {
+  animation: m-daemon-eyes-b 0.12s steps(1);
 }
 
-.mascot-stage[data-hit='b'] .m-owl .m-hit {
-  animation: m-owl-swing-b 0.5s ease-out;
-}
-
-@keyframes m-owl-swing-a {
-  30% {
-    transform: rotate(-50deg);
-  }
-  65% {
-    transform: rotate(28deg);
+@keyframes m-daemon-eyes-a {
+  from {
+    fill: #FFF500;
   }
 }
 
-@keyframes m-owl-swing-b {
-  30% {
-    transform: rotate(-50deg);
-  }
-  65% {
-    transform: rotate(28deg);
+@keyframes m-daemon-eyes-b {
+  from {
+    fill: #FFF500;
   }
 }
 
-.m-owl-spark {
+.m-daemon-spark {
   opacity: 0;
 }
 
-.mascot-stage[data-hit='a'] .m-owl-spark {
-  animation: m-owl-spark-a 0.9s ease-out;
+.mascot-stage[data-tap='a'] .m-daemon-spark {
+  animation: m-daemon-spark-a 0.24s steps(3);
 }
 
-.mascot-stage[data-hit='b'] .m-owl-spark {
-  animation: m-owl-spark-b 0.9s ease-out;
+.mascot-stage[data-tap='b'] .m-daemon-spark {
+  animation: m-daemon-spark-b 0.24s steps(3);
 }
 
-@keyframes m-owl-spark-a {
+@keyframes m-daemon-spark-a {
   0% {
     opacity: 1;
-    transform: translate(0, 0) scale(0.4) rotate(0deg);
+    transform: translate(0, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg);
+    transform: translate(var(--dx), var(--dy));
   }
 }
 
-@keyframes m-owl-spark-b {
+@keyframes m-daemon-spark-b {
   0% {
     opacity: 1;
-    transform: translate(0, 0) scale(0.4) rotate(0deg);
+    transform: translate(0, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg);
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+/* On a beat: the laser fires clean across the screen, stutters, and cuts out. */
+.m-daemon-laser {
+  opacity: 0;
+}
+
+.mascot-stage[data-hit='a'] .m-daemon-laser {
+  animation: m-daemon-laser-a 0.3s steps(1);
+}
+
+.mascot-stage[data-hit='b'] .m-daemon-laser {
+  animation: m-daemon-laser-b 0.3s steps(1);
+}
+
+@keyframes m-daemon-laser-a {
+  0% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 0.4;
+  }
+  66% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes m-daemon-laser-b {
+  0% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 0.4;
+  }
+  66% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ...and a square shockwave steps outward from the sprite. */
+.m-daemon-shock {
+  opacity: 0;
+  transform-origin: 120px 94px;
+}
+
+.mascot-stage[data-hit='a'] .m-daemon-shock {
+  animation: m-daemon-shock-a 0.4s steps(4);
+}
+
+.mascot-stage[data-hit='b'] .m-daemon-shock {
+  animation: m-daemon-shock-b 0.4s steps(4);
+}
+
+@keyframes m-daemon-shock-a {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4);
+  }
+}
+
+@keyframes m-daemon-shock-b {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4);
   }
 }

@@ -13,6 +13,7 @@ import { sessionFromDetail } from '../session/render';
 import { ReplayPlayer } from '../session/replay';
 import { renderScore } from '../session/score';
 import { createThemeFx, type ThemeFx } from '../themes/fx';
+import { ThemeBackdrop } from '../themes/ThemeBackdrop';
 import { themeFor } from '../themes/themes';
 import { CompositionList } from './CompositionList';
 import { saveBlob } from './download';
@@ -260,6 +261,7 @@ export function TypingSurface() {
       <div className="fx-grain" aria-hidden="true" />
       <div className="fx-vignette" aria-hidden="true" />
       <div className="fx-scanlines" aria-hidden="true" />
+      <ThemeBackdrop theme={theme} wpm={readout.wpm} lastKey={lastKey} area={areaRef} />
 
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
         <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">

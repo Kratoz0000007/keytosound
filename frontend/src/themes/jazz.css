@@ -1,19 +1,23 @@
 /*
- * Jazz: a speakeasy after midnight. Crimson lamplight falling from above,
- * velvet-maroon booths, a neon sign for a title, ivory piano keys, brass,
- * and a record turning under the notes.
+ * Jazz: a speakeasy after midnight. Two crimson stage spots swaying through
+ * the smoke (drawn by themes/jazz/JazzBackgroundCanvas), mahogany booths
+ * with brass trim, a neon sign for a title, and a record turning under the
+ * notes.
  */
 
 @layer components {
   [data-theme='jazz'] {
-    --bg: #0D090B; /* crimson charcoal */
-    --card: #180F12; /* smoky velvet maroon */
-    --pad: #1E1216;
-    --line: #331A20;
-    --cream: #FCEFE3;
+    --bg: #0B080A; /* dark velvet charcoal */
+    --card: #160D11; /* dark mahogany maroon */
+    /* The same mahogany, letting a little stage light through from behind. */
+    --glass: rgba(22, 13, 17, 0.9);
+    --pad: #1A0F13;
+    --line: #2A181F; /* the hairline brass-in-shadow edge */
+    --cream: #FDF8F0; /* parchment ivory */
+    --label: #FCEFE3;
     --crimson: #E63946; /* neon */
-    --gold: #FFB703; /* brass */
-    --amber: #FB8500; /* readouts */
+    --gold: #D4AF37; /* polished brass */
+    --amber: #F59E0B; /* readouts */
     --muted: #9E8087; /* dusty rose */
 
     --card-shadow:
@@ -39,12 +43,10 @@
 
     color-scheme: dark;
 
-    /* A dim stage lamp, glowing crimson from the top centre. */
+    /* The room itself is dark; the stage canvas brings the light. */
     body {
       min-height: 100vh;
-      background:
-        radial-gradient(circle at top, rgba(120, 20, 30, 0.25), transparent 70%),
-        var(--bg);
+      background: var(--bg);
       color: var(--cream);
       font-family: var(--font-deco);
     }
@@ -171,7 +173,7 @@
         border-color: var(--gold);
         box-shadow:
           var(--card-shadow),
-          0 0 0 3px rgba(255, 183, 3, 0.3);
+          0 0 0 3px rgba(212, 175, 55, 0.3);
       }
 
       &::after {
@@ -208,7 +210,7 @@
       }
     }
 
-    /* ---- Cards: velvet booths, a maroon hairline that warms red on hover. */
+    /* ---- Cards: mahogany booths, a hairline edge that warms red on hover. */
 
     .chassis-frame,
     .panel,
@@ -217,7 +219,7 @@
     .visualizer {
       border: 1px solid var(--line);
       border-radius: 12px;
-      background: var(--card);
+      background: var(--glass);
       box-shadow: var(--card-shadow);
       transition: border-color 0.25s ease;
     }
@@ -244,7 +246,7 @@
         left: 24px;
         right: 24px;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255, 183, 3, 0.55), transparent);
+        background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.55), transparent);
         pointer-events: none;
       }
     }
@@ -284,7 +286,7 @@
       line-height: 1.1;
       letter-spacing: 0;
       color: var(--amber);
-      text-shadow: 0 0 14px rgba(251, 133, 0, 0.4);
+      text-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
     }
 
     .hud-value-live {
@@ -306,7 +308,7 @@
     }
 
     .terminal-body {
-      background: radial-gradient(ellipse 60% 90% at 12% 0%, rgba(251, 133, 0, 0.1), transparent 70%);
+      background: radial-gradient(ellipse 60% 90% at 12% 0%, rgba(245, 158, 11, 0.1), transparent 70%);
 
       /* The needle scratch: a bright hairline dragged across the record on Space or Enter. */
       &::after {
@@ -316,7 +318,7 @@
         left: -10%;
         width: 55%;
         height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(252, 239, 227, 0.9), rgba(255, 183, 3, 0.6), transparent);
+        background: linear-gradient(90deg, transparent, rgba(252, 239, 227, 0.9), rgba(212, 175, 55, 0.6), transparent);
         opacity: 0;
         transform: rotate(-3deg);
         pointer-events: none;
@@ -386,7 +388,7 @@
      */
     .visualizer {
       background:
-        repeating-radial-gradient(circle at 100% 50%, #150D10 0 2px, #180F12 2px 5px);
+        repeating-radial-gradient(circle at 100% 50%, #120A0E 0 2px, #160D11 2px 5px);
     }
 
     /* ---- Pads with backlit brass keys */
@@ -403,57 +405,62 @@
       color: var(--gold);
     }
 
+    /* A backlit brass pad: dark maroon inside a fine brass edge. */
     .key-card {
       gap: 10px;
       padding: 5px 10px 5px 5px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--gold);
       border-radius: 12px;
       background: var(--pad);
       box-shadow:
         inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+        inset 0 0 14px rgba(212, 175, 55, 0.08),
         0 4px 10px -4px rgba(0, 0, 0, 0.8);
-      transition: border-color 0.25s ease;
+      transition: box-shadow 0.25s ease;
 
       &:hover {
-        border-color: rgba(230, 57, 70, 0.5);
+        box-shadow:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+          inset 0 0 14px rgba(212, 175, 55, 0.16),
+          0 0 14px rgba(212, 175, 55, 0.2);
       }
 
       &:hover .key-action {
         color: var(--cream);
       }
 
-      /* A struck pad flashes solid gold with dark lettering, for 100ms. */
+      /* A struck pad lights solid brass with dark lettering at once, then fades back over 120ms. */
       &[data-pressed] {
-        animation: jazz-pad 0.1s steps(1);
+        animation: jazz-pad 0.12s ease-out;
       }
 
       &[data-pressed] .keycap {
-        animation: jazz-key 0.1s steps(1);
+        animation: jazz-key 0.12s ease-out;
       }
 
       &[data-pressed] .key-action {
-        animation: jazz-pad-label 0.1s steps(1);
+        animation: jazz-pad-label 0.12s ease-out;
       }
     }
 
-    /* A backlit brass key: dark maroon, a brass edge, gold lettering. */
+    /* The key inside the pad: sunk into the wood, engraved in brass. */
     .keycap {
       min-width: 2rem;
       height: 2rem;
       padding: 0 8px;
-      border: 1px solid rgba(255, 183, 3, 0.5);
+      border: 1px solid transparent;
       border-radius: 7px;
-      background: #1A0F13;
+      background: var(--bg);
       box-shadow:
-        inset 0 0 10px rgba(255, 183, 3, 0.12),
-        0 1px 2px rgba(0, 0, 0, 0.6);
+        inset 0 1px 3px rgba(0, 0, 0, 0.8),
+        inset 0 0 10px rgba(212, 175, 55, 0.12);
       font-family: var(--font-serif);
       font-size: 1rem;
       font-weight: 800;
       font-variant-numeric: lining-nums;
       line-height: 1;
       color: var(--gold);
-      text-shadow: 0 0 8px rgba(255, 183, 3, 0.45);
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.45);
     }
 
     /* One line per pad, so a row of pads stays one height. */
@@ -461,7 +468,7 @@
       min-width: 0;
       overflow: hidden;
       font-size: 0.875rem;
-      color: rgba(252, 239, 227, 0.85);
+      color: var(--label);
       text-overflow: ellipsis;
       white-space: nowrap;
       transition: color 0.25s ease;
@@ -572,8 +579,8 @@
 
 @keyframes jazz-note {
   from {
-    color: #FFB703;
-    text-shadow: 0 0 22px rgba(255, 183, 3, 0.9);
+    color: #D4AF37;
+    text-shadow: 0 0 22px rgba(212, 175, 55, 0.9);
   }
 }
 
@@ -588,27 +595,26 @@
   }
 }
 
-/* Held for the whole 100ms by steps(1), then gone at once. */
+/* Starts fully lit and eases back to the idle pad; no hold. */
 @keyframes jazz-pad {
   from {
-    background: #FFB703;
-    border-color: #FFB703;
-    box-shadow: 0 0 22px rgba(255, 183, 3, 0.55);
+    background: #D4AF37;
+    box-shadow: 0 0 22px rgba(212, 175, 55, 0.55);
   }
 }
 
 @keyframes jazz-key {
   from {
-    background: #0D090B;
-    border-color: #0D090B;
-    color: #FFB703;
+    background: transparent;
+    box-shadow: none;
+    color: #0B080A;
     text-shadow: none;
   }
 }
 
 @keyframes jazz-pad-label {
   from {
-    color: #0D090B;
+    color: #0B080A;
   }
 }
 

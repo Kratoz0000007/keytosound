@@ -1,60 +1,27 @@
-import { caretPoint } from './caret';
-import { between, flip, isCharacter, Particles, type ParticleSpec } from './particles';
+import { createNotationFx, notationEffects } from './notation';
 import type { ThemeFx } from './index';
 
-const NOTES = ['♩', '♪', '♫', '♬']; // quarter, eighth, beamed eighths, beamed sixteenths
-
 /**
- * Which Classical effects a keystroke sets off. Letters and digits float a
- * note up from the caret; space and Enter sweep red along the rules of the
- * terminal.
+ * Classical's keystroke effects: a letter sends a glowing gold note arcing
+ * from the caret into the mascot's giant ear (or floating up, if the ear is
+ * off screen), faster as the typing speeds up; space or Enter runs a gold
+ * hairline around every card for 120ms.
  */
-export function classicalEffects(key: string): { note: boolean; sweep: boolean } {
-  return {
-    note: isCharacter(key),
-    sweep: key === ' ' || key === 'Enter',
-  };
-}
+export const classicalEffects = notationEffects;
 
-/** One note in ink or red pencil, rising gently and fading over 500ms. */
-function floatingNote(): ParticleSpec[] {
-  const size = Math.round(between(16, 22));
-  return [
-    {
-      shape: 'glyph',
-      glyph: NOTES[Math.floor(Math.random() * NOTES.length)],
-      // Bodoni has no music symbols; the symbol fonts after it do.
-      font: `${size}px 'Bodoni Moda', 'Segoe UI Symbol', 'Noto Music', 'Apple Symbols', serif`,
-      color: Math.random() < 0.5 ? '#A4161A' : '#1C1A17',
-      size,
-      lifeMs: 500,
-      vx: between(-20, 20),
-      vy: -between(60, 90),
-      gravity: -20,
-    },
-  ];
+/** The middle of the mascot's ear canal on screen, if it is drawn. */
+function earCanal(): { x: number; y: number } | null {
+  const canal = document.querySelector('.m-red-canal');
+  if (!canal) return null;
+  const box = canal.getBoundingClientRect();
+  return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
 }
 
 export function createClassicalFx(): ThemeFx {
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const particles = new Particles();
-
-  return {
-    onKey(key, area) {
-      if (reducedMotion.matches) return;
-      const effects = classicalEffects(key);
-      if (effects.note) {
-        const { x, y } = caretPoint(area);
-        particles.emit(x, y - 8, floatingNote());
-      }
-      const terminal = area.closest<HTMLElement>('.terminal');
-      if (effects.sweep && terminal) flip(terminal, 'fxSweep');
-    },
-    dispose() {
-      particles.dispose();
-      document.querySelectorAll<HTMLElement>('[data-fx-sweep]').forEach((el) => {
-        delete el.dataset.fxSweep;
-      });
-    },
-  };
+  return createNotationFx({
+    colors: ['#E5C158', '#D4AF37', '#F7F1E5'],
+    glow: 8,
+    font: "'Bodoni Moda'",
+    target: earCanal,
+  });
 }

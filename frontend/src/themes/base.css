@@ -23,6 +23,7 @@
  *   .terminal-body .terminal-prompt .terminal-input .terminal-ghost .terminal-cursor
  *   .visualizer                   the note canvas
  *   .mascot-stage                 the genre mascot's box under the visualizer (see ui/mascots)
+ *   .stage-canvas                 a theme's live canvas behind the page (see themes/ThemeBackdrop)
  *   .panel .panel-heading .legend-heading .key-card .keycap .key-action
  *                                 .key-card[data-pressed] for a moment after its key is struck
  *   .field .status-line .track-row .track-title .track-meta .library-empty .notice-warn
@@ -55,6 +56,19 @@
   .fx-scanlines {
     display: none;
     position: fixed;
+    pointer-events: none;
+  }
+
+  /*
+   * Behind everything, filling the window, never in the way of a click. At
+   * -2, so a theme's .fx-* overlays (at -1) lay their texture over its light.
+   */
+  .stage-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
   }
 

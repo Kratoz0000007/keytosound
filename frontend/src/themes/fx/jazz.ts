@@ -14,13 +14,13 @@ export function jazzEffects(key: string): { sparks: boolean; scratch: boolean } 
   };
 }
 
-/** Brass sparks that arc and fall, and dark-crimson smoke that rises and spreads. */
+/** Brass sparks that arc and fall, and dark-crimson smoke that rises and spreads, gone in 300ms. */
 function sparksAndSmoke(): ParticleSpec[] {
   const sparks: ParticleSpec[] = Array.from({ length: 3 }, () => ({
     shape: 'dot',
-    color: '#FFB703',
+    color: '#D4AF37',
     size: between(1.2, 2),
-    lifeMs: 400,
+    lifeMs: 300,
     vx: between(-70, 70),
     vy: -between(60, 150),
     gravity: 260,
@@ -31,7 +31,7 @@ function sparksAndSmoke(): ParticleSpec[] {
     color: 'rgba(120, 24, 38, 0.55)',
     size: between(3, 5),
     grow: 3.5,
-    lifeMs: 400,
+    lifeMs: 300,
     vx: between(-15, 15),
     vy: -between(40, 80),
     gravity: -30,

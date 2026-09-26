@@ -18,6 +18,12 @@ export interface ParticleSpec {
   grow?: number;
   glyph?: string;
   font?: string;
+  /** How far through its life (0..1) it holds full strength before fading. Default 0. */
+  fadeFrom?: number;
+  /** Fades in this many hard steps instead of smoothly, like CSS steps(n). */
+  fadeSteps?: number;
+  /** A glyph's size at the end of its life, as a multiple of its size at birth. */
+  scaleTo?: number;
 }
 
 interface Live extends ParticleSpec {
@@ -90,7 +96,10 @@ export class Particles {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       const t = (now - p.born) / p.lifeMs;
-      ctx.globalAlpha = p.stepped ? Math.ceil((1 - t) * 4) / 4 : 1 - t;
+      const hold = p.fadeFrom ?? 0;
+      const fade = t <= hold ? 1 : 1 - (t - hold) / (1 - hold);
+      const steps = p.fadeSteps ?? (p.stepped ? 4 : 0);
+      ctx.globalAlpha = steps ? Math.ceil(fade * steps) / steps : fade;
       ctx.shadowBlur = p.glow ?? 0;
       ctx.shadowColor = p.color;
       ctx.fillStyle = p.color;
@@ -117,7 +126,16 @@ export class Particles {
         ctx.font = p.font ?? `${p.size}px serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(p.glyph ?? '', p.x, p.y);
+        if (p.scaleTo === undefined) {
+          ctx.fillText(p.glyph ?? '', p.x, p.y);
+        } else {
+          const s = 1 + (p.scaleTo - 1) * t;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.scale(s, s);
+          ctx.fillText(p.glyph ?? '', 0, 0);
+          ctx.restore();
+        }
       }
     }
     ctx.globalAlpha = 1;
