@@ -33,12 +33,6 @@
  *   --viz-style                   optional: roll (default), matrix (a dot-matrix equalizer)
  *                                 or scope (an oscilloscope trace)
  *   --viz-decor --viz-accent      optional, for the scope: smoke or staves, and their colour
- *
- * Keystroke effects beyond CSS go in themes/fx (see createThemeFx). They
- * signal the theme's CSS through attributes on .terminal: data-fx-flash
- * (8-bit, set for 50ms), and data-fx-backlight, data-fx-scratch and
- * data-fx-sweep (Lo-Fi, Jazz, Classical), which flip between a and b so
- * identical a/b keyframes restart on every hit.
  *                                 canvas colours, read by Visualizer.tsx
  */
 

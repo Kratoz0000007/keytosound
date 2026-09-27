@@ -1,12 +1,6 @@
 /**
- * Genres that have a theme of their own, in themes/<genre id>.css. A genre
- * not listed borrows the fallback, so the page is never unstyled while its
- * theme is still being built.
+ * The one theme every genre wears: synthwave, the Hotline Miami look in
+ * themes/synthwave.css. Per-genre themes are kept on the per-genre-themes
+ * branch.
  */
-const THEMED_GENRES = new Set(['synthwave', 'lofi', 'eightbit', 'jazz', 'classical']);
-
-export const FALLBACK_THEME = 'synthwave';
-
-export function themeFor(genreId: string): string {
-  return THEMED_GENRES.has(genreId) ? genreId : FALLBACK_THEME;
-}
+export const THEME = 'synthwave';

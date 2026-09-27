@@ -12,8 +12,7 @@ import { SessionRecorder } from '../session/recorder';
 import { sessionFromDetail } from '../session/render';
 import { ReplayPlayer } from '../session/replay';
 import { renderScore } from '../session/score';
-import { createThemeFx, type ThemeFx } from '../themes/fx';
-import { themeFor } from '../themes/themes';
+import { THEME } from '../themes/themes';
 import { AnalyticsPanel } from './AnalyticsPanel';
 import { AuthPanel } from './AuthPanel';
 import { isUnauthorized, saveAreaFor } from './authView';
@@ -58,7 +57,6 @@ const EMPTY_READOUT: Readout = {
 
 export function TypingSurface() {
   const areaRef = useRef<HTMLTextAreaElement>(null);
-  const fxRef = useRef<ThemeFx | null>(null);
   const analyzerRef = useRef(new TypingAnalyzer());
   const musicRef = useRef(new MusicEngine(GENRES[DEFAULT_GENRE_ID], SEED));
   // The band reads harmony and the beat from whichever engine is current.
@@ -95,24 +93,13 @@ export function TypingSurface() {
   }, [expire]);
 
   const preset = GENRES[genreId];
-  const theme = themeFor(genreId);
 
   // On <html>, not a wrapper, so the page background and scrollbar follow the
   // theme too. A layout effect, so it lands before paint and before the
   // Visualizer's own effect reads the theme's colours.
   useLayoutEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
-  // A theme's keystroke effects, if it has any, live as long as the theme.
-  useEffect(() => {
-    const fx = createThemeFx(theme);
-    fxRef.current = fx;
-    return () => {
-      fx?.dispose();
-      fxRef.current = null;
-    };
-  }, [theme]);
+    document.documentElement.dataset.theme = THEME;
+  }, []);
 
   /** Runs for both live typing and replay — replay is not a special case. */
   const consumeKey = useCallback((key: KeyEvent) => {
@@ -169,7 +156,6 @@ export function TypingSurface() {
       const stamped = { key: key.key, timestamp: audioRef.current.sessionMs() };
       recorderRef.current.record(stamped);
       consumeKey(stamped);
-      if (areaRef.current) fxRef.current?.onKey(key.key, areaRef.current);
     },
     [consumeKey],
   );
@@ -384,8 +370,8 @@ export function TypingSurface() {
               </div>
             </div>
 
-            <Visualizer notes={notes} theme={theme} />
-            <Mascot theme={theme} wpm={readout.wpm} lastKey={lastKey} />
+            <Visualizer notes={notes} theme={THEME} />
+            <Mascot wpm={readout.wpm} lastKey={lastKey} />
           </div>
 
           <KeyLegend lastKey={lastKey} />
