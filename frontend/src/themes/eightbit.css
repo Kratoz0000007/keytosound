@@ -1,0 +1,721 @@
+/*
+ * 8-Bit: an arcade cabinet and a Game Boy screen. Phosphor green on black,
+ * yellow for the score, square corners, chunky borders and hard block
+ * shadows. Nothing eases: every state change is an instant, stepped cut.
+ */
+
+@layer components {
+  [data-theme='eightbit'] {
+    --bg: #050505; /* pitch black arcade */
+    --screen: #0B130B; /* Game Boy dark, for the typing screen */
+    --card: #0E1A0E; /* dark matrix green */
+    --green: #39FF14; /* phosphor / electric lime */
+    --green-dim: #1F8A0A; /* muted matrix green: shadows, rules, idle borders */
+    --yellow: #FFE600;
+    --grey: #A0A0A0; /* secondary text; clearer than dim green at small sizes */
+
+    --font-pixel: 'Press Start 2P', monospace; /* the title only: its 8 reads as an & */
+    --font-ui: 'Silkscreen', monospace; /* every other pixel label, digits included */
+    --font-term: 'VT323', monospace;
+
+    --bezel: #0F220F; /* the handheld's olive-grey housing */
+
+    --focus-ring: var(--yellow);
+    --viz-style: matrix; /* a dot-matrix equalizer, not the scrolling roll */
+    --viz-bg: var(--screen);
+    --viz-grid: rgba(57, 255, 20, 0.08); /* unlit dots */
+    --viz-note: var(--green);
+    --viz-playhead: var(--yellow); /* the peak dot of each column */
+    --viz-glow: 0;
+
+    color-scheme: dark;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--green);
+      font-family: var(--font-term);
+      font-size: 1.25rem;
+    }
+
+    ::selection {
+      background: var(--green);
+      color: var(--bg);
+    }
+
+    /*
+     * ---- Attract mode: an old arcade game playing its demo behind the
+     * page. A pixel moon and scrolling stars, a formation of invaders
+     * marching overhead, and a side-scrolling world below: far mountains,
+     * a lit city and brick ground, each scrolling faster than the last.
+     * Everything moves in whole-pixel steps, never smoothly.
+     *   .fx-grain      the sky and moon; ::before the stars; ::after the score bar
+     *   .fx-vignette   the ground band; ::before the mountains; ::after the city
+     *   .fx-scanlines  the invader formation; its ::after is the second frame
+     */
+
+    .fx-grain,
+    .fx-vignette,
+    .fx-scanlines {
+      display: block;
+      z-index: -1;
+    }
+
+    .fx-grain {
+      inset: 0;
+      overflow: hidden;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64' shape-rendering='crispEdges'%3E%3Crect x='28' y='0' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='32' y='0' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='16' y='4' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='20' y='4' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='24' y='4' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='28' y='4' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='4' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='4' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='40' y='4' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='44' y='4' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='12' y='8' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='16' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='8' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='8' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='12' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='12' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='12' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='12' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='16' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='16' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='24' y='16' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='28' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='16' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='16' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='20' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='20' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='20' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='24' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='24' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='36' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='24' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='24' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='0' y='28' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='8' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='28' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='60' y='28' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='0' y='32' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='8' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='32' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='60' y='32' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='36' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='36' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='44' y='36' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='48' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='36' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='36' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='40' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='40' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='44' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='40' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='40' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='4' y='44' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='12' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='44' width='4' height='4' fill='%23B8A600'/%3E%3Crect x='20' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='44' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='56' y='44' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='8' y='48' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='12' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='16' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='48' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='52' y='48' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='12' y='52' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='16' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='20' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='24' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='28' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='40' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='44' y='52' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='48' y='52' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='16' y='56' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='20' y='56' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='24' y='56' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='28' y='56' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='32' y='56' width='4' height='4' fill='%23FFE600'/%3E%3Crect x='36' y='56' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='40' y='56' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='44' y='56' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='28' y='60' width='4' height='4' fill='%23E0CB00'/%3E%3Crect x='32' y='60' width='4' height='4' fill='%23E0CB00'/%3E%3C/svg%3E") right 12vw top 16vh / 64px 64px no-repeat;
+
+      /* Stars drift left one tile per loop, a pixel-step at a time. */
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: calc(100% + 320px);
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320' shape-rendering='crispEdges'%3E%3Crect x='102' y='304' width='4' height='4' fill='%23FFE600' opacity='0.9'/%3E%3Crect x='262' y='302' width='2' height='2' fill='%2339FF14' opacity='0.6'/%3E%3Crect x='196' y='140' width='2' height='2' fill='%23FFE600' opacity='0.6'/%3E%3Crect x='76' y='74' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='154' y='22' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='240' y='258' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='82' y='204' width='4' height='4' fill='%2339FF14' opacity='0.9'/%3E%3Crect x='156' y='232' width='4' height='4' fill='%23A0A0A0' opacity='0.9'/%3E%3Crect x='20' y='246' width='2' height='2' fill='%2339FF14' opacity='0.6'/%3E%3Crect x='268' y='124' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='314' y='116' width='4' height='4' fill='%23A0A0A0' opacity='0.9'/%3E%3Crect x='124' y='36' width='2' height='2' fill='%2339FF14' opacity='0.6'/%3E%3Crect x='120' y='284' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='314' y='198' width='4' height='4' fill='%23A0A0A0' opacity='0.9'/%3E%3Crect x='26' y='148' width='2' height='2' fill='%23FFE600' opacity='0.6'/%3E%3Crect x='272' y='88' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='284' y='246' width='2' height='2' fill='%23FFE600' opacity='0.6'/%3E%3Crect x='214' y='26' width='2' height='2' fill='%2339FF14' opacity='0.6'/%3E%3Crect x='306' y='240' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='280' y='202' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='96' y='44' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='296' y='238' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='108' y='254' width='2' height='2' fill='%2339FF14' opacity='0.6'/%3E%3Crect x='196' y='306' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='180' y='278' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='162' y='272' width='4' height='4' fill='%23FFE600' opacity='0.9'/%3E%3Crect x='68' y='238' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3Crect x='132' y='54' width='2' height='2' fill='%23A0A0A0' opacity='0.6'/%3E%3C/svg%3E") 0 0 / 320px 320px repeat;
+        animation: eightbit-scroll-320 32s steps(80) infinite;
+      }
+
+      /*
+       * The score bar across the top of the screen, one line. Each label is
+       * tied to its score by a no-break space, so justifying spreads the three
+       * pairs to the edges and the middle.
+       */
+      &::after {
+        content: '1UP\00a0 000000 HI-SCORE\00a0 031337 2UP\00a0 000000';
+        position: absolute;
+        top: 14px;
+        left: 32px;
+        right: 32px;
+        text-align: justify;
+        text-align-last: justify;
+        word-spacing: -0.2em;
+        font-family: var(--font-ui);
+        font-size: 1rem;
+        line-height: 1;
+        color: var(--green-dim);
+      }
+    }
+
+    /* The bar needs the room a wide screen gives above the header. */
+    @media (max-width: 40rem) {
+      .fx-grain::after {
+        display: none;
+      }
+    }
+
+    /* The side-scroller: ground in the band itself, mountains and city over it. */
+    .fx-vignette {
+      inset: auto 0 0 0;
+      height: 240px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='32' viewBox='0 0 64 32' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='64' height='32' fill='%231F8A0A'/%3E%3Crect x='0' y='0' width='64' height='4' fill='%2339FF14'/%3E%3Crect x='0' y='16' width='64' height='4' fill='%230B160B'/%3E%3Crect x='28' y='4' width='4' height='12' fill='%230B160B'/%3E%3Crect x='60' y='4' width='4' height='12' fill='%230B160B'/%3E%3Crect x='12' y='20' width='4' height='12' fill='%230B160B'/%3E%3Crect x='44' y='20' width='4' height='12' fill='%230B160B'/%3E%3C/svg%3E") 0 bottom / 64px 32px repeat-x;
+      animation: eightbit-ground 1s steps(16) infinite;
+
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+      }
+
+      &::before {
+        bottom: 56px;
+        width: calc(100% + 480px);
+        height: 120px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='120' viewBox='0 0 480 120' shape-rendering='crispEdges'%3E%3Crect x='0' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='0' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='4' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='4' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='8' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='8' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='12' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='12' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='16' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='16' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='20' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='20' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='24' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='24' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='28' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='28' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='32' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='32' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='36' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='36' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='40' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='40' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='44' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='44' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='48' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='48' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='52' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='52' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='56' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='56' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='60' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='60' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='64' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='64' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='68' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='68' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='72' y='56' width='4' height='64' fill='%230C1F0C'/%3E%3Crect x='72' y='56' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='76' y='60' width='4' height='60' fill='%230C1F0C'/%3E%3Crect x='76' y='60' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='80' y='64' width='4' height='56' fill='%230C1F0C'/%3E%3Crect x='80' y='64' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='84' y='68' width='4' height='52' fill='%230C1F0C'/%3E%3Crect x='84' y='68' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='88' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='88' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='92' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='92' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='96' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='96' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='100' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='100' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='104' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='104' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='108' y='68' width='4' height='52' fill='%230C1F0C'/%3E%3Crect x='108' y='68' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='112' y='64' width='4' height='56' fill='%230C1F0C'/%3E%3Crect x='112' y='64' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='116' y='56' width='4' height='64' fill='%230C1F0C'/%3E%3Crect x='116' y='56' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='120' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='120' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='124' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='124' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='128' y='40' width='4' height='80' fill='%230C1F0C'/%3E%3Crect x='128' y='40' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='132' y='40' width='4' height='80' fill='%230C1F0C'/%3E%3Crect x='132' y='40' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='136' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='136' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='140' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='140' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='144' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='144' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='148' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='148' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='152' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='152' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='156' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='156' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='160' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='160' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='164' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='164' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='168' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='168' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='172' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='172' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='176' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='176' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='180' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='180' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='184' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='184' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='188' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='188' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='192' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='192' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='196' y='36' width='4' height='84' fill='%230C1F0C'/%3E%3Crect x='196' y='36' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='200' y='40' width='4' height='80' fill='%230C1F0C'/%3E%3Crect x='200' y='40' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='204' y='44' width='4' height='76' fill='%230C1F0C'/%3E%3Crect x='204' y='44' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='208' y='48' width='4' height='72' fill='%230C1F0C'/%3E%3Crect x='208' y='48' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='212' y='56' width='4' height='64' fill='%230C1F0C'/%3E%3Crect x='212' y='56' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='216' y='64' width='4' height='56' fill='%230C1F0C'/%3E%3Crect x='216' y='64' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='220' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='220' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='224' y='76' width='4' height='44' fill='%230C1F0C'/%3E%3Crect x='224' y='76' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='228' y='84' width='4' height='36' fill='%230C1F0C'/%3E%3Crect x='228' y='84' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='232' y='88' width='4' height='32' fill='%230C1F0C'/%3E%3Crect x='232' y='88' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='236' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='236' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='240' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='240' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='244' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='244' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='248' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='248' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='252' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='252' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='256' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='256' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='260' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='260' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='264' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='264' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='268' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='268' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='272' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='272' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='276' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='276' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='280' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='280' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='284' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='284' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='288' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='288' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='292' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='292' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='296' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='296' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='300' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='300' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='304' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='304' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='308' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='308' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='312' y='88' width='4' height='32' fill='%230C1F0C'/%3E%3Crect x='312' y='88' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='316' y='84' width='4' height='36' fill='%230C1F0C'/%3E%3Crect x='316' y='84' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='320' y='80' width='4' height='40' fill='%230C1F0C'/%3E%3Crect x='320' y='80' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='324' y='76' width='4' height='44' fill='%230C1F0C'/%3E%3Crect x='324' y='76' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='328' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='328' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='332' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='332' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='336' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='336' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='340' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='340' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='344' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='344' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='348' y='76' width='4' height='44' fill='%230C1F0C'/%3E%3Crect x='348' y='76' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='352' y='80' width='4' height='40' fill='%230C1F0C'/%3E%3Crect x='352' y='80' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='356' y='88' width='4' height='32' fill='%230C1F0C'/%3E%3Crect x='356' y='88' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='360' y='92' width='4' height='28' fill='%230C1F0C'/%3E%3Crect x='360' y='92' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='364' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='364' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='368' y='104' width='4' height='16' fill='%230C1F0C'/%3E%3Crect x='368' y='104' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='372' y='104' width='4' height='16' fill='%230C1F0C'/%3E%3Crect x='372' y='104' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='376' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='376' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='380' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='380' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='384' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='384' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='388' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='388' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='392' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='392' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='396' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='396' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='400' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='400' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='404' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='404' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='408' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='408' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='412' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='412' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='416' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='416' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='420' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='420' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='424' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='424' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='428' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='428' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='432' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='432' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='436' y='108' width='4' height='12' fill='%230C1F0C'/%3E%3Crect x='436' y='108' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='440' y='104' width='4' height='16' fill='%230C1F0C'/%3E%3Crect x='440' y='104' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='444' y='100' width='4' height='20' fill='%230C1F0C'/%3E%3Crect x='444' y='100' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='448' y='96' width='4' height='24' fill='%230C1F0C'/%3E%3Crect x='448' y='96' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='452' y='88' width='4' height='32' fill='%230C1F0C'/%3E%3Crect x='452' y='88' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='456' y='80' width='4' height='40' fill='%230C1F0C'/%3E%3Crect x='456' y='80' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='460' y='72' width='4' height='48' fill='%230C1F0C'/%3E%3Crect x='460' y='72' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='464' y='68' width='4' height='52' fill='%230C1F0C'/%3E%3Crect x='464' y='68' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='468' y='60' width='4' height='60' fill='%230C1F0C'/%3E%3Crect x='468' y='60' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='472' y='56' width='4' height='64' fill='%230C1F0C'/%3E%3Crect x='472' y='56' width='4' height='4' fill='%231F8A0A'/%3E%3Crect x='476' y='52' width='4' height='68' fill='%230C1F0C'/%3E%3Crect x='476' y='52' width='4' height='4' fill='%231F8A0A'/%3E%3C/svg%3E") 0 0 / 480px 120px repeat-x;
+        opacity: 0.8;
+        animation: eightbit-scroll-480 16s steps(120) infinite;
+      }
+
+      &::after {
+        bottom: 28px;
+        width: calc(100% + 320px);
+        height: 112px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='112' viewBox='0 0 320 112' shape-rendering='crispEdges'%3E%3Crect x='4' y='80' width='32' height='32' fill='%23081208'/%3E%3Crect x='4' y='80' width='32' height='4' fill='%23123312'/%3E%3Crect x='16' y='104' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='44' y='16' width='20' height='96' fill='%23081208'/%3E%3Crect x='44' y='16' width='20' height='4' fill='%23123312'/%3E%3Crect x='56' y='32' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='48' y='64' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='56' y='96' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='48' y='104' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='56' y='104' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='72' y='36' width='20' height='76' fill='%23081208'/%3E%3Crect x='72' y='36' width='20' height='4' fill='%23123312'/%3E%3Crect x='80' y='24' width='4' height='12' fill='%23123312'/%3E%3Crect x='80' y='20' width='4' height='4' fill='%23FF3B3B'/%3E%3Crect x='76' y='44' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='84' y='52' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='84' y='60' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='84' y='68' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='76' y='84' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='84' y='92' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='84' y='100' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='100' y='64' width='40' height='48' fill='%23081208'/%3E%3Crect x='100' y='64' width='40' height='4' fill='%23123312'/%3E%3Crect x='104' y='72' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='128' y='80' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='112' y='88' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='112' y='96' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='112' y='104' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='120' y='104' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='148' y='32' width='32' height='80' fill='%23081208'/%3E%3Crect x='148' y='32' width='32' height='4' fill='%23123312'/%3E%3Crect x='168' y='40' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='160' y='48' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='160' y='56' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='160' y='88' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='188' y='24' width='36' height='88' fill='%23081208'/%3E%3Crect x='188' y='24' width='36' height='4' fill='%23123312'/%3E%3Crect x='200' y='32' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='200' y='40' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='216' y='56' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='200' y='72' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='200' y='80' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='208' y='80' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='208' y='88' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='200' y='96' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='200' y='104' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='216' y='104' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='228' y='20' width='36' height='92' fill='%23081208'/%3E%3Crect x='228' y='20' width='36' height='4' fill='%23123312'/%3E%3Crect x='248' y='36' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='256' y='36' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='232' y='44' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='248' y='60' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='232' y='68' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='232' y='76' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='248' y='76' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='256' y='76' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='256' y='92' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='240' y='100' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='272' y='76' width='40' height='36' fill='%23081208'/%3E%3Crect x='272' y='76' width='40' height='4' fill='%23123312'/%3E%3Crect x='292' y='64' width='4' height='12' fill='%23123312'/%3E%3Crect x='292' y='60' width='4' height='4' fill='%23FF3B3B'/%3E%3Crect x='284' y='84' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='300' y='84' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3Crect x='276' y='92' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='300' y='92' width='4' height='4' fill='%23FFE600' opacity='0.8'/%3E%3Crect x='276' y='100' width='4' height='4' fill='%2339FF14' opacity='0.8'/%3E%3C/svg%3E") 0 0 / 320px 112px repeat-x;
+        animation: eightbit-scroll-320 6s steps(80) infinite;
+      }
+    }
+
+    /*
+     * The invaders: two small formations, one in each side margin, where
+     * the page leaves open sky. Each marches right and back in six stiff
+     * steps, flapping between its two frames every half second.
+     */
+    .fx-scanlines {
+      --invaders-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='72' viewBox='0 0 192 72' shape-rendering='crispEdges'%3E%3Crect x='11' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='9' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='13' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='21' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='9' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='13' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='17' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='21' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='11' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='19' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='23' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='43' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='41' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='39' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='45' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='53' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='39' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='41' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='45' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='49' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='53' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='39' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='43' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='51' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='55' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='75' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='73' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='71' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='77' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='85' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='71' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='73' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='77' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='81' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='85' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='71' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='75' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='83' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='87' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='107' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='105' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='103' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='109' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='117' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='103' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='105' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='109' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='113' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='117' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='103' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='107' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='115' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='119' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='139' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='137' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='135' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='141' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='149' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='135' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='137' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='141' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='145' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='149' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='135' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='139' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='147' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='151' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='171' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='169' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='167' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='173' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='181' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='167' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='169' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='173' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='177' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='181' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='167' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='171' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='179' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='183' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='23' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='9' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='21' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='7' y='32' width='18' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='11' y='34' width='10' height='2' fill='%2339FF14'/%3E%3Crect x='23' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='7' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='21' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='23' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='39' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='55' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='41' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='53' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='39' y='32' width='18' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='43' y='34' width='10' height='2' fill='%2339FF14'/%3E%3Crect x='55' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='39' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='53' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='55' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='71' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='87' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='73' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='85' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='71' y='32' width='18' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='75' y='34' width='10' height='2' fill='%2339FF14'/%3E%3Crect x='87' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='71' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='85' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='87' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='103' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='119' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='105' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='117' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='103' y='32' width='18' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='107' y='34' width='10' height='2' fill='%2339FF14'/%3E%3Crect x='119' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='103' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='117' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='119' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='135' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='151' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='137' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='149' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='135' y='32' width='18' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='139' y='34' width='10' height='2' fill='%2339FF14'/%3E%3Crect x='151' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='135' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='149' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='151' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='167' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='183' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='169' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='181' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='167' y='32' width='18' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='171' y='34' width='10' height='2' fill='%2339FF14'/%3E%3Crect x='183' y='34' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='167' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='181' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='183' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='12' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='8' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='6' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='12' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='18' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='22' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='6' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='8' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='12' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='18' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='22' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='6' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='24' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='44' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='40' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='38' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='44' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='50' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='54' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='38' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='40' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='44' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='50' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='54' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='38' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='56' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='76' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='72' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='70' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='76' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='82' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='86' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='70' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='72' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='76' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='82' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='86' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='70' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='88' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='108' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='104' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='102' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='108' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='114' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='118' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='102' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='104' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='108' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='114' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='118' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='102' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='120' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='140' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='136' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='134' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='140' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='146' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='150' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='134' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='136' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='140' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='146' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='150' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='134' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='152' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='172' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='168' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='166' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='172' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='178' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='182' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='166' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='168' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='172' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='178' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='182' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='166' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='184' y='62' width='2' height='2' fill='%2339FF14'/%3E%3C/svg%3E");
+      --invaders-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='72' viewBox='0 0 192 72' shape-rendering='crispEdges'%3E%3Crect x='11' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='9' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='13' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='21' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='11' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='15' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='19' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='23' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='9' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='13' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='17' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='21' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='43' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='41' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='39' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='45' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='53' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='39' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='39' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='43' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='47' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='51' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='55' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='41' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='45' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='49' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='53' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='75' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='73' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='71' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='77' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='85' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='71' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='71' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='75' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='79' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='83' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='87' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='73' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='77' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='81' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='85' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='107' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='105' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='103' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='109' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='117' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='103' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='103' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='107' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='111' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='115' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='119' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='105' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='109' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='113' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='117' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='139' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='137' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='135' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='141' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='149' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='135' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='135' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='139' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='143' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='147' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='151' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='137' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='141' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='145' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='149' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='171' y='4' width='10' height='2' fill='%23FFE600'/%3E%3Crect x='169' y='6' width='14' height='2' fill='%23FFE600'/%3E%3Crect x='167' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='173' y='8' width='6' height='2' fill='%23FFE600'/%3E%3Crect x='181' y='8' width='4' height='2' fill='%23FFE600'/%3E%3Crect x='167' y='10' width='18' height='2' fill='%23FFE600'/%3E%3Crect x='167' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='171' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='175' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='179' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='183' y='12' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='169' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='173' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='177' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='181' y='14' width='2' height='2' fill='%23FFE600'/%3E%3Crect x='7' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='23' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='9' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='21' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='25' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='9' y='32' width='14' height='2' fill='%2339FF14'/%3E%3Crect x='25' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='13' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='21' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='5' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='9' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='19' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='7' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='21' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='39' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='55' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='41' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='53' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='57' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='41' y='32' width='14' height='2' fill='%2339FF14'/%3E%3Crect x='57' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='45' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='53' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='37' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='41' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='51' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='39' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='53' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='71' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='87' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='73' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='85' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='89' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='73' y='32' width='14' height='2' fill='%2339FF14'/%3E%3Crect x='89' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='77' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='85' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='69' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='73' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='83' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='71' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='85' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='103' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='119' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='105' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='117' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='121' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='105' y='32' width='14' height='2' fill='%2339FF14'/%3E%3Crect x='121' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='109' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='117' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='101' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='105' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='115' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='103' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='117' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='135' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='151' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='137' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='149' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='153' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='137' y='32' width='14' height='2' fill='%2339FF14'/%3E%3Crect x='153' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='141' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='149' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='133' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='137' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='147' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='135' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='149' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='167' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='183' y='28' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='169' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='181' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='185' y='30' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='169' y='32' width='14' height='2' fill='%2339FF14'/%3E%3Crect x='185' y='32' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='173' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='181' y='34' width='6' height='2' fill='%2339FF14'/%3E%3Crect x='165' y='36' width='22' height='2' fill='%2339FF14'/%3E%3Crect x='169' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='179' y='38' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='167' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='181' y='40' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='12' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='8' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='6' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='12' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='18' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='22' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='6' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='6' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='10' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='20' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='24' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='8' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='22' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='44' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='40' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='38' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='44' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='50' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='54' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='38' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='38' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='42' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='52' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='56' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='40' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='54' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='76' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='72' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='70' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='76' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='82' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='86' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='70' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='70' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='74' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='84' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='88' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='72' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='86' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='108' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='104' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='102' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='108' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='114' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='118' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='102' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='102' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='106' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='116' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='120' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='104' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='118' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='140' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='136' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='134' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='140' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='146' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='150' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='134' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='134' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='138' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='148' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='152' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='136' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='150' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='172' y='52' width='8' height='2' fill='%2339FF14'/%3E%3Crect x='168' y='54' width='16' height='2' fill='%2339FF14'/%3E%3Crect x='166' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='172' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='178' y='56' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='182' y='56' width='4' height='2' fill='%2339FF14'/%3E%3Crect x='166' y='58' width='20' height='2' fill='%2339FF14'/%3E%3Crect x='166' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='170' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='180' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='184' y='60' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='168' y='62' width='2' height='2' fill='%2339FF14'/%3E%3Crect x='182' y='62' width='2' height='2' fill='%2339FF14'/%3E%3C/svg%3E");
+      inset: 0;
+
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        width: 192px;
+        height: 72px;
+        background: var(--invaders-a) 0 0 / 192px 72px no-repeat;
+        opacity: 0.5;
+        animation:
+          eightbit-march 6s steps(6) infinite,
+          eightbit-flap 1s steps(1) infinite;
+      }
+
+      &::before {
+        top: 30vh;
+        left: 3vw;
+      }
+
+      /* The right-hand formation, below the moon and half a beat behind. */
+      &::after {
+        top: 56vh;
+        right: 3vw;
+        animation-delay: -3s, -0.5s;
+      }
+    }
+
+    /* The margins are only wide enough for them from about 1536px up. */
+    @media (max-width: 95.99rem) {
+      .fx-scanlines::before,
+      .fx-scanlines::after {
+        display: none;
+      }
+    }
+
+    /*
+     * ---- Title screen
+     *
+     * Both pixel fonts are drawn on an 8px grid, so every size here is a
+     * multiple of 8; in between, each font pixel spans a fraction of a screen
+     * pixel and blurs. Press Start 2P draws its 8 like an &, so it sets only
+     * the title, which has no digits; Silkscreen sets the rest.
+     */
+
+    .app-title {
+      display: inline-block;
+      align-self: flex-start;
+      font-family: var(--font-pixel);
+      font-size: 2rem;
+      line-height: 1.25;
+      text-transform: uppercase;
+      color: var(--yellow);
+      text-shadow: 2px 2px 0 var(--green-dim);
+      cursor: default;
+
+      @media (min-width: 48rem) {
+        font-size: 3rem;
+      }
+
+      @media (max-width: 30rem) {
+        font-size: 1.5rem;
+      }
+    }
+
+    .tagline {
+      font-size: 1.375rem;
+      color: rgba(57, 255, 20, 0.85);
+    }
+
+    /*
+     * ---- Buttons: square, with a NES-style bevel on the lower right edge and
+     * a hard offset shadow. Pressing sinks the button into its shadow.
+     */
+
+    .btn {
+      padding: 10px 16px;
+      border: 3px solid transparent;
+      border-radius: 0;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+      text-transform: uppercase;
+
+      &:active {
+        transform: translate(3px, 3px);
+      }
+    }
+
+    .btn-start,
+    .btn-primary {
+      background: var(--green);
+      color: var(--bg);
+      border-color: var(--bg);
+      box-shadow:
+        inset -3px -3px 0 var(--green-dim),
+        3px 3px 0 #000000;
+
+      &:hover {
+        background: var(--yellow);
+        box-shadow:
+          inset -3px -3px 0 rgba(0, 0, 0, 0.25),
+          3px 3px 0 #000000;
+      }
+
+      &:active {
+        box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--green);
+      border-color: var(--green);
+      box-shadow: 3px 3px 0 #000000;
+
+      &:hover {
+        background: var(--green);
+        color: var(--bg);
+      }
+
+      &:active {
+        box-shadow: none;
+      }
+    }
+
+    .btn-danger {
+      background: var(--card);
+      color: var(--grey);
+      border-color: var(--grey);
+      box-shadow: 3px 3px 0 #000000;
+
+      &:hover {
+        background: var(--yellow);
+        color: var(--bg);
+        border-color: var(--yellow);
+      }
+
+      &:active {
+        box-shadow: none;
+      }
+    }
+
+    .btn-sm {
+      padding: 8px 10px;
+      border-width: 2px;
+      font-size: 0.5rem;
+    }
+
+    /* ---- Genre picker */
+
+    .genre-select {
+      border: 3px solid var(--green);
+      border-radius: 0;
+      background: var(--card);
+      box-shadow: 3px 3px 0 #000000;
+
+      &:has(select:focus-visible) {
+        border-color: var(--yellow);
+      }
+
+      /* A pixel triangle. */
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 14px;
+        margin-top: -3px;
+        border: 6px solid transparent;
+        border-top-color: var(--green);
+        border-bottom-width: 0;
+        pointer-events: none;
+      }
+
+      & select {
+        padding: 10px 40px 10px 16px;
+        background: transparent;
+        color: var(--green);
+        font-family: var(--font-ui);
+        font-size: 1rem;
+        line-height: 1;
+        text-transform: uppercase;
+        outline: none;
+      }
+
+      & option {
+        background: var(--card);
+        color: var(--green);
+      }
+    }
+
+    /* ---- Cards: square, thick border, hard shadow. */
+
+    .chassis-frame,
+    .panel,
+    .track-row,
+    .notice-warn {
+      border: 3px solid var(--green);
+      border-radius: 0;
+      background: var(--card);
+      box-shadow: 4px 4px 0 var(--green-dim);
+    }
+
+    /* ---- HUD: the score panel. */
+
+    .hud-panel {
+      gap: 3px;
+      background: var(--green-dim);
+    }
+
+    .hud-cell {
+      gap: 4px;
+      padding: 10px 14px 8px;
+      background: var(--card);
+    }
+
+    .hud-label {
+      font-size: 1.125rem;
+      line-height: 1;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--grey);
+    }
+
+    /* VT323 advances 0.4em, so 11 characters need 4.4em: at most 22cqi. */
+    .hud-value {
+      font-family: var(--font-term);
+      font-size: min(2.5rem, 22cqi);
+      line-height: 1;
+      letter-spacing: 0;
+      color: var(--yellow);
+    }
+
+    .hud-value-live {
+      animation: eightbit-score 0.2s steps(1);
+    }
+
+    /*
+     * ---- The handheld: one olive bezel around the column that holds the
+     * terminal and the visualizer, so both read as screens set into it.
+     * The column has no class of its own; it is the parent of .terminal.
+     */
+
+    div:has(> .terminal) {
+      position: relative;
+      padding: 36px 18px 20px;
+      border: 3px solid var(--green);
+      background: var(--bezel);
+      box-shadow: 4px 4px 0 var(--green-dim);
+
+      /* The power LED: dark until the beat runs. */
+      &::before {
+        content: '';
+        position: absolute;
+        top: 13px;
+        left: 18px;
+        width: 8px;
+        height: 8px;
+        background: var(--green-dim);
+      }
+
+      &:has(.terminal-input:not(:disabled))::before {
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+      }
+
+      &::after {
+        content: 'POWER';
+        position: absolute;
+        top: 13px;
+        left: 34px;
+        font-family: var(--font-ui);
+        font-size: 0.5rem;
+        line-height: 1;
+        color: var(--grey);
+      }
+    }
+
+    /* The typing screen: a dark inset edge, lit yellow while you type. */
+    .terminal .chassis-frame {
+      padding: 0;
+      border-color: var(--bg);
+      background: var(--screen);
+      box-shadow: none;
+    }
+
+    .terminal:focus-within .chassis-frame {
+      border-color: var(--yellow);
+    }
+
+    .terminal-body {
+      background-color: var(--screen);
+      background-image:
+        linear-gradient(rgba(57, 255, 20, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(57, 255, 20, 0.05) 1px, transparent 1px);
+      background-size: 4px 4px;
+    }
+
+    .terminal-prompt {
+      top: 12px;
+      left: 14px;
+      font-family: var(--font-term);
+      font-size: 1.75rem;
+      line-height: 1.25;
+      color: var(--yellow);
+    }
+
+    .terminal-input,
+    .terminal-ghost {
+      padding: 12px 16px 12px 40px;
+      font-family: var(--font-term);
+      font-size: 1.75rem;
+      line-height: 1.25;
+    }
+
+    .terminal-input {
+      height: 13rem;
+      color: var(--green);
+      caret-color: var(--green);
+      text-shadow: 0 0 6px rgba(57, 255, 20, 0.45);
+      scrollbar-color: var(--green-dim) var(--screen);
+    }
+
+    .terminal-ghost {
+      color: var(--grey);
+    }
+
+    /* Before Start, the screen blinks its one instruction, title-screen style. */
+    .terminal:has(.terminal-input:disabled) .terminal-ghost {
+      color: var(--yellow);
+      text-transform: uppercase;
+      animation: eightbit-blink 1s steps(1) infinite;
+    }
+
+    .terminal:has(.terminal-input:disabled) .terminal-cursor {
+      display: none;
+    }
+
+    .terminal-cursor {
+      width: 0.5em;
+      height: 0.9em;
+      margin-left: 4px;
+      vertical-align: -0.1em;
+      background: var(--green);
+      animation: eightbit-blink 1s steps(1) infinite;
+    }
+
+    /*
+     * The hit flash: for 50ms the screen inverts, green ground and black
+     * text. The effects engine (themes/fx) sets data-fx-flash, at most three
+     * times a second.
+     */
+    .terminal[data-fx-flash] {
+      & .chassis-frame,
+      & .terminal-body {
+        background: var(--green);
+      }
+
+      & .terminal-input,
+      & .terminal-prompt,
+      & .terminal-ghost {
+        color: var(--bg);
+        text-shadow: none;
+      }
+    }
+
+    /* The second screen, set into the same bezel. */
+    .visualizer {
+      border: 3px solid var(--bg);
+      box-shadow: none;
+    }
+
+    /* ---- Keypads: arcade buttons that invert when struck. */
+
+    /* A dimmer frame, so the bright pads inside read as the buttons. */
+    .panel {
+      padding: 18px;
+      border-color: var(--green-dim);
+    }
+
+    .panel-heading {
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+
+    .key-card {
+      gap: 8px;
+      padding: 4px 8px 4px 4px;
+      border: 2px solid var(--green);
+      background: var(--card);
+      box-shadow: 3px 3px 0 #000000;
+
+      &:hover {
+        border-color: var(--yellow);
+      }
+
+      &[data-pressed] {
+        animation: eightbit-pad 0.1s steps(1);
+      }
+
+      &[data-pressed] .keycap {
+        animation: eightbit-key 0.1s steps(1);
+      }
+
+      &[data-pressed] .key-action {
+        animation: eightbit-pad-label 0.1s steps(1);
+      }
+    }
+
+    .keycap {
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 6px;
+      border: 2px solid var(--green-dim);
+      background: var(--bg);
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      line-height: 1;
+      color: var(--yellow);
+    }
+
+    /* One line per pad, so a row of pads stays one height. */
+    .key-action {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 1.25rem;
+      line-height: 1;
+      color: var(--grey);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ---- Saving and the saved list */
+
+    .field {
+      padding: 8px 14px;
+      border: 3px solid var(--green-dim);
+      border-radius: 0;
+      background: var(--bg);
+      color: var(--green);
+      font-family: var(--font-term);
+      font-size: 1.375rem;
+      line-height: 1.2;
+      outline: none;
+
+      &::placeholder {
+        color: var(--grey);
+      }
+
+      &:focus {
+        border-color: var(--yellow);
+      }
+    }
+
+    .status-line {
+      font-size: 1.375rem;
+      line-height: 1.2;
+      color: var(--green);
+    }
+
+    .track-row {
+      gap: 12px 16px;
+      padding: 10px 14px;
+    }
+
+    .track-title {
+      font-size: 1.375rem;
+      color: var(--green);
+    }
+
+    .track-meta {
+      color: var(--grey);
+    }
+
+    .library-empty {
+      color: var(--grey);
+    }
+
+    .notice-warn {
+      padding: 8px 14px;
+      border-color: var(--yellow);
+      box-shadow: 4px 4px 0 #000000;
+      color: var(--yellow);
+    }
+  }
+}
+
+/* A sharp 500ms on, 500ms off. */
+@keyframes eightbit-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes eightbit-score {
+  from {
+    color: #39FF14;
+  }
+}
+
+/*
+ * A struck pad inverts, holds for 100ms, and snaps back; steps(1) keeps it
+ * from fading either way.
+ */
+@keyframes eightbit-pad {
+  from {
+    background: #39FF14;
+    box-shadow: none;
+    transform: translate(3px, 3px);
+  }
+}
+
+@keyframes eightbit-key {
+  from {
+    background: #050505;
+    border-color: #050505;
+    color: #39FF14;
+  }
+}
+
+@keyframes eightbit-pad-label {
+  from {
+    color: #050505;
+  }
+}
+
+/* One tile to the left per loop, so the repeat is seamless. */
+@keyframes eightbit-scroll-320 {
+  to {
+    transform: translateX(-320px);
+  }
+}
+
+@keyframes eightbit-scroll-480 {
+  to {
+    transform: translateX(-480px);
+  }
+}
+
+@keyframes eightbit-ground {
+  to {
+    background-position-x: -64px;
+  }
+}
+
+/* Six 8px steps right, six back. */
+@keyframes eightbit-march {
+  0%,
+  100% {
+    transform: translateX(-24px);
+  }
+  50% {
+    transform: translateX(24px);
+  }
+}
+
+/* The two frames of the invaders, swapped outright: no fade between them. */
+@keyframes eightbit-flap {
+  0% {
+    background-image: var(--invaders-a);
+  }
+  50% {
+    background-image: var(--invaders-b);
+  }
+}

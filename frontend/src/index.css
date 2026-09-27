@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
-/* Light only, for now: stop the browser applying its dark defaults. */
-:root {
-  color-scheme: light;
-}
-
-body {
-  background: #ffffff;
-  color: #171717;
-}
+/*
+ * One file per theme. A new theme also needs its genre id added to
+ * THEMED_GENRES in themes/themes.ts, and any web fonts it uses added to the
+ * Google Fonts link in index.html (only the active theme's fonts download).
+ */
+@import "./themes/base.css";
+@import "./themes/synthwave.css";
+@import "./themes/lofi.css";
+@import "./themes/eightbit.css";
+@import "./themes/jazz.css";
+@import "./themes/classical.css";

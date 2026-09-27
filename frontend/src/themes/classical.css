@@ -1,0 +1,653 @@
+/*
+ * Classical: the score. The one light theme: ivory manuscript paper, faint
+ * staves printed right across the page, everything set in black ink in
+ * Bodoni (cut in the 1790s, Mozart's decade), cards framed in an engraved
+ * double rule. The title sits in a yellow cartouche, after the classic
+ * Deutsche Grammophon sleeve, and the conductor's red pencil marks
+ * whatever is live.
+ */
+
+@layer components {
+  [data-theme='classical'] {
+    --paper: #EFE6D4; /* the page */
+    --sheet: #FBF7EF; /* the cards, a fresh sheet on the pile */
+    --ink: #1C1A17;
+    --ink-soft: #5B5347;
+    --ink-faint: rgba(28, 26, 23, 0.14);
+    --red: #A4161A; /* the conductor's pencil */
+    --gold: #A8842F;
+    --yellow: #F2C200; /* the cartouche */
+
+    /* An engraved double rule: the border, a hair of paper, a second line. */
+    --frame:
+      0 0 0 3px var(--sheet),
+      0 0 0 4px var(--ink),
+      0 20px 32px -26px rgba(60, 40, 10, 0.5);
+
+    --font-serif: 'Bodoni Moda', 'Didot', Georgia, serif;
+    --font-symbol: 'Segoe UI Symbol', 'Noto Music', 'Apple Symbols', serif;
+
+    --focus-ring: var(--red);
+    --viz-style: scope; /* an ink trace across a stave */
+    --viz-decor: staves;
+    --viz-bg: transparent;
+    --viz-grid: var(--ink-faint);
+    --viz-note: var(--ink);
+    --viz-playhead: var(--red);
+    --viz-accent: rgba(28, 26, 23, 0.32);
+    --viz-glow: 0;
+    --stave: rgba(28, 26, 23, 0.22);
+
+    color-scheme: light;
+
+    /* Manuscript paper: groups of five faint staff lines all the way down. */
+    body {
+      min-height: 100vh;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0 64px,
+          rgba(28, 26, 23, 0.06) 64px 65px,
+          transparent 65px 72px,
+          rgba(28, 26, 23, 0.06) 72px 73px,
+          transparent 73px 80px,
+          rgba(28, 26, 23, 0.06) 80px 81px,
+          transparent 81px 88px,
+          rgba(28, 26, 23, 0.06) 88px 89px,
+          transparent 89px 96px,
+          rgba(28, 26, 23, 0.06) 96px 97px,
+          transparent 97px 128px
+        ),
+        var(--paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-optical-sizing: auto;
+    }
+
+    /* A yellow highlighter, as if someone marked up the score. */
+    ::selection {
+      background: rgba(242, 194, 0, 0.55);
+      color: var(--ink);
+    }
+
+    /*
+     * Bodoni's hairlines vanish at label sizes. Pin the small type to the
+     * smallest optical size, drawn with the sturdiest hairlines.
+     */
+    .hud-label,
+    .panel-heading,
+    .track-meta,
+    .btn,
+    .genre-select select {
+      font-variation-settings: 'opsz' 6;
+    }
+
+    /* ---- The paper itself: grain, and edges browned with age. */
+
+    .fx-grain,
+    .fx-vignette {
+      display: block;
+      inset: 0;
+      z-index: -1;
+    }
+
+    .fx-grain {
+      opacity: 0.35;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    }
+
+    .fx-vignette {
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(120, 88, 40, 0.16) 100%);
+      mix-blend-mode: multiply;
+    }
+
+    /* ---- Header: a record sleeve's yellow cartouche. */
+
+    .app-title {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 0.3em 0.6em 0.24em;
+      border-radius: 10px;
+      background: var(--yellow);
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 6vw, 3.25rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink);
+      box-shadow:
+        inset 0 0 0 5px var(--yellow),
+        inset 0 0 0 6.5px var(--ink),
+        0 14px 26px -16px rgba(60, 40, 10, 0.55);
+      cursor: default;
+    }
+
+    /* An opus number before the tagline, in the conductor's red. */
+    .tagline {
+      font-size: 1.125rem;
+      font-style: italic;
+      color: var(--ink-soft);
+
+      &::before {
+        content: 'Op. 1';
+        margin-right: 0.7em;
+        font-style: normal;
+        font-weight: 600;
+        font-variant-caps: all-small-caps;
+        letter-spacing: 0.12em;
+        color: var(--red);
+      }
+    }
+
+    /* ---- Buttons: engraved plates. */
+
+    .btn {
+      padding: 12px 22px;
+      border: 1px solid var(--ink);
+      border-radius: 2px;
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .btn-start,
+    .btn-primary {
+      background: var(--ink);
+      color: var(--sheet);
+      box-shadow:
+        0 0 0 2px var(--paper),
+        0 0 0 3px var(--ink);
+
+      &:hover {
+        background: var(--red);
+        border-color: var(--red);
+        box-shadow:
+          0 0 0 2px var(--paper),
+          0 0 0 3px var(--red);
+      }
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--ink);
+
+      &:hover {
+        background: var(--ink);
+        color: var(--sheet);
+      }
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border-color: var(--red);
+
+      &:hover {
+        background: var(--red);
+        color: var(--sheet);
+      }
+    }
+
+    .btn-sm {
+      padding: 8px 12px;
+      font-size: 0.6875rem;
+    }
+
+    /* ---- Genre picker */
+
+    .genre-select {
+      border: 1px solid var(--ink);
+      border-radius: 2px;
+      background: var(--sheet);
+      transition: box-shadow 0.2s ease;
+
+      /* Keyboard focus only; a mouse click shouldn't ring it. */
+      &:has(select:focus-visible) {
+        box-shadow:
+          0 0 0 2px var(--paper),
+          0 0 0 3px var(--red);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 18px;
+        width: 7px;
+        height: 7px;
+        margin-top: -5px;
+        border-right: 1.5px solid var(--ink);
+        border-bottom: 1.5px solid var(--ink);
+        transform: rotate(45deg);
+        pointer-events: none;
+      }
+
+      & select {
+        padding: 12px 46px 12px 18px;
+        background: transparent;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        outline: none;
+      }
+
+      & option {
+        background: var(--sheet);
+        color: var(--ink);
+        letter-spacing: normal;
+        text-transform: none;
+      }
+    }
+
+    /* ---- Cards: fresh sheets in an engraved double rule. */
+
+    .chassis-frame,
+    .panel,
+    .track-row,
+    .notice-warn,
+    .visualizer,
+    .mascot-stage {
+      border: 1px solid var(--ink);
+      border-radius: 0;
+      background: var(--sheet);
+      box-shadow: var(--frame);
+    }
+
+    .chassis-frame {
+      overflow: hidden;
+    }
+
+    /* ---- HUD: the tempo marking and the chord chart. */
+
+    .hud-panel {
+      background: transparent;
+    }
+
+    /* Hairlines between cells; the frame clips the ones on its outer edge. */
+    .hud-cell {
+      gap: 6px;
+      padding: 16px 20px 14px;
+      box-shadow:
+        1px 0 0 var(--ink-faint),
+        0 1px 0 var(--ink-faint);
+    }
+
+    .hud-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-variant-caps: all-small-caps;
+      letter-spacing: 0.14em;
+      color: var(--ink-soft);
+    }
+
+    /* "F# maj pent" sets 5.6em wide in Bodoni, so 17cqi keeps it inside. */
+    .hud-value {
+      font-family: var(--font-serif);
+      font-size: min(2rem, 17cqi);
+      font-weight: 600;
+      font-variant-numeric: lining-nums tabular-nums;
+      line-height: 1.1;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+
+    /* The note being played now, in red pencil. */
+    .hud-cell:first-child .hud-value {
+      color: var(--red);
+    }
+
+    /* BPM, written the way a score writes tempo: a metronome mark. */
+    .hud-cell:nth-child(4) .hud-value::before {
+      content: '\2669\00a0=\00a0';
+      font-family: var(--font-symbol);
+      font-size: 0.8em;
+      font-weight: 400;
+    }
+
+    /*
+     * A new note gets a stroke of yellow highlighter under it, which then
+     * recedes. fit-content so the stroke covers the word, not the cell.
+     */
+    .hud-value-live {
+      width: fit-content;
+      max-width: 100%;
+      background: linear-gradient(transparent 58%, rgba(242, 194, 0, 0.75) 58%) no-repeat left / 0% 100%;
+      animation: classical-note 0.7s ease-out;
+    }
+
+    /* ---- Terminal: a manuscript page; you write the lyrics. */
+
+    .terminal:focus-within .chassis-frame {
+      box-shadow:
+        0 0 0 3px var(--sheet),
+        0 0 0 4px var(--red),
+        0 20px 32px -26px rgba(60, 40, 10, 0.5);
+    }
+
+    /* A manuscript page needs no computer prompt. */
+    .terminal-prompt {
+      display: none;
+    }
+
+    .terminal-input,
+    .terminal-ghost {
+      padding: 14px 28px;
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-style: italic;
+      line-height: 3.5rem;
+    }
+
+    /*
+     * Staves: five lines in the top 20px of every 3.5rem line, so each line
+     * of typing sits beneath its stave like lyrics under a score.
+     * background-attachment: local keeps them aligned as the page scrolls.
+     */
+    .terminal-input {
+      height: 13rem;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 3px,
+        var(--stave) 3px 4px,
+        transparent 4px 7px,
+        var(--stave) 7px 8px,
+        transparent 8px 11px,
+        var(--stave) 11px 12px,
+        transparent 12px 15px,
+        var(--stave) 15px 16px,
+        transparent 16px 19px,
+        var(--stave) 19px 20px,
+        transparent 20px 3.5rem
+      );
+      background-position: 0 14px;
+      background-attachment: local;
+      color: var(--ink);
+      caret-color: var(--red);
+      scrollbar-color: var(--ink-faint) transparent;
+    }
+
+    .terminal-ghost {
+      color: var(--ink-soft);
+    }
+
+    .terminal-cursor {
+      width: 2px;
+      height: 1.1em;
+      margin-left: 4px;
+      vertical-align: -0.2em;
+      background: var(--red);
+      animation: classical-beam 1.6s ease-in-out infinite;
+    }
+
+    /*
+     * The border sweep on Space or Enter: the rules burn red for 120ms while
+     * a glint runs along the top.
+     */
+    .terminal .chassis-frame {
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 30%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--red), var(--gold), transparent);
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+
+    .terminal[data-fx-sweep='a'] .chassis-frame {
+      animation: classical-sweep-a 0.12s steps(1);
+
+      &::after {
+        animation: classical-glint-a 0.12s linear;
+      }
+    }
+
+    .terminal[data-fx-sweep='b'] .chassis-frame {
+      animation: classical-sweep-b 0.12s steps(1);
+
+      &::after {
+        animation: classical-glint-b 0.12s linear;
+      }
+    }
+
+    .mascot-stage {
+      background:
+        radial-gradient(ellipse 50% 80% at 50% 100%, rgba(168, 132, 47, 0.1), transparent 70%),
+        var(--sheet);
+    }
+
+    /* ---- Key legend: a keyboard, white keys with black key caps. */
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panel-heading {
+      font-size: 0.875rem;
+      font-weight: 700;
+      font-variant-caps: all-small-caps;
+      letter-spacing: 0.2em;
+      color: var(--red);
+
+      /* A printer's fleuron before each heading. */
+      &::before {
+        content: '\2766';
+        margin-right: 0.5em;
+        font-family: var(--font-symbol);
+        font-variant-caps: normal;
+      }
+    }
+
+    .key-card {
+      gap: 10px;
+      padding: 5px 10px 5px 5px;
+      border: 1px solid var(--ink);
+      border-radius: 0 0 5px 5px;
+      background: var(--sheet);
+      box-shadow: inset 0 -3px 0 rgba(28, 26, 23, 0.08);
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: #F4ECDC;
+      }
+
+      /* Struck: the key goes down black, its cap red, for 100ms. */
+      &[data-pressed] {
+        animation: classical-pad 0.1s steps(1);
+      }
+
+      &[data-pressed] .keycap {
+        animation: classical-key 0.1s steps(1);
+      }
+
+      &[data-pressed] .key-action {
+        animation: classical-pad-label 0.1s steps(1);
+      }
+    }
+
+    .keycap {
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 8px;
+      border-radius: 0 0 4px 4px;
+      background: var(--ink);
+      box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.12);
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 700;
+      font-variant-numeric: lining-nums;
+      line-height: 1;
+      color: var(--sheet);
+    }
+
+    /* One line per pad, so a row of pads stays one height. */
+    .key-action {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 0.9375rem;
+      font-style: italic;
+      color: var(--ink);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ---- Saving and the saved list */
+
+    /* A line to sign on, not a box. */
+    .field {
+      padding: 10px 2px;
+      border: 0;
+      border-bottom: 1px solid var(--ink);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+
+      &::placeholder {
+        font-style: italic;
+        color: var(--ink-soft);
+      }
+
+      &:focus {
+        border-bottom-color: var(--red);
+        box-shadow: 0 1px 0 var(--red);
+      }
+    }
+
+    .status-line {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--red);
+    }
+
+    .track-row {
+      gap: 12px 16px;
+      padding: 12px 18px;
+    }
+
+    .track-title {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .track-meta {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-variant-caps: all-small-caps;
+      letter-spacing: 0.16em;
+      color: var(--ink-soft);
+    }
+
+    .library-empty {
+      font-style: italic;
+      color: var(--ink-soft);
+    }
+
+    .notice-warn {
+      padding: 11px 18px;
+      border-left: 3px solid var(--red);
+      font-style: italic;
+      color: var(--ink);
+    }
+  }
+}
+
+@keyframes classical-note {
+  from {
+    background-size: 100% 100%;
+  }
+}
+
+@keyframes classical-beam {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* Held for the whole 100ms by steps(1), then gone at once. */
+@keyframes classical-pad {
+  from {
+    background: #1C1A17;
+  }
+}
+
+@keyframes classical-key {
+  from {
+    background: #A4161A;
+  }
+}
+
+@keyframes classical-pad-label {
+  from {
+    color: #FBF7EF;
+  }
+}
+
+@keyframes classical-sweep-a {
+  from {
+    border-color: #A4161A;
+    box-shadow:
+      0 0 0 3px #FBF7EF,
+      0 0 0 4px #A4161A,
+      0 0 22px rgba(164, 22, 26, 0.3);
+  }
+}
+
+@keyframes classical-sweep-b {
+  from {
+    border-color: #A4161A;
+    box-shadow:
+      0 0 0 3px #FBF7EF,
+      0 0 0 4px #A4161A,
+      0 0 22px rgba(164, 22, 26, 0.3);
+  }
+}
+
+@keyframes classical-glint-a {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(240%);
+  }
+}
+
+@keyframes classical-glint-b {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(240%);
+  }
+}
