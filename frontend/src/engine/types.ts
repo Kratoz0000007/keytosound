@@ -23,7 +23,8 @@ export type InstrumentId =
   | 'uprightPiano'
   // Synth-only patches: no recordings, just a voice of their own.
   | 'synthPad'
-  | 'synthBass';
+  | 'synthBass'
+  | 'subBass';
 
 export type GestureShape = 'flat' | 'rise' | 'fall' | 'arch';
 
@@ -124,7 +125,10 @@ export interface GenrePreset {
   padOctave?: number;
   /** Octave of the bass root, as padOctave. Absent: 2, from C1 up. */
   bassOctave?: number;
-  /** Holds the key's root and fifth under every bar, on the pad instrument. */
+  /**
+   * Holds the key's root and fifth (Sa and Pa) under everything, and plays no
+   * chords: the pad rests, and bass and stab play Sa and Pa instead.
+   */
   drone?: boolean;
   groove: Groove;
 }

@@ -41,8 +41,9 @@ export const GENRES: Record<string, GenrePreset> = {
     name: 'Lo-Fi',
     scale: 'minorPentatonic',
     keyRoot: 9, // A
-    // Am7 - Dm7 - G - Cmaj: the classic loose loop
-    progression: [minor7(9), minor7(2), major(7), major(0)],
+    // Fmaj7 - Em7 - Dm7 - Am7: the drifting, descending 7ths of late-night
+    // lo-fi, landing home on Am. Plain triads made it sound like a demo loop.
+    progression: [major7(5), minor7(4), minor7(2), minor7(9)],
     bpm: 75,
     weights: {
       interval: 2.0,
@@ -60,6 +61,7 @@ export const GENRES: Record<string, GenrePreset> = {
     glideSeconds: 0, // a recording cannot glide; slurred notes connect by legato
     padInstrument: 'uprightPiano',
     stabInstrument: 'uprightPiano',
+    bassInstrument: 'subBass',
     // Late kick on step 10 and heavy swing give the dragging feel.
     groove: groove({ kick: [0, 10], snare: BACKBEAT, hat: EVERY_8TH, bass: [0, 8], swing: 0.35 }),
   },

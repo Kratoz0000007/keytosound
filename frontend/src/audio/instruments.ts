@@ -88,6 +88,7 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
     case 'contrabassArco':
     case 'contrabassPizz':
     case 'synthBass':
+    case 'subBass':
     case 'bass':
       return new Tone.MonoSynth({
         oscillator: { type: 'square' },

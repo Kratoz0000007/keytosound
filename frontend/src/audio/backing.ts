@@ -26,8 +26,18 @@ export interface BandSource {
 const DEFAULT_PAD_OCTAVE = 4;
 const DEFAULT_BASS_OCTAVE = 2;
 
-/** The drone sits this much quieter than the pad it shares an instrument with. */
-const DRONE_DB = -6;
+/**
+ * How far under the melody each band part sits, in dB. A recorded
+ * instrument's volume is set for playing the melody (sampleLibrary.ts), and
+ * the band's parts must not bury it.
+ */
+const PAD_DB = -13;
+const STAB_DB = -6;
+const BASS_DB = -6;
+
+/** The drone: a quiet, dark reed tone, felt more than heard. */
+const DRONE_VOLUME = -30;
+const DRONE_CUTOFF_HZ = 900;
 
 function midiNote(pitch: number): string {
   return Tone.Frequency(pitch, 'midi').toNote();
@@ -99,6 +109,17 @@ function padSynth(id: InstrumentId | undefined): Tone.PolySynth {
 
 /** The bass's synth, chosen the same way as padSynth. */
 function bassSynth(id: InstrumentId | undefined): Tone.MonoSynth {
+  if (id === 'subBass') {
+    // Round and felt rather than heard: a filtered triangle with no bite.
+    const sub = new Tone.MonoSynth({
+      oscillator: { type: 'triangle' },
+      filter: { Q: 0.5, type: 'lowpass', rolloff: -24 },
+      envelope: { attack: 0.02, decay: 0.5, sustain: 0.6, release: 0.3 },
+      filterEnvelope: { attack: 0.02, decay: 0.3, sustain: 1, baseFrequency: 320, octaves: 0 },
+    });
+    sub.volume.value = -10;
+    return sub.toDestination();
+  }
   const bass =
     id === 'synthBass'
       ? new Tone.MonoSynth({
@@ -128,8 +149,12 @@ function recorded(id: InstrumentId | undefined, fallback: ChordVoice, gainDb = 0
  * a getter, because the engine is replaced on every genre switch and replay.
  */
 export class BackingBand {
-  private readonly pad: ChordVoice;
-  private readonly drone: ChordVoice | null = null;
+  /** Null for a drone genre: it plays no chords. */
+  private readonly pad: ChordVoice | null = null;
+  private readonly drone: Tone.PolySynth | null = null;
+  private readonly droneFilter: Tone.Filter | null = null;
+  /** The key the drone is holding, or null while it is silent. */
+  private droneRoot: number | null = null;
   private readonly ambience: Ambience | null = null;
   private readonly padOctave: number;
   private readonly bassOctave: number;
@@ -160,22 +185,27 @@ export class BackingBand {
     this.padOctave = preset.padOctave ?? DEFAULT_PAD_OCTAVE;
     this.bassOctave = preset.bassOctave ?? DEFAULT_BASS_OCTAVE;
 
-    this.pad = recorded(preset.padInstrument, polyVoice(padSynth(preset.padInstrument)));
-
     if (preset.drone) {
-      // Its own voice, so a new pad chord never cuts the drone off.
-      const drone = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.8, decay: 0.2, sustain: 0.9, release: 2 },
-      }).toDestination();
-      drone.volume.value = -22;
-      this.drone = recorded(preset.padInstrument, polyVoice(drone), DRONE_DB);
+      // A synth, not the recorded reeds: a 4-second recording restruck every
+      // bar swells and fades every bar, where a drone should simply hold.
+      this.droneFilter = new Tone.Filter(DRONE_CUTOFF_HZ, 'lowpass').toDestination();
+      this.drone = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'fatsawtooth', count: 2, spread: 10 },
+        envelope: { attack: 1.5, decay: 0, sustain: 1, release: 2 },
+      }).connect(this.droneFilter);
+      this.drone.volume.value = DRONE_VOLUME;
+    } else {
+      this.pad = recorded(
+        preset.padInstrument,
+        polyVoice(padSynth(preset.padInstrument)),
+        PAD_DB + (kit.padDb ?? 0),
+      );
     }
 
     const bed = AMBIENCE[preset.id];
     if (bed) this.ambience = new Ambience(bed);
 
-    this.bass = recorded(preset.bassInstrument, monoVoice(bassSynth(preset.bassInstrument)));
+    this.bass = recorded(preset.bassInstrument, monoVoice(bassSynth(preset.bassInstrument)), BASS_DB);
 
     this.kick = new Tone.MembraneSynth({
       pitchDecay: kit.kick.pitchDecay,
@@ -233,7 +263,7 @@ export class BackingBand {
       envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 },
     }).toDestination();
     stab.volume.value = -20;
-    this.stab = recorded(preset.stabInstrument, polyVoice(stab));
+    this.stab = recorded(preset.stabInstrument, polyVoice(stab), STAB_DB);
 
     // A swell into the beat it lands on, not a hit on it.
     this.fx = new Tone.NoiseSynth({
@@ -287,10 +317,8 @@ export class BackingBand {
           const harmony = source.harmonyAt(bar);
           this.chord = harmony.chord;
           this.keyRoot = harmony.keyRoot;
-          this.pad.play(chordToNotes(this.chord, this.padOctave), '1m', time);
-          // Sa and Pa of whatever key the music is in, restated every bar.
-          const sa = pitchClass(this.keyRoot) + 12 * this.padOctave;
-          this.drone?.play([midiNote(sa), midiNote(sa + 7)], '1m', time);
+          this.pad?.play(chordToNotes(this.chord, this.padOctave), '1m', time);
+          this.holdDrone(time);
         }
 
         for (const voice of VOICES) {
@@ -302,13 +330,32 @@ export class BackingBand {
     ).start(0);
   }
 
+  /**
+   * Sa and Pa, the key's root and fifth, from this octave. A drone genre's
+   * band plays these where others play the chord: Indian music is modal, and
+   * the progression's Db chord against a C drone is a semitone clash.
+   */
+  private saPa(octave: number): string[] {
+    const sa = pitchClass(this.keyRoot) + 12 * octave;
+    return [midiNote(sa), midiNote(sa + 7)];
+  }
+
+  /** Strikes the drone once, and again only when the key changes. */
+  private holdDrone(time: number): void {
+    if (!this.drone || this.droneRoot === this.keyRoot) return;
+    if (this.droneRoot !== null) this.drone.releaseAll(time);
+    this.drone.triggerAttack(this.saPa(this.padOctave), time);
+    this.droneRoot = this.keyRoot;
+  }
+
   /** Plays one voice at `time`. Also used for immediate feedback on a digit press. */
   trigger(voice: Voice, time: number = Tone.now()): void {
     if (voice === 'bass') {
-      const root = midiNote(pitchClass(this.chord.root) + 12 * this.bassOctave);
-      this.bass.play([root], '8n', time);
+      const root = this.drone ? pitchClass(this.keyRoot) : pitchClass(this.chord.root);
+      this.bass.play([midiNote(root + 12 * this.bassOctave)], '8n', time);
     } else if (voice === 'stab') {
-      this.stab.play(chordToNotes(this.chord, this.padOctave), '16n', time);
+      const notes = this.drone ? this.saPa(this.padOctave) : chordToNotes(this.chord, this.padOctave);
+      this.stab.play(notes, '16n', time);
     } else {
       this.hit[voice](time);
     }
@@ -322,8 +369,9 @@ export class BackingBand {
   /** Cuts any held notes; the pad's '1m' chords otherwise ring on after a pause. */
   release(): void {
     this.ambience?.stop();
-    this.drone?.release();
-    this.pad.release();
+    this.drone?.releaseAll();
+    this.droneRoot = null;
+    this.pad?.release();
     this.stab.release();
     this.bass.release();
   }
@@ -334,8 +382,9 @@ export class BackingBand {
     // after a restart can be -4e-13s. Tone throws on that, and a genre switch
     // made moments after Start would abort half-way with no lead instrument.
     this.sequence?.dispose();
-    this.pad.dispose();
+    this.pad?.dispose();
     this.drone?.dispose();
+    this.droneFilter?.dispose();
     this.ambience?.dispose();
     this.bass.dispose();
     this.stab.dispose();

@@ -56,7 +56,8 @@ describe('Harmony', () => {
     h.request('open', 0);
     expect(h.at(1).chord.root).toBe(4);
     expect(h.at(2).chord.root).toBe(4);
-    expect(h.at(3).chord.root).not.toBe(4);
+    // Then back on the progression.
+    expect(h.at(3).progressionIndex).toBeGreaterThanOrEqual(0);
   });
 
   it('modulates on Enter, transposing the whole progression', () => {

@@ -17,6 +17,7 @@ class FakeNode {
     return this;
   }
   triggerAttackRelease = vi.fn();
+  triggerAttack = vi.fn();
   releaseAll = vi.fn();
   triggerRelease = vi.fn();
   dispose = vi.fn();
@@ -202,14 +203,43 @@ describe('BackingBand', () => {
     band.dispose();
   });
 
-  it('drones Sa and Pa under every Sufi bar', () => {
+  it('holds one Sa-Pa drone under Sufi, not a new swell every bar', () => {
     nodes.length = 0;
     const engine = new MusicEngine(GENRES.sufi, 1);
     const band = new BackingBand(GENRES.sufi, () => engine);
     band.start();
-    sequences.at(-1)!.step(0, 0);
+    for (let bar = 0; bar < 4; bar++) sequences.at(-1)!.step(bar * 2, 0);
 
-    expect(played()).toContainEqual(['m48', 'm55']);
+    const held = nodes.flatMap((node) => node.triggerAttack.mock.calls.map((call) => call[0]));
+    expect(held).toEqual([['m48', 'm55']]);
+
+    // A pause lets it go, and the next bar after it strikes it again.
+    band.release();
+    sequences.at(-1)!.step(10, 0);
+    expect(nodes.flatMap((node) => node.triggerAttack.mock.calls)).toHaveLength(2);
+    band.dispose();
+  });
+
+  it('plays no chords in Sufi: the pad rests, and bass and stab play Sa and Pa', () => {
+    nodes.length = 0;
+    const engine = new MusicEngine(GENRES.sufi, 1);
+    // Always the second bar: its chord is Db, while the key stays C.
+    const source = {
+      harmonyAt: () => engine.harmonyAt(1),
+      beatHas: () => false,
+      swing: 0,
+      barMs: engine.barMs,
+    };
+    expect(source.harmonyAt().chord.root).toBe(1);
+    const band = new BackingBand(GENRES.sufi, () => source);
+    band.start();
+    sequences.at(-1)!.step(0, 0);
+    band.trigger('stab', 9);
+    band.trigger('bass', 9.5);
+
+    // C's Sa and Pa, not Db: no chord-shaped note list other than the stab's.
+    expect(played()).toEqual(expect.arrayContaining([['m48', 'm55'], 'm36']));
+    expect(played()).toHaveLength(2);
     band.dispose();
   });
 

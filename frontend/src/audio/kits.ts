@@ -13,6 +13,11 @@ export interface Kit {
   clapHz: number;
   /** A big reverb on the snare, cut dead by a gate: the 80s gated snare. */
   gatedSnare?: boolean;
+  /**
+   * Extra dB on a recorded pad. A string section held for a whole bar is far
+   * louder than the short melody notes its volume was measured on.
+   */
+  padDb?: number;
 }
 
 type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
@@ -55,6 +60,7 @@ export const KITS: Record<string, Kit> = {
     hatNoise: 'pink',
     stabOscillator: 'sine',
     clapHz: 800,
+    padDb: -8,
   },
 };
 
