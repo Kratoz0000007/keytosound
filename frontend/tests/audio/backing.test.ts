@@ -13,6 +13,9 @@ class FakeNode {
   connect() {
     return this;
   }
+  chain() {
+    return this;
+  }
   triggerAttackRelease = vi.fn();
   releaseAll = vi.fn();
   triggerRelease = vi.fn();
@@ -51,6 +54,15 @@ class FakeBufferSource extends FakeNode {
   }
 }
 
+/** The gated snare's reverb, so a test can find it. */
+const reverbs: FakeNode[] = [];
+class FakeReverb extends FakeNode {
+  constructor() {
+    super();
+    reverbs.push(this);
+  }
+}
+
 const sequences: FakeSequence[] = [];
 
 /**
@@ -80,6 +92,9 @@ vi.mock('tone', () => ({
   MembraneSynth: FakeNode,
   NoiseSynth: FakeNode,
   Filter: FakeNode,
+  Reverb: FakeReverb,
+  Gate: FakeNode,
+  getDestination: () => new FakeNode(),
   Sampler: FakeSampler,
   ToneAudioBuffer: FakeBuffer,
   ToneBufferSource: FakeBufferSource,
@@ -194,5 +209,17 @@ describe('BackingBand', () => {
     const built = players.slice(start);
     expect(built.length).toBeGreaterThan(7);
     for (const buffer of built) expect(buffer.dispose).toHaveBeenCalled();
+  });
+
+  it("gives Synthwave's snare a gated reverb, and only Synthwave's", () => {
+    reverbs.length = 0;
+    const lofi = new BackingBand(GENRES.lofi, () => new MusicEngine(GENRES.lofi, 1));
+    expect(reverbs).toHaveLength(0);
+    lofi.dispose();
+
+    const band = new BackingBand(GENRES.synthwave, () => new MusicEngine(GENRES.synthwave, 1));
+    expect(reverbs).toHaveLength(1);
+    band.dispose();
+    expect(reverbs[0].dispose).toHaveBeenCalled();
   });
 });

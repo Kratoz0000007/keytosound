@@ -11,6 +11,8 @@ export interface Kit {
   stabOscillator: OscType;
   /** Centre of the clap's band-pass: lower sounds boxier. */
   clapHz: number;
+  /** A big reverb on the snare, cut dead by a gate: the 80s gated snare. */
+  gatedSnare?: boolean;
 }
 
 type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
@@ -30,6 +32,7 @@ export const KITS: Record<string, Kit> = {
     hatNoise: 'white',
     stabOscillator: 'sawtooth',
     clapHz: 1600,
+    gatedSnare: true,
   },
   eightbit: {
     kick: { note: 'C2', pitchDecay: 0.08, octaves: 4, decay: 0.2, oscillator: 'square' },

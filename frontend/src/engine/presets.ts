@@ -86,12 +86,14 @@ export const GENRES: Record<string, GenrePreset> = {
     registerSpread: 11,
     leadInstrument: 'synthLead',
     glideSeconds: 0.14, // long: the genre is built on sliding leads
-    // Four on the floor, offbeat hats, driving root-note bass.
+    padInstrument: 'synthPad',
+    bassInstrument: 'synthBass',
+    // Four on the floor, offbeat hats, a saw bass pulsing in eighths.
     groove: groove({
       kick: [0, 4, 8, 12],
       snare: BACKBEAT,
       hat: [2, 6, 10, 14],
-      bass: [0, 4, 8, 12],
+      bass: EVERY_8TH,
       swing: 0,
     }),
   },

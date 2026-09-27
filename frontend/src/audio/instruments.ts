@@ -30,10 +30,11 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
         envelope: { attack: 0.01, decay: 0.6, sustain: 0.35, release: 1.6 },
       });
 
+    // Three detuned saws, chorused in createLead: the wide 80s lead.
     case 'synthLead':
       return new Tone.Synth({
-        oscillator: { type: 'sawtooth' },
-        envelope: { attack: 0.02, decay: 0.2, sustain: 0.55, release: 0.6 },
+        oscillator: { type: 'fatsawtooth', count: 3, spread: 24 },
+        envelope: { attack: 0.02, decay: 0.2, sustain: 0.6, release: 0.6 },
       });
 
     case 'eightBit':
@@ -77,7 +78,7 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
         envelope: { attack: 0.08, decay: 0.2, sustain: 0.8, release: 0.4 },
       });
 
-    // Three detuned saws: the wide 80s lead. Chorus is added in createLead.
+    // The band's wide saw pad (audio/backing.ts); as a lead, the same patch.
     case 'synthPad':
       return new Tone.Synth({
         oscillator: { type: 'fatsawtooth', count: 3, spread: 30 },
@@ -114,7 +115,13 @@ export function createLead(id: InstrumentId): LeadChain {
   const delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.22, wet: 0.14 });
   const reverb = new Tone.Reverb({ decay: 2.4, wet: 0.24 });
   delay.chain(reverb, Tone.getDestination());
-  synth.connect(delay);
+  // Detuned saws only sound wide once chorused; nothing else wants it.
+  const chorus =
+    id === 'synthLead'
+      ? new Tone.Chorus({ frequency: 1.2, delayTime: 3.5, depth: 0.6, wet: 0.45 }).start()
+      : null;
+  if (chorus) synth.chain(chorus, delay);
+  else synth.connect(delay);
 
   const samples = PITCHED[id];
   const sampler = samples ? createSampler(samples) : null;
@@ -126,6 +133,7 @@ export function createLead(id: InstrumentId): LeadChain {
     voice,
     dispose() {
       voice.dispose();
+      chorus?.dispose();
       delay.dispose();
       reverb.dispose();
     },

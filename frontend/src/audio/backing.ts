@@ -57,6 +57,43 @@ function monoVoice(synth: Tone.MonoSynth): ChordVoice {
   };
 }
 
+/**
+ * The pad's synth: its own patch for a synth-only instrument, else the soft
+ * sine pad, which is also what a recorded pad plays until it loads.
+ */
+function padSynth(id: InstrumentId | undefined): Tone.PolySynth {
+  const pad =
+    id === 'synthPad'
+      ? new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'fatsawtooth', count: 3, spread: 40 },
+          envelope: { attack: 0.9, decay: 0.5, sustain: 0.8, release: 2.5 },
+        })
+      : new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.6, decay: 1, sustain: 0.6, release: 2 },
+        });
+  pad.volume.value = id === 'synthPad' ? -28 : -20;
+  return pad.toDestination();
+}
+
+/** The bass's synth, chosen the same way as padSynth. */
+function bassSynth(id: InstrumentId | undefined): Tone.MonoSynth {
+  const bass =
+    id === 'synthBass'
+      ? new Tone.MonoSynth({
+          oscillator: { type: 'sawtooth' },
+          filter: { Q: 3, type: 'lowpass' },
+          envelope: { attack: 0.005, decay: 0.2, sustain: 0.5, release: 0.15 },
+          filterEnvelope: { attack: 0.005, decay: 0.15, sustain: 0.2, baseFrequency: 90, octaves: 3.5 },
+        })
+      : new Tone.MonoSynth({
+          oscillator: { type: 'square' },
+          envelope: { attack: 0.02, decay: 0.3, sustain: 0.3, release: 0.4 },
+        });
+  bass.volume.value = -14;
+  return bass.toDestination();
+}
+
 /** The recorded instrument when there is one, else the band's synth voice. */
 function recorded(id: InstrumentId | undefined, fallback: ChordVoice, gainDb = 0): ChordVoice {
   const samples = id ? PITCHED[id] : undefined;
@@ -79,6 +116,7 @@ export class BackingBand {
   private readonly kick: Tone.MembraneSynth;
   private readonly perc: Tone.MembraneSynth;
   private readonly snare: Tone.NoiseSynth;
+  private readonly snareEffects: Tone.ToneAudioNode[] = [];
   private readonly hat: Tone.NoiseSynth;
   private readonly openHat: Tone.NoiseSynth;
   private readonly clap: Tone.NoiseSynth;
@@ -101,12 +139,7 @@ export class BackingBand {
     this.padOctave = preset.padOctave ?? DEFAULT_PAD_OCTAVE;
     this.bassOctave = preset.bassOctave ?? DEFAULT_BASS_OCTAVE;
 
-    const pad = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.6, decay: 1, sustain: 0.6, release: 2 },
-    }).toDestination();
-    pad.volume.value = -20;
-    this.pad = recorded(preset.padInstrument, polyVoice(pad));
+    this.pad = recorded(preset.padInstrument, polyVoice(padSynth(preset.padInstrument)));
 
     if (preset.drone) {
       // Its own voice, so a new pad chord never cuts the drone off.
@@ -121,12 +154,7 @@ export class BackingBand {
     const bed = AMBIENCE[preset.id];
     if (bed) this.ambience = new Ambience(bed);
 
-    const bass = new Tone.MonoSynth({
-      oscillator: { type: 'square' },
-      envelope: { attack: 0.02, decay: 0.3, sustain: 0.3, release: 0.4 },
-    }).toDestination();
-    bass.volume.value = -14;
-    this.bass = recorded(preset.bassInstrument, monoVoice(bass));
+    this.bass = recorded(preset.bassInstrument, monoVoice(bassSynth(preset.bassInstrument)));
 
     this.kick = new Tone.MembraneSynth({
       pitchDecay: kit.kick.pitchDecay,
@@ -147,8 +175,18 @@ export class BackingBand {
     this.snare = new Tone.NoiseSynth({
       noise: { type: 'pink' },
       envelope: { attack: 0.001, decay: 0.18, sustain: 0 },
-    }).toDestination();
+    });
     this.snare.volume.value = -18;
+    if (kit.gatedSnare) {
+      // The gate shuts once the reverb tail falls below its threshold.
+      const reverb = new Tone.Reverb({ decay: 1.8, wet: 0.6 });
+      const gate = new Tone.Gate(-38, 0.04);
+      this.snare.chain(reverb, gate, Tone.getDestination());
+      this.snareEffects.push(reverb, gate);
+      this.snare.volume.value = -14;
+    } else {
+      this.snare.toDestination();
+    }
 
     this.hat = new Tone.NoiseSynth({
       noise: { type: kit.hatNoise },
@@ -281,6 +319,7 @@ export class BackingBand {
     this.bass.dispose();
     this.stab.dispose();
     for (const hit of this.sampledHits) hit.dispose();
+    for (const effect of this.snareEffects) effect.dispose();
     for (const node of [
       this.kick,
       this.perc,
