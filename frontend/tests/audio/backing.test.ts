@@ -54,6 +54,20 @@ class FakeBufferSource extends FakeNode {
   }
 }
 
+/**
+ * A synth that starts a source on every hit, as Tone's NoiseSynth, Synth and
+ * MonoSynth do: each keeps one state timeline and throws on a time earlier
+ * than the last one it was given.
+ */
+class FakeSourceSynth extends FakeNode {
+  private last = -Infinity;
+  triggerAttackRelease = vi.fn((...args: unknown[]) => {
+    const time = args.at(-1) as number;
+    if (time < this.last) throw new Error('The time must be greater than or equal to the last scheduled time');
+    this.last = time;
+  });
+}
+
 /** The gated snare's reverb, so a test can find it. */
 const reverbs: FakeNode[] = [];
 class FakeReverb extends FakeNode {
@@ -88,9 +102,9 @@ class FakeSequence {
 vi.mock('tone', () => ({
   PolySynth: FakeNode,
   Synth: FakeNode,
-  MonoSynth: FakeNode,
-  MembraneSynth: FakeNode,
-  NoiseSynth: FakeNode,
+  MonoSynth: FakeSourceSynth,
+  MembraneSynth: FakeSourceSynth,
+  NoiseSynth: FakeSourceSynth,
   Filter: FakeNode,
   Reverb: FakeReverb,
   Gate: FakeNode,
@@ -221,5 +235,18 @@ describe('BackingBand', () => {
     expect(reverbs).toHaveLength(1);
     band.dispose();
     expect(reverbs[0].dispose).toHaveBeenCalled();
+  });
+
+  it('drops a synth hit that would land before one already queued', () => {
+    // A digit plays its hit at once, and the sequencer may already have queued
+    // the same voice a few milliseconds earlier: Tone threw on that.
+    const band = new BackingBand(GENRES.synthwave, () => new MusicEngine(GENRES.synthwave, 1));
+    expect(() => {
+      for (const voice of ['kick', 'snare', 'hat', 'openHat', 'clap', 'perc', 'fx', 'bass'] as const) {
+        band.trigger(voice, 2);
+        band.trigger(voice, 1.99);
+      }
+    }).not.toThrow();
+    band.dispose();
   });
 });

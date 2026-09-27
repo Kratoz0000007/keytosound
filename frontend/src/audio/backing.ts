@@ -49,9 +49,30 @@ function polyVoice(synth: Tone.PolySynth): ChordVoice {
   };
 }
 
+/**
+ * Plays only hits that land after the previous one. Tone's synths start a
+ * source per hit on a single timeline and throw on an earlier time, which
+ * happens when a digit's immediate hit lands just after the sequencer queued
+ * the same voice a few ms ahead. That queued hit is as good as this one.
+ */
+function inOrder(play: (time: number) => void): (time: number) => void {
+  let last = -Infinity;
+  return (time) => {
+    if (time < last) return;
+    last = time;
+    play(time);
+  };
+}
+
 function monoVoice(synth: Tone.MonoSynth): ChordVoice {
+  // One oscillator on one timeline, like the drum synths: see inOrder.
+  let last = -Infinity;
   return {
-    play: (notes, duration, time) => synth.triggerAttackRelease(notes[0], duration, time),
+    play: (notes, duration, time) => {
+      if (time < last) return;
+      last = time;
+      synth.triggerAttackRelease(notes[0], duration, time);
+    },
     release: () => synth.triggerRelease(),
     dispose: () => synth.dispose(),
   };
@@ -222,13 +243,13 @@ export class BackingBand {
     this.fx.volume.value = -24;
 
     const synthHit: Record<DrumVoice, (time: number) => void> = {
-      kick: (time) => this.kick.triggerAttackRelease(kit.kick.note, '8n', time),
-      snare: (time) => this.snare.triggerAttackRelease('8n', time),
-      hat: (time) => this.hat.triggerAttackRelease('16n', time),
-      openHat: (time) => this.openHat.triggerAttackRelease('8n', time),
-      clap: (time) => this.clap.triggerAttackRelease('16n', time),
-      perc: (time) => this.perc.triggerAttackRelease(kit.perc.note, '8n', time),
-      fx: (time) => this.fx.triggerAttackRelease('4n', time),
+      kick: inOrder((time) => this.kick.triggerAttackRelease(kit.kick.note, '8n', time)),
+      snare: inOrder((time) => this.snare.triggerAttackRelease('8n', time)),
+      hat: inOrder((time) => this.hat.triggerAttackRelease('16n', time)),
+      openHat: inOrder((time) => this.openHat.triggerAttackRelease('8n', time)),
+      clap: inOrder((time) => this.clap.triggerAttackRelease('16n', time)),
+      perc: inOrder((time) => this.perc.triggerAttackRelease(kit.perc.note, '8n', time)),
+      fx: inOrder((time) => this.fx.triggerAttackRelease('4n', time)),
     };
     // A kit's recordings replace its synth hits voice by voice; the synth hit
     // plays until they load, and for any voice the kit does not record.
