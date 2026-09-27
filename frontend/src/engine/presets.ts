@@ -149,8 +149,12 @@ export const GENRES: Record<string, GenrePreset> = {
     temperature: 0.3,
     centerPitch: 69, // A4
     registerSpread: 10,
-    leadInstrument: 'electricPiano',
-    glideSeconds: 0.05, // subtle, like a bent note
+    leadInstrument: 'tenorSax',
+    glideSeconds: 0, // a recording cannot glide; slurred notes connect by legato
+    padInstrument: 'grandPiano', // comping chords
+    bassInstrument: 'contrabassPizz',
+    stabInstrument: 'grandPiano',
+    bassOctave: 3, // upright bass from C2, its real range
     // Swung ride pattern, sparse kick: the drummer comps rather than drives.
     groove: groove({
       kick: [0],

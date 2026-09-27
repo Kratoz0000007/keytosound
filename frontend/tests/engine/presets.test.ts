@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GENRES, DEFAULT_GENRE_ID } from '../../src/engine/presets';
 import { SCALES } from '../../src/engine/theory';
+import { PITCHED } from '../../src/audio/sampleLibrary';
 
 describe('GENRES', () => {
   it('ships six genres', () => {
@@ -92,5 +93,20 @@ describe('GENRES', () => {
       expect(sufi.padInstrument).toBe('harmonium');
       expect(sufi.glideSeconds).toBe(0);
     });
+  });
+
+  describe('jazz', () => {
+    it('is a tenor sax over piano and plucked upright bass', () => {
+      expect(GENRES.jazz.leadInstrument).toBe('tenorSax');
+      expect(GENRES.jazz.padInstrument).toBe('grandPiano');
+      expect(GENRES.jazz.bassInstrument).toBe('contrabassPizz');
+    });
+  });
+
+  it('never asks a recorded lead to glide', () => {
+    // Samplers cannot slide between notes; LegatoLead connects them instead.
+    for (const preset of Object.values(GENRES)) {
+      if (PITCHED[preset.leadInstrument]) expect(preset.glideSeconds).toBe(0);
+    }
   });
 });
