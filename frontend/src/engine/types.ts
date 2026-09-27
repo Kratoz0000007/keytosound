@@ -11,7 +11,12 @@ export type InstrumentId =
   | 'synthLead'
   | 'electricPiano'
   | 'bass'
-  | 'eightBit';
+  | 'eightBit'
+  // Recorded instruments; each also has a synth fallback in audio/instruments.ts.
+  | 'grandPiano'
+  | 'strings'
+  | 'stringsPizz'
+  | 'contrabassArco';
 
 export type GestureShape = 'flat' | 'rise' | 'fall' | 'arch';
 
@@ -99,6 +104,12 @@ export interface GenrePreset {
    * cannot glide, like a piano: they connect by legato alone.
    */
   glideSeconds: number;
+  /** The chord pad's instrument. Absent: the soft synth pad. */
+  padInstrument?: InstrumentId;
+  /** The bass voice's instrument. Absent: the synth bass. */
+  bassInstrument?: InstrumentId;
+  /** The stab voice's instrument. Absent: the kit's synth stab. */
+  stabInstrument?: InstrumentId;
   groove: Groove;
 }
 

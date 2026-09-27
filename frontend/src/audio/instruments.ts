@@ -39,6 +39,26 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
         envelope: { attack: 0.001, decay: 0.08, sustain: 0.4, release: 0.08 },
       });
 
+    // The recorded instruments' stand-ins until their samples load.
+    case 'grandPiano':
+      return new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.005, decay: 0.4, sustain: 0.25, release: 1.2 },
+      });
+
+    case 'strings':
+      return new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.6, decay: 1, sustain: 0.6, release: 2 },
+      });
+
+    case 'stringsPizz':
+      return new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 },
+      });
+
+    case 'contrabassArco':
     case 'bass':
       return new Tone.MonoSynth({
         oscillator: { type: 'square' },
