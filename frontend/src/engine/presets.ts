@@ -184,8 +184,11 @@ export const GENRES: Record<string, GenrePreset> = {
     temperature: 0.2,
     centerPitch: 72, // C5
     registerSpread: 12,
-    leadInstrument: 'piano',
+    leadInstrument: 'grandPiano',
     glideSeconds: 0, // a piano cannot glide; legato only
+    padInstrument: 'strings',
+    bassInstrument: 'contrabassArco',
+    stabInstrument: 'stringsPizz',
     // A full drum kit under a piano line would be absurd, but no pulse at all
     // reads as the band having stopped. A soft downbeat is the compromise.
     groove: SOFT_PULSE,

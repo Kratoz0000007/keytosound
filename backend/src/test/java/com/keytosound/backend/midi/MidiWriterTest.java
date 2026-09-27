@@ -110,6 +110,20 @@ class MidiWriterTest {
     }
 
     @Test
+    void writesTheGrandPianoAsAnAcousticGrand() throws Exception {
+        Score grand = new Score(120, "grandPiano", score().lead(), score().pad(), score().bass(), score().drums());
+        Track lead = read(writer.write("rain", grand)).getTracks()[1];
+        int program = -1;
+        for (int i = 0; i < lead.size(); i++) {
+            if (lead.get(i).getMessage() instanceof ShortMessage m
+                    && m.getCommand() == ShortMessage.PROGRAM_CHANGE) {
+                program = m.getData1();
+            }
+        }
+        assertThat(program).isZero(); // GM "Acoustic Grand Piano"
+    }
+
+    @Test
     void neverWritesAZeroLengthNote() throws Exception {
         Score tiny = new Score(120, "piano", List.of(new ScoreNote(60, 0.0, 0.0001, 0.5)),
                 List.of(), List.of(), List.of());

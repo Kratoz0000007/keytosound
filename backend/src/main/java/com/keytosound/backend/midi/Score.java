@@ -17,7 +17,7 @@ import java.util.List;
  */
 public record Score(
         @Min(40) @Max(240) int bpm,
-        @NotNull @Pattern(regexp = "piano|electricPiano|synthLead|eightBit|bass") String leadInstrument,
+        @NotNull @Pattern(regexp = "piano|electricPiano|synthLead|eightBit|bass|grandPiano") String leadInstrument,
         @NotNull @Size(max = 20000) List<@NotNull @Valid ScoreNote> lead,
         @NotNull @Size(max = 20000) List<@NotNull @Valid ScoreNote> pad,
         @NotNull @Size(max = 20000) List<@NotNull @Valid ScoreNote> bass,
