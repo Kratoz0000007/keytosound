@@ -61,7 +61,8 @@ export function mapFeatures(
   return {
     // Erasures are brief, so holding backspace does not stack long notes.
     durationBeats: erasing ? 0.25 : durationFromInterval(f.interval),
-    subdivision: erasing || energy > 0.5 ? 16 : 8,
+    // Always 16ths: an 8th grid kept a slow typist waiting up to 400ms for a note.
+    subdivision: 16,
     velocity,
     leapAllowance,
     gestureShape: erasing ? 'fall' : shapeFromWord(f.wordLength, f.punctuation),

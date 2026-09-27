@@ -82,6 +82,7 @@ export class AudioEngine {
     if (!this.lead || !this.scheduler || this.paused) return;
     const now = transportSeconds();
     const scheduled = this.scheduler.schedule(event, now);
+    if (!scheduled) return;
     const note = Tone.Frequency(scheduled.pitch, 'midi').toNote();
     Tone.getTransport().scheduleOnce((time) => {
       this.lead?.play({

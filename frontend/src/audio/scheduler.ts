@@ -31,16 +31,24 @@ export class Scheduler {
     private readonly startTime: number,
   ) {}
 
-  schedule(event: MusicalEvent, now: number): ScheduledEvent {
+  /**
+   * Null when the note would sound too late to belong to its key. Typing
+   * faster than the grid used to queue every note a slot behind the last, so
+   * a fast sentence at 84 bpm finished playing four seconds after the typing
+   * stopped. Now a note waits at most one slot (or a 16th, if longer).
+   */
+  schedule(event: MusicalEvent, now: number): ScheduledEvent | null {
     const beat = secondsPerBeat(this.bpm);
     const gridSeconds = (beat * 4) / event.subdivision;
+    const thirtySecond = beat / 8;
 
     let time = nextGridTime(now, gridSeconds, this.startTime);
-    // Two keystrokes can land in one slot; push the second to the next one
-    // rather than stacking notes and producing an accidental chord.
+    // Two keystrokes can land in one slot. Stacking them would make an
+    // accidental chord, so the second goes to the next 32nd after the first.
     if (time <= this.lastScheduledTime) {
-      time = this.lastScheduledTime + gridSeconds;
+      time = nextGridTime(this.lastScheduledTime + thirtySecond / 2, thirtySecond, this.startTime);
     }
+    if (time - now > Math.max(gridSeconds, beat / 4) + 1e-9) return null;
     this.lastScheduledTime = time;
 
     return {

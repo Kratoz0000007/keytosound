@@ -46,11 +46,11 @@ describe('mapFeatures', () => {
     expect(fast.durationBeats).toBeLessThan(slow.durationBeats);
   });
 
-  it('uses a 16th grid at high energy and an 8th grid at low energy', () => {
+  it('uses a 16th grid at any speed, so a note never waits long for its slot', () => {
     const fast = mapFeatures(baseFeatures({ speed: 90 }), baseState(), preset);
     const slow = mapFeatures(baseFeatures({ speed: 10 }), baseState(), preset);
     expect(fast.subdivision).toBe(16);
-    expect(slow.subdivision).toBe(8);
+    expect(slow.subdivision).toBe(16);
   });
 
   it('raises velocity with typing speed', () => {

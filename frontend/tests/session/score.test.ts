@@ -29,12 +29,12 @@ describe('renderScore', () => {
     expect(score.leadInstrument).toBe(GENRES.synthwave.leadInstrument);
   });
 
-  it('places every lead note on the 16th-note grid', () => {
+  it('places every lead note on the grid: 16ths, or 32nds when two keys share a slot', () => {
     const score = renderScore(session(PROSE));
-    const sixteenth = 60 / GENRES.lofi.bpm / 4;
+    const thirtySecond = 60 / GENRES.lofi.bpm / 8;
     expect(score.lead.length).toBeGreaterThan(20);
     for (const note of score.lead) {
-      const steps = note.start / sixteenth;
+      const steps = note.start / thirtySecond;
       expect(Math.abs(steps - Math.round(steps))).toBeLessThan(1e-6);
     }
   });

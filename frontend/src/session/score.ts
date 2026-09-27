@@ -77,6 +77,7 @@ export function renderScore(session: RecordedSession): Score {
     const event = engine.step(analyzer.process(key));
     if (!event) return;
     const placed = scheduler.schedule(event, key.timestamp / 1000);
+    if (!placed) return;
     // Mirror LegatoLead: a word's first note re-attacks softly, live and on
     // export alike. Slur notes can't be mirrored exactly either way — live
     // they inherit the previous attack via setNote rather than re-attacking —

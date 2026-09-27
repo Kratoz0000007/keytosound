@@ -43,35 +43,58 @@ describe('nextGridTime', () => {
 describe('Scheduler', () => {
   it('places a note on a grid slot at or after now', () => {
     const scheduler = new Scheduler(120, 0);
-    const scheduled = scheduler.schedule(event(), 1.1);
+    const scheduled = scheduler.schedule(event(), 1.1)!;
     expect(scheduled.time).toBeGreaterThanOrEqual(1.1);
   });
 
   it('uses a finer grid for a 16th-note subdivision than an 8th', () => {
     // Separate schedulers: one instance remembers its last slot, which would
     // push the second note forward and invalidate the comparison.
-    const eighth = new Scheduler(120, 0).schedule(event({ subdivision: 8 }), 1.01);
-    const sixteenth = new Scheduler(120, 0).schedule(event({ subdivision: 16 }), 1.01);
+    const eighth = new Scheduler(120, 0).schedule(event({ subdivision: 8 }), 1.01)!;
+    const sixteenth = new Scheduler(120, 0).schedule(event({ subdivision: 16 }), 1.01)!;
     expect(sixteenth.time - 1.01).toBeLessThan(eighth.time - 1.01);
   });
 
   it('converts beat duration to seconds using the tempo', () => {
     const scheduler = new Scheduler(120, 0);
-    const scheduled = scheduler.schedule(event({ durationBeats: 2 }), 0);
+    const scheduled = scheduler.schedule(event({ durationBeats: 2 }), 0)!;
     expect(scheduled.durationSeconds).toBeCloseTo(1);
   });
 
   it('carries pitch and velocity through unchanged', () => {
     const scheduler = new Scheduler(90, 0);
-    const scheduled = scheduler.schedule(event({ pitch: 64, velocity: 0.42 }), 0);
+    const scheduled = scheduler.schedule(event({ pitch: 64, velocity: 0.42 }), 0)!;
     expect(scheduled.pitch).toBe(64);
     expect(scheduled.velocity).toBeCloseTo(0.42);
   });
 
   it('never schedules two notes into the same slot', () => {
     const scheduler = new Scheduler(120, 0);
-    const a = scheduler.schedule(event(), 1.0);
-    const b = scheduler.schedule(event(), 1.0);
+    const a = scheduler.schedule(event(), 1.0)!;
+    const b = scheduler.schedule(event(), 1.0)!;
     expect(b.time).toBeGreaterThan(a.time);
+  });
+
+  it('squeezes a note whose slot is taken into the next 32nd, not the next slot', () => {
+    const scheduler = new Scheduler(120, 0);
+    const a = scheduler.schedule(event({ subdivision: 16 }), 1.0)!;
+    const b = scheduler.schedule(event({ subdivision: 16 }), 1.0)!;
+    expect(b.time - a.time).toBeCloseTo(secondsPerBeat(120) / 8);
+  });
+
+  it('never lets typing faster than the grid fall behind', () => {
+    // 84 bpm, keys every 60ms: faster than even a 32nd (89ms). Notes that
+    // cannot sound within one 16th of their key are dropped, not queued.
+    const scheduler = new Scheduler(84, 0);
+    const sixteenth = secondsPerBeat(84) / 4;
+    let played = 0;
+    for (let i = 0; i < 60; i++) {
+      const now = i * 0.06;
+      const placed = scheduler.schedule(event({ subdivision: 16 }), now);
+      if (!placed) continue;
+      played++;
+      expect(placed.time - now).toBeLessThanOrEqual(sixteenth + 1e-9);
+    }
+    expect(played).toBeGreaterThan(30);
   });
 });
