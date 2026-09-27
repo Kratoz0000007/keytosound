@@ -221,11 +221,15 @@ describe('determinism contract', () => {
     expect(second).toEqual(first);
   });
 
-  it('produces a different sequence for a different seed', () => {
-    const session = sentenceFeatures();
-    const a = renderSession(session, preset, 1);
-    const b = renderSession(session, preset, 2);
-    expect(b).not.toEqual(a);
+  it('leaves to the seed only what words do not decide: punctuation and erasing', () => {
+    // Words play the same whatever the seed (see 'sentence as score'); the
+    // transition engine, and so the seed, still picks these notes.
+    const keys = [...'no! so? ok, yes. go! '.repeat(3)];
+    for (let i = 0; i < 6; i++) keys.push('Backspace');
+    const analyzer = new TypingAnalyzer();
+    const session = keys.map((key, i) => analyzer.process({ key, timestamp: 150 * (i + 1) }));
+    const played = [1, 2, 3, 4].map((seed) => renderSession(session, preset, seed));
+    expect(played.some((events) => JSON.stringify(events) !== JSON.stringify(played[0]))).toBe(true);
   });
 
   it('produces a different sequence for a different genre', () => {
@@ -282,6 +286,41 @@ describe('sentence as score', () => {
     expect(second).toHaveLength(4);
     // Direction of every move matches; the clash nudge may resize a step.
     expect(shape(second)).toEqual(shape(first));
+  });
+
+  /** Types words through one engine, a key every 100ms, and the pitches each word played. */
+  function typeWords(words: string[], seed: number): number[][] {
+    const engine = new MusicEngine(lofi, seed);
+    const analyzer = new TypingAnalyzer();
+    let t = 0;
+    return words.map((word) => {
+      const out: number[] = [];
+      for (const ch of word + ' ') {
+        t += 100;
+        const event = engine.step(analyzer.process({ key: ch, timestamp: t }));
+        if (event && ch !== ' ') out.push(event.pitch);
+      }
+      return out;
+    });
+  }
+
+  it('plays a repeated word with the very same notes over the same chord', () => {
+    // All inside the first bar (3.2s at 75 bpm), so every word hears one chord.
+    const [first, , second, , third] = typeWords(['rain', 'on', 'rain', 'slow', 'rain'], 7);
+    expect(first).toHaveLength(4);
+    expect(second).toEqual(first);
+    expect(third).toEqual(first);
+  });
+
+  it('plays a word the same whatever the random seed', () => {
+    const played = [1, 2, 3, 4, 5].map((seed) => typeWords(['harbour'], seed)[0]);
+    for (const notes of played) expect(notes).toEqual(played[0]);
+  });
+
+  it('gives different words different tunes', () => {
+    const [rain, town, quiet] = typeWords(['rain', 'town', 'quiet'], 7);
+    expect(town).not.toEqual(rain.slice(0, town.length));
+    expect(quiet.slice(0, 4)).not.toEqual(rain);
   });
 
   it('shares an opening between words that share a prefix', () => {

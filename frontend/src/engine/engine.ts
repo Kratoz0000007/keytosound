@@ -1,7 +1,7 @@
 import { BeatPattern, type BeatEdit, type Voice } from './beat';
 import { Harmony, type BarHarmony, type CadenceKind } from './harmony';
 import { mapFeatures } from './mapper';
-import { motifPitch, motifStep } from './motif';
+import { fnv1a, motifPitch, motifSteps } from './motif';
 import { createPrng } from './prng';
 import { isChordTone, pitchClass, scalePitchesInRange, SCALES } from './theory';
 import { registerWindow, selectNextPitch } from './transition';
@@ -50,11 +50,20 @@ function initialState(preset: GenrePreset, bar: BarHarmony): MusicalState {
 }
 
 /**
+ * The chord tones a word can start on: root, third, fifth. Three for every
+ * chord, triad or seventh, so a letter's choice does not shift between them.
+ */
+const START_ROLES = 3;
+
+/**
  * Turns typing into music. Each key has one job:
  *
- * - the first letter of a word: the transition engine chooses where the word
- *   starts, joining it to the last one and steering toward any cadence target;
- * - later letters: the word's own motif, a shape hashed from its letters;
+ * - the first letter of a word: the word starts on a chord tone its letter
+ *   picks (root, third or fifth of whatever chord is playing), near the
+ *   middle of the register, or on the cadence target after punctuation;
+ * - later letters: the word's own motif, a shape hashed from its letters and
+ *   measured from the word's first note, so the same word always plays the
+ *   same tune over the same chord, and the same shape over any other;
  * - space: the word lands on a nearby chord tone;
  * - punctuation and Enter: harmony (cadences, modulation) via Harmony;
  * - digits: the drum loop via BeatPattern;
@@ -68,6 +77,8 @@ export class MusicEngine {
   private beat: BeatPattern;
   private pendingTarget: CadenceKind | null = null;
   private lastEdit: BeatEdit | null = null;
+  /** The current word's first note: every later letter is placed from it. */
+  private wordStart: number | null = null;
 
   constructor(
     private readonly preset: GenrePreset,
@@ -87,6 +98,7 @@ export class MusicEngine {
     this.eventCount = 0;
     this.pendingTarget = null;
     this.lastEdit = null;
+    this.wordStart = null;
   }
 
   getState(): Readonly<MusicalState> {
@@ -194,12 +206,19 @@ export class MusicEngine {
     if (f.wordLength > 0) return this.landingPitch();
 
     const letters = f.wordPrefix.length;
-    if (letters === 1) return this.wordStartPitch(params);
+    if (letters === 1) {
+      this.wordStart = this.wordStartPitch(f.wordPrefix, params);
+      return this.wordStart;
+    }
     if (letters >= 2) {
       const [floor, ceiling] = registerWindow(this.preset);
+      // The whole shape so far, from the word's first note. Stepping from the
+      // previous note instead let one chord-clash nudge shift every later
+      // letter, so a repeated word came out as a different tune.
+      const steps = motifSteps(f.wordPrefix).reduce((sum, step) => sum + step, 0);
       return motifPitch({
-        previousPitch: this.state.previousPitch,
-        step: motifStep(f.wordPrefix),
+        previousPitch: this.wordStart ?? this.state.previousPitch,
+        step: steps,
         keyRoot: this.state.keyRoot,
         scale: this.state.scale,
         chord: this.state.currentChord,
@@ -211,13 +230,32 @@ export class MusicEngine {
     return null;
   }
 
-  /** Where a word begins is the one real decision per word, and the transition engine makes it. */
-  private wordStartPitch(params: MappedParams): number | null {
-    this.state.targetPitchClass = this.targetPitchClass();
-    const pitch = selectNextPitch(this.state, params, this.preset, this.rng);
-    this.state.targetPitchClass = null;
+  /**
+   * Where a word begins. Its first letter picks a chord tone by role, not a
+   * note: 't' might start on the third of every chord, which is a different
+   * pitch in each. The octave is the one nearest the middle of the register,
+   * so a word comes back where it was rather than wherever the last one left
+   * off. Punctuation's cadence target wins, so a sentence still resolves.
+   */
+  private wordStartPitch(letter: string, params: MappedParams): number | null {
+    const target = this.targetPitchClass();
     this.pendingTarget = null;
-    return pitch;
+
+    const chord = this.state.currentChord;
+    const first = fnv1a(letter) % START_ROLES;
+    const roles = [0, 1, 2].map((r) => pitchClass(chord.root + chord.intervals[(first + r) % START_ROLES]));
+    const wanted = target !== null ? [target, ...roles] : roles;
+
+    const [floor, ceiling] = registerWindow(this.preset);
+    const inScale = scalePitchesInRange(this.state.keyRoot, this.state.scale, floor, ceiling);
+    const centre = this.preset.centerPitch;
+    // A chord tone outside a pentatonic scale is skipped for the next role.
+    for (const pc of wanted) {
+      const options = inScale.filter((p) => pitchClass(p) === pc);
+      if (options.length === 0) continue;
+      return options.reduce((best, p) => (Math.abs(p - centre) < Math.abs(best - centre) ? p : best));
+    }
+    return selectNextPitch(this.state, params, this.preset, this.rng);
   }
 
   private targetPitchClass(): number | null {

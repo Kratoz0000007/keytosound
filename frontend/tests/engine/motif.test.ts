@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fnv1a, motifPitch, motifStep, motifSteps, STEP_TABLE } from '../../src/engine/motif';
+import { fnv1a, motifPitch, motifStep, motifSteps, STEP_TABLE, WORD_SPAN } from '../../src/engine/motif';
 import { clashesWithChord, scalePitchesInRange } from '../../src/engine/theory';
 import type { Chord } from '../../src/engine/types';
 
@@ -23,6 +23,16 @@ describe('motifStep', () => {
     for (const w of ['a', 'ab', 'hello', 'zzz', 'rainbow', "don't"]) {
       expect(STEP_TABLE).toContain(motifStep(w));
       expect(motifStep(w)).not.toBe(0);
+    }
+  });
+
+  it('keeps even a long word within a few degrees of its first note', () => {
+    for (const word of ['extraordinarily', 'supercalifragilistic', 'mmmmmmmmmmmmmm', 'abcdefghijklmnop']) {
+      let offset = 0;
+      for (const step of motifSteps(word)) {
+        offset += step;
+        expect(Math.abs(offset)).toBeLessThanOrEqual(WORD_SPAN);
+      }
     }
   });
 
