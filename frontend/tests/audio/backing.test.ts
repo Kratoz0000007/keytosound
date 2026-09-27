@@ -25,13 +25,23 @@ class FakeSampler extends FakeNode {
   }
 }
 
-const players: FakePlayer[] = [];
-class FakePlayer extends FakeNode {
+/** One per recorded hit file; never loaded, like the samplers. */
+const players: FakeBuffer[] = [];
+class FakeBuffer extends FakeNode {
   loaded = false;
-  start = vi.fn();
   constructor() {
     super();
     players.push(this);
+  }
+}
+
+/** A fresh source per hit that actually plays a recording. */
+const hitSources: FakeNode[] = [];
+class FakeBufferSource extends FakeNode {
+  start = vi.fn();
+  constructor() {
+    super();
+    hitSources.push(this);
   }
 }
 
@@ -63,7 +73,9 @@ vi.mock('tone', () => ({
   NoiseSynth: FakeNode,
   Filter: FakeNode,
   Sampler: FakeSampler,
-  Player: FakePlayer,
+  ToneAudioBuffer: FakeBuffer,
+  ToneBufferSource: FakeBufferSource,
+  Volume: FakeNode,
   Sequence: FakeSequence,
   Time: () => ({ toSeconds: () => 0.125 }),
   Frequency: () => ({ toNote: () => 'C4' }),
@@ -103,8 +115,8 @@ describe('BackingBand', () => {
     const engine = new MusicEngine(GENRES.classical, 1);
     const band = new BackingBand(GENRES.classical, () => engine);
     band.trigger('kick', 1);
-    // Fake players never report loaded, so every hit must go to the synth.
-    expect(players.every((p) => p.start.mock.calls.length === 0)).toBe(true);
+    // Fake buffers never report loaded, so every hit must go to the synth.
+    expect(hitSources).toHaveLength(0);
     band.dispose();
   });
 
