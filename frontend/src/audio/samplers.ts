@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import { sampleUrl, type HitSamples, type PitchedSamples } from './sampleLibrary';
+import { sampleUrl, type AmbienceSamples, type HitSamples, type PitchedSamples } from './sampleLibrary';
 import type { PlayerLike } from './sampledVoices';
 
 /** One warning per failed folder, then the voice quietly stays on its synth. */
@@ -59,4 +59,55 @@ export function createPlayers(samples: HitSamples): PlayerLike[] {
         warn(samples.dir, error),
       ),
   );
+}
+
+/**
+ * A recording looped under the whole band, like Lo-Fi's vinyl hiss. It has no
+ * synth stand-in: until the file loads there is simply no bed. start() made
+ * while loading takes effect on load, unless stop() came first.
+ */
+export class Ambience {
+  private readonly buffer: Tone.ToneAudioBuffer;
+  private readonly output: Tone.Volume;
+  private source: Tone.ToneBufferSource | null = null;
+  private wanted = false;
+
+  constructor(samples: AmbienceSamples) {
+    this.output = new Tone.Volume(samples.volume).toDestination();
+    this.buffer = new Tone.ToneAudioBuffer(
+      sampleUrl(samples.dir, samples.file),
+      () => {
+        if (this.wanted) this.play();
+      },
+      (error) => warn(samples.dir, error),
+    );
+  }
+
+  start(): void {
+    this.wanted = true;
+    if (this.buffer.loaded) this.play();
+  }
+
+  stop(): void {
+    this.wanted = false;
+    const source = this.source;
+    this.source = null;
+    if (!source) return;
+    source.stop();
+    source.dispose();
+  }
+
+  dispose(): void {
+    this.stop();
+    this.buffer.dispose();
+    this.output.dispose();
+  }
+
+  private play(): void {
+    if (this.source) return;
+    const source = new Tone.ToneBufferSource(this.buffer).connect(this.output);
+    source.loop = true;
+    source.start();
+    this.source = source;
+  }
 }

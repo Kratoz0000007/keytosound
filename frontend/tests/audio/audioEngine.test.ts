@@ -36,10 +36,11 @@ const bands: {
   start: ReturnType<typeof vi.fn>;
   dispose: ReturnType<typeof vi.fn>;
   release: ReturnType<typeof vi.fn>;
+  startAmbience: ReturnType<typeof vi.fn>;
 }[] = [];
 vi.mock('../../src/audio/backing', () => ({
   BackingBand: vi.fn(function () {
-    const band = { start: vi.fn(), dispose: vi.fn(), release: vi.fn() };
+    const band = { start: vi.fn(), dispose: vi.fn(), release: vi.fn(), startAmbience: vi.fn() };
     bands.push(band);
     return band;
   }),
@@ -131,6 +132,18 @@ describe('AudioEngine', () => {
     engine.pause();
     engine.play(NOTE);
     expect(transport.scheduleOnce).not.toHaveBeenCalled();
+  });
+
+  it('runs the ambience bed only while the beat plays', async () => {
+    const engine = new AudioEngine(GENRES.lofi);
+    await engine.start();
+    expect(bands[0].startAmbience).toHaveBeenCalledTimes(1);
+    engine.pause();
+    engine.setGenre(GENRES.jazz);
+    // Built while paused: the new band's bed waits for resume.
+    expect(bands[1].startAmbience).not.toHaveBeenCalled();
+    engine.resume();
+    expect(bands[1].startAmbience).toHaveBeenCalledTimes(1);
   });
 
   it('stays paused across a genre switch', async () => {

@@ -4,9 +4,9 @@ import type { BarHarmony } from '../engine/harmony';
 import { pitchClass } from '../engine/theory';
 import type { Chord, GenrePreset, InstrumentId } from '../engine/types';
 import { DEFAULT_KIT, KITS } from './kits';
-import { KIT_SAMPLES, PITCHED, type DrumVoice } from './sampleLibrary';
+import { AMBIENCE, KIT_SAMPLES, PITCHED, type DrumVoice } from './sampleLibrary';
 import { SampledChords, SampledHit, type ChordVoice } from './sampledVoices';
-import { createPlayers, createSampler } from './samplers';
+import { Ambience, createPlayers, createSampler } from './samplers';
 
 const STEPS_PER_BAR = 16;
 
@@ -22,9 +22,20 @@ export interface BandSource {
   readonly barMs: number;
 }
 
+/** Where the pad, stab and bass sit when a preset does not say. */
+const DEFAULT_PAD_OCTAVE = 4;
+const DEFAULT_BASS_OCTAVE = 2;
+
+/** The drone sits this much quieter than the pad it shares an instrument with. */
+const DRONE_DB = -6;
+
+function midiNote(pitch: number): string {
+  return Tone.Frequency(pitch, 'midi').toNote();
+}
+
 function chordToNotes(chord: Chord, octave: number): string[] {
   return chord.intervals.map((interval) =>
-    Tone.Frequency(pitchClass(chord.root + interval) + 12 * octave, 'midi').toNote(),
+    midiNote(pitchClass(chord.root + interval) + 12 * octave),
   );
 }
 
@@ -47,10 +58,11 @@ function monoVoice(synth: Tone.MonoSynth): ChordVoice {
 }
 
 /** The recorded instrument when there is one, else the band's synth voice. */
-function recorded(id: InstrumentId | undefined, fallback: ChordVoice): ChordVoice {
+function recorded(id: InstrumentId | undefined, fallback: ChordVoice, gainDb = 0): ChordVoice {
   const samples = id ? PITCHED[id] : undefined;
   if (!samples) return fallback;
-  return new SampledChords(createSampler(samples).toDestination(), fallback);
+  const sampler = createSampler({ ...samples, volume: samples.volume + gainDb });
+  return new SampledChords(sampler.toDestination(), fallback);
 }
 
 /**
@@ -59,6 +71,10 @@ function recorded(id: InstrumentId | undefined, fallback: ChordVoice): ChordVoic
  */
 export class BackingBand {
   private readonly pad: ChordVoice;
+  private readonly drone: ChordVoice | null = null;
+  private readonly ambience: Ambience | null = null;
+  private readonly padOctave: number;
+  private readonly bassOctave: number;
   private readonly bass: ChordVoice;
   private readonly kick: Tone.MembraneSynth;
   private readonly perc: Tone.MembraneSynth;
@@ -73,6 +89,7 @@ export class BackingBand {
   private readonly sampledHits: SampledHit[] = [];
   private sequence: Tone.Sequence<number> | null = null;
   private chord: Chord;
+  private keyRoot: number;
 
   constructor(
     private readonly preset: GenrePreset,
@@ -80,6 +97,9 @@ export class BackingBand {
   ) {
     const kit = KITS[preset.id] ?? DEFAULT_KIT;
     this.chord = preset.progression[0];
+    this.keyRoot = preset.keyRoot;
+    this.padOctave = preset.padOctave ?? DEFAULT_PAD_OCTAVE;
+    this.bassOctave = preset.bassOctave ?? DEFAULT_BASS_OCTAVE;
 
     const pad = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine' },
@@ -87,6 +107,19 @@ export class BackingBand {
     }).toDestination();
     pad.volume.value = -20;
     this.pad = recorded(preset.padInstrument, polyVoice(pad));
+
+    if (preset.drone) {
+      // Its own voice, so a new pad chord never cuts the drone off.
+      const drone = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.8, decay: 0.2, sustain: 0.9, release: 2 },
+      }).toDestination();
+      drone.volume.value = -22;
+      this.drone = recorded(preset.padInstrument, polyVoice(drone), DRONE_DB);
+    }
+
+    const bed = AMBIENCE[preset.id];
+    if (bed) this.ambience = new Ambience(bed);
 
     const bass = new Tone.MonoSynth({
       oscillator: { type: 'square' },
@@ -192,8 +225,13 @@ export class BackingBand {
         if (step === 0) {
           const seconds = transport.getSecondsAtTime(time);
           const bar = Math.max(0, Math.round((seconds * 1000) / source.barMs));
-          this.chord = source.harmonyAt(bar).chord;
-          this.pad.play(chordToNotes(this.chord, 4), '1m', time);
+          const harmony = source.harmonyAt(bar);
+          this.chord = harmony.chord;
+          this.keyRoot = harmony.keyRoot;
+          this.pad.play(chordToNotes(this.chord, this.padOctave), '1m', time);
+          // Sa and Pa of whatever key the music is in, restated every bar.
+          const sa = pitchClass(this.keyRoot) + 12 * this.padOctave;
+          this.drone?.play([midiNote(sa), midiNote(sa + 7)], '1m', time);
         }
 
         for (const voice of VOICES) {
@@ -208,17 +246,24 @@ export class BackingBand {
   /** Plays one voice at `time`. Also used for immediate feedback on a digit press. */
   trigger(voice: Voice, time: number = Tone.now()): void {
     if (voice === 'bass') {
-      const root = Tone.Frequency(pitchClass(this.chord.root) + 24, 'midi').toNote();
+      const root = midiNote(pitchClass(this.chord.root) + 12 * this.bassOctave);
       this.bass.play([root], '8n', time);
     } else if (voice === 'stab') {
-      this.stab.play(chordToNotes(this.chord, 4), '16n', time);
+      this.stab.play(chordToNotes(this.chord, this.padOctave), '16n', time);
     } else {
       this.hit[voice](time);
     }
   }
 
+  /** Starts the genre's ambience bed, if it has one; again after every pause. */
+  startAmbience(): void {
+    this.ambience?.start();
+  }
+
   /** Cuts any held notes; the pad's '1m' chords otherwise ring on after a pause. */
   release(): void {
+    this.ambience?.stop();
+    this.drone?.release();
     this.pad.release();
     this.stab.release();
     this.bass.release();
@@ -231,6 +276,8 @@ export class BackingBand {
     // made moments after Start would abort half-way with no lead instrument.
     this.sequence?.dispose();
     this.pad.dispose();
+    this.drone?.dispose();
+    this.ambience?.dispose();
     this.bass.dispose();
     this.stab.dispose();
     for (const hit of this.sampledHits) hit.dispose();

@@ -28,34 +28,62 @@ export function sampleUrl(dir: string, file = ''): string {
   return `${import.meta.env.BASE_URL}samples/${dir}/${file}`;
 }
 
-const SALAMANDER_NOTES = Object.fromEntries(
-  ['A0', 'C1', 'D#1', 'F#1', 'A1', 'C2', 'D#2', 'F#2', 'A2', 'C3', 'D#3', 'F#3', 'A3', 'C4', 'D#4',
-    'F#4', 'A4', 'C5', 'D#5', 'F#5', 'A5', 'C6', 'D#6', 'F#6', 'A6', 'C7', 'D#7', 'F#7', 'A7', 'C8']
-    .map((note) => [note, `${note.replace('#', 's')}.mp3`]),
-);
+/**
+ * Note name to file, for files named after the pitch they really sound at.
+ * VSCO and VCSL name theirs an octave low, so their files were renamed by
+ * measured pitch (scripts/samples/manifest.json); the names here are true.
+ */
+function named(notes: string[]): Record<string, string> {
+  return Object.fromEntries(notes.map((note) => [note, `${note.replace('#', 's')}.mp3`]));
+}
 
-/** The seven notes the string samples were taken at (Task 1 manifest). */
-const STRING_NOTES = {
-  'F#3': 'Fs3.mp3',
-  A3: 'A3.mp3',
-  C4: 'C4.mp3',
-  E4: 'E4.mp3',
-  G4: 'G4.mp3',
-  B4: 'B4.mp3',
-  D5: 'D5.mp3',
-};
+const STRING_NOTES = named(['F#4', 'A4', 'C5', 'E5', 'G5', 'B5', 'D6']);
 
 export const PITCHED: Partial<Record<InstrumentId, PitchedSamples>> = {
-  grandPiano: { dir: 'grand-piano', notes: SALAMANDER_NOTES, volume: -4, release: 1.2 },
+  grandPiano: {
+    dir: 'grand-piano',
+    notes: named(['A0', 'C1', 'D#1', 'F#1', 'A1', 'C2', 'D#2', 'F#2', 'A2', 'C3', 'D#3', 'F#3',
+      'A3', 'C4', 'D#4', 'F#4', 'A4', 'C5', 'D#5', 'F#5', 'A5', 'C6', 'D#6', 'F#6', 'A6', 'C7',
+      'D#7', 'F#7', 'A7', 'C8']),
+    volume: -4,
+    release: 1.2,
+  },
   strings: { dir: 'strings', notes: STRING_NOTES, volume: -16, release: 1 },
   stringsPizz: { dir: 'strings-pizz', notes: STRING_NOTES, volume: -10, release: 0.3 },
   contrabassArco: {
     dir: 'contrabass-arco',
-    notes: { C1: 'C1.mp3', E1: 'E1.mp3', 'G#1': 'Gs1.mp3', 'C#2': 'Cs2.mp3' },
+    notes: named(['C2', 'E2', 'G#2', 'C#3']),
     volume: -10,
     release: 0.6,
   },
+  contrabassPizz: {
+    dir: 'contrabass-pizz',
+    notes: named(['E1', 'G1', 'A#1', 'C2', 'E2', 'G#2', 'C#3', 'E3']),
+    volume: -6,
+    release: 0.4,
+  },
+  tenorSax: {
+    dir: 'tenor-sax',
+    notes: named(['C4', 'D4', 'E4', 'F#4', 'A#4', 'C5', 'D5', 'E5', 'G5', 'A#5', 'C6', 'D6']),
+    volume: -8,
+    release: 0.25,
+  },
+  harmonium: {
+    dir: 'harmonium',
+    notes: named(['C2', 'D#2', 'G2', 'A#2', 'C3', 'D#3', 'F#3', 'A3', 'C4', 'D#4', 'F#4', 'A4',
+      'C5', 'D5']),
+    volume: -10,
+    release: 0.4,
+  },
+  uprightPiano: {
+    dir: 'upright-piano',
+    notes: named(['C2', 'G2', 'C3', 'G3', 'C4', 'G4', 'C5', 'G5']),
+    volume: -6,
+    release: 1,
+  },
 };
+
+const TABLA = 'tabla';
 
 /** Recorded hits per genre id. A voice left out keeps its synth sound. */
 export const KIT_SAMPLES: Record<string, Partial<Record<DrumVoice, HitSamples>>> = {
@@ -68,4 +96,46 @@ export const KIT_SAMPLES: Record<string, Partial<Record<DrumVoice, HitSamples>>>
     clap: { dir: 'cymbals', files: ['crash-1.mp3', 'crash-2.mp3'], volume: -16 },
     fx: { dir: 'cymbals', files: ['swell.mp3'], volume: -14 },
   },
+  // Tabla bols on the drum keys: ghe is the deep left hand, na and te/ke the
+  // sharp right hand, tun the ringing open stroke.
+  sufi: {
+    kick: { dir: TABLA, files: ['ghe-1.mp3', 'ghe-2.mp3', 'ghe-3.mp3'], volume: -4 },
+    snare: { dir: TABLA, files: ['na-1.mp3', 'na-2.mp3'], volume: -6 },
+    hat: { dir: TABLA, files: ['te-1.mp3', 'ke-1.mp3', 'te-2.mp3', 'ke-2.mp3'], volume: -8 },
+    openHat: { dir: TABLA, files: ['tun-1.mp3', 'tun-2.mp3'], volume: -8 },
+    clap: { dir: 'claps', files: ['1.mp3', '2.mp3', '3.mp3', '4.mp3'], volume: -10 },
+    perc: { dir: 'daf', files: ['low-1.mp3', 'high-1.mp3', 'low-2.mp3', 'high-2.mp3'], volume: -8 },
+    fx: { dir: 'finger-cymbals', files: ['1.mp3'], volume: -14 },
+  },
+  // A brushed small-group kit: the hat voice is the ride, which carries the
+  // swing, and the clap is the hi-hat's foot chick.
+  jazz: {
+    kick: { dir: 'jazz-kit', files: ['kick-1.mp3', 'kick-2.mp3'], volume: -8 },
+    snare: { dir: 'jazz-kit', files: ['snare-1.mp3', 'snare-2.mp3'], volume: -8 },
+    hat: { dir: 'jazz-kit', files: ['ride-1.mp3', 'ride-2.mp3'], volume: -16 },
+    openHat: { dir: 'jazz-kit', files: ['open-hat-1.mp3', 'open-hat-2.mp3'], volume: -18 },
+    clap: { dir: 'jazz-kit', files: ['chick-1.mp3', 'chick-2.mp3'], volume: -12 },
+    perc: { dir: 'jazz-kit', files: ['tom.mp3'], volume: -10 },
+    fx: { dir: 'cymbals', files: ['swell.mp3'], volume: -16 },
+  },
+  lofi: {
+    kick: { dir: 'lofi-kit', files: ['kick-1.mp3', 'kick-2.mp3'], volume: -4 },
+    snare: { dir: 'lofi-kit', files: ['snare-1.mp3', 'snare-2.mp3'], volume: -8 },
+    hat: { dir: 'lofi-kit', files: ['hat-1.mp3', 'hat-2.mp3'], volume: -16 },
+    openHat: { dir: 'jazz-kit', files: ['open-hat-1.mp3', 'open-hat-2.mp3'], volume: -20 },
+    clap: { dir: 'claps', files: ['1.mp3', '2.mp3', '3.mp3', '4.mp3'], volume: -12 },
+    perc: { dir: 'lofi-kit', files: ['tom.mp3'], volume: -10 },
+    fx: { dir: 'vinyl', files: ['scratch.mp3'], volume: -12 },
+  },
+};
+
+/** A quiet recording looped under a genre for as long as the beat runs. */
+export interface AmbienceSamples {
+  dir: string;
+  file: string;
+  volume: number;
+}
+
+export const AMBIENCE: Record<string, AmbienceSamples> = {
+  lofi: { dir: 'vinyl', file: 'hiss.mp3', volume: -24 },
 };

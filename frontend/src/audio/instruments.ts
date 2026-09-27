@@ -44,6 +44,7 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
 
     // The recorded instruments' stand-ins until their samples load.
     case 'grandPiano':
+    case 'uprightPiano':
       return new Tone.Synth({
         oscillator: { type: 'triangle' },
         envelope: { attack: 0.005, decay: 0.4, sustain: 0.25, release: 1.2 },
@@ -61,7 +62,31 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
         envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 },
       });
 
+    // Breathy and slow to speak, like a reed.
+    case 'tenorSax':
+      return new Tone.FMSynth({
+        harmonicity: 1,
+        modulationIndex: 2.5,
+        envelope: { attack: 0.06, decay: 0.2, sustain: 0.7, release: 0.3 },
+      });
+
+    // Bellows-driven reeds: a buzzy tone that holds as long as the key does.
+    case 'harmonium':
+      return new Tone.Synth({
+        oscillator: { type: 'fatsquare', count: 2, spread: 12 },
+        envelope: { attack: 0.08, decay: 0.2, sustain: 0.8, release: 0.4 },
+      });
+
+    // Three detuned saws: the wide 80s lead. Chorus is added in createLead.
+    case 'synthPad':
+      return new Tone.Synth({
+        oscillator: { type: 'fatsawtooth', count: 3, spread: 30 },
+        envelope: { attack: 0.8, decay: 0.5, sustain: 0.7, release: 2 },
+      });
+
     case 'contrabassArco':
+    case 'contrabassPizz':
+    case 'synthBass':
     case 'bass':
       return new Tone.MonoSynth({
         oscillator: { type: 'square' },

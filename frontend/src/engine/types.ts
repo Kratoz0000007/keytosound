@@ -4,7 +4,7 @@
  * modes below reintroduce that risk and must be paired with heavier
  * chordTone weighting; see the Jazz and Classical presets.
  */
-export type ScaleName = 'majorPentatonic' | 'minorPentatonic' | 'dorian' | 'major';
+export type ScaleName = 'majorPentatonic' | 'minorPentatonic' | 'dorian' | 'major' | 'bhairav';
 
 export type InstrumentId =
   | 'piano'
@@ -16,7 +16,14 @@ export type InstrumentId =
   | 'grandPiano'
   | 'strings'
   | 'stringsPizz'
-  | 'contrabassArco';
+  | 'contrabassArco'
+  | 'contrabassPizz'
+  | 'tenorSax'
+  | 'harmonium'
+  | 'uprightPiano'
+  // Synth-only patches: no recordings, just a voice of their own.
+  | 'synthPad'
+  | 'synthBass';
 
 export type GestureShape = 'flat' | 'rise' | 'fall' | 'arch';
 
@@ -110,6 +117,15 @@ export interface GenrePreset {
   bassInstrument?: InstrumentId;
   /** The stab voice's instrument. Absent: the kit's synth stab. */
   stabInstrument?: InstrumentId;
+  /**
+   * Octave of the pad and stab chords: pitch class + 12 x padOctave, so 4 puts
+   * them from C3 up. Absent: 4. Recorded instruments sit where they sound real.
+   */
+  padOctave?: number;
+  /** Octave of the bass root, as padOctave. Absent: 2, from C1 up. */
+  bassOctave?: number;
+  /** Holds the key's root and fifth under every bar, on the pad instrument. */
+  drone?: boolean;
   groove: Groove;
 }
 

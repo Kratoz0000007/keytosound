@@ -11,7 +11,17 @@ import { GENRES } from '../../src/engine/presets';
  */
 describe('MIDI export vocabulary', () => {
   it('every genre lead instrument is one the backend Score pattern accepts', () => {
-    const acceptedByBackend = ['piano', 'electricPiano', 'synthLead', 'eightBit', 'bass', 'grandPiano'];
+    const acceptedByBackend = [
+      'piano',
+      'electricPiano',
+      'synthLead',
+      'eightBit',
+      'bass',
+      'grandPiano',
+      'uprightPiano',
+      'tenorSax',
+      'harmonium',
+    ];
     for (const genre of Object.values(GENRES)) {
       expect(acceptedByBackend).toContain(genre.leadInstrument);
     }

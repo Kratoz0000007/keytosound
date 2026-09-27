@@ -124,6 +124,23 @@ class MidiWriterTest {
     }
 
     @Test
+    void writesEachRecordedLeadAsItsGeneralMidiProgram() throws Exception {
+        var expected = java.util.Map.of("uprightPiano", 0, "tenorSax", 66, "harmonium", 20);
+        for (var entry : expected.entrySet()) {
+            Score score = new Score(120, entry.getKey(), score().lead(), score().pad(), score().bass(), score().drums());
+            Track lead = read(writer.write("rain", score)).getTracks()[1];
+            int program = -1;
+            for (int i = 0; i < lead.size(); i++) {
+                if (lead.get(i).getMessage() instanceof ShortMessage m
+                        && m.getCommand() == ShortMessage.PROGRAM_CHANGE) {
+                    program = m.getData1();
+                }
+            }
+            assertThat(program).as(entry.getKey()).isEqualTo(entry.getValue());
+        }
+    }
+
+    @Test
     void neverWritesAZeroLengthNote() throws Exception {
         Score tiny = new Score(120, "piano", List.of(new ScoreNote(60, 0.0, 0.0001, 0.5)),
                 List.of(), List.of(), List.of());

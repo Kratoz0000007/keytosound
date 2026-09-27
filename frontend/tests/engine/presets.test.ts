@@ -3,8 +3,8 @@ import { GENRES, DEFAULT_GENRE_ID } from '../../src/engine/presets';
 import { SCALES } from '../../src/engine/theory';
 
 describe('GENRES', () => {
-  it('ships five genres', () => {
-    expect(Object.keys(GENRES)).toHaveLength(5);
+  it('ships six genres', () => {
+    expect(Object.keys(GENRES)).toHaveLength(6);
   });
 
   it('has a valid default', () => {
@@ -69,4 +69,28 @@ describe('GENRES', () => {
       });
     });
   }
+
+  describe('sufi', () => {
+    const sufi = GENRES.sufi;
+
+    it('builds every chord from Bhairav tones only', () => {
+      for (const chord of sufi.progression) {
+        for (const interval of chord.intervals) {
+          const degree = (((chord.root + interval - sufi.keyRoot) % 12) + 12) % 12;
+          expect(SCALES.bhairav).toContain(degree);
+        }
+      }
+    });
+
+    it('starts and ends its progression on Sa', () => {
+      expect(sufi.progression[0].root).toBe(sufi.keyRoot);
+      expect(sufi.progression.at(-1)!.root).toBe(sufi.keyRoot);
+    });
+
+    it('holds a drone on the harmonium and never glides', () => {
+      expect(sufi.drone).toBe(true);
+      expect(sufi.padInstrument).toBe('harmonium');
+      expect(sufi.glideSeconds).toBe(0);
+    });
+  });
 });

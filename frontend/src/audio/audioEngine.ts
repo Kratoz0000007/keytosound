@@ -59,7 +59,10 @@ export class AudioEngine {
     this.backing = new BackingBand(this.preset, this.source);
     this.backing.start();
     // A paused engine stays paused across a genre switch; resume() starts it.
-    if (!this.paused) transport.start();
+    if (!this.paused) {
+      transport.start();
+      this.backing.startAmbience();
+    }
     this.scheduler = new Scheduler(this.preset.bpm, transportSeconds());
   }
 
@@ -115,6 +118,7 @@ export class AudioEngine {
   resume(): void {
     if (!this.started || !this.paused) return;
     Tone.getTransport().start();
+    this.backing?.startAmbience();
     this.paused = false;
   }
 

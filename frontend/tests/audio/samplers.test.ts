@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 const sources: FakeSource[] = [];
 class FakeSource {
   onended: (() => void) | null = null;
+  loop = false;
   start = vi.fn();
+  stop = vi.fn();
   dispose = vi.fn();
   constructor() {
     sources.push(this);
@@ -13,9 +15,21 @@ class FakeSource {
   }
 }
 
+/** Loaded at once unless a test says otherwise; onload is kept to fire later. */
+let loadedOnCreate = true;
+const buffers: FakeBuffer[] = [];
 class FakeBuffer {
-  loaded = true;
+  loaded = loadedOnCreate;
   dispose = vi.fn();
+  readonly onload?: () => void;
+  constructor(_url: string, onload?: () => void) {
+    this.onload = onload;
+    buffers.push(this);
+  }
+  finishLoading() {
+    this.loaded = true;
+    this.onload?.();
+  }
 }
 
 class FakeVolume {
@@ -31,7 +45,7 @@ vi.mock('tone', () => ({
   Volume: FakeVolume,
 }));
 
-const { createPlayers } = await import('../../src/audio/samplers');
+const { Ambience, createPlayers } = await import('../../src/audio/samplers');
 
 describe('createPlayers', () => {
   it('plays every hit on its own source, so out-of-order times cannot collide', () => {
@@ -61,5 +75,50 @@ describe('createPlayers', () => {
 
   it('makes one player per file', () => {
     expect(createPlayers({ dir: 'timpani', files: ['a.mp3', 'b.mp3'], volume: -4 })).toHaveLength(2);
+  });
+});
+
+describe('Ambience', () => {
+  const hiss = { dir: 'vinyl', file: 'hiss.mp3', volume: -24 };
+
+  it('loops the bed once started, and stops and frees it on stop', () => {
+    const bed = new Ambience(hiss);
+    const before = sources.length;
+    bed.start();
+    const source = sources.at(-1)!;
+    expect(sources).toHaveLength(before + 1);
+    expect(source.loop).toBe(true);
+    expect(source.start).toHaveBeenCalled();
+
+    bed.stop();
+    expect(source.stop).toHaveBeenCalled();
+    expect(source.dispose).toHaveBeenCalled();
+  });
+
+  it('never plays two copies when started twice', () => {
+    const bed = new Ambience(hiss);
+    const before = sources.length;
+    bed.start();
+    bed.start();
+    expect(sources).toHaveLength(before + 1);
+    bed.dispose();
+  });
+
+  it('starts on load if asked while loading, but not if stopped since', () => {
+    loadedOnCreate = false;
+    const wanted = new Ambience(hiss);
+    const unwanted = new Ambience(hiss);
+    loadedOnCreate = true;
+    const [wantedBuffer, unwantedBuffer] = buffers.slice(-2);
+    const before = sources.length;
+
+    wanted.start();
+    unwanted.start();
+    unwanted.stop();
+    expect(sources).toHaveLength(before);
+
+    wantedBuffer.finishLoading();
+    unwantedBuffer.finishLoading();
+    expect(sources).toHaveLength(before + 1);
   });
 });

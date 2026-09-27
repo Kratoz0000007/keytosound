@@ -68,6 +68,11 @@ describe('maxScaleStep', () => {
     expect(maxScaleStep('major')).toBe(2);
   });
 
+  it("counts Bhairav's augmented second as its largest step", () => {
+    // Flat 2nd up to the major 3rd: the gap that gives the raag its ache.
+    expect(maxScaleStep('bhairav')).toBe(3);
+  });
+
   it('accounts for the wrap back to the octave', () => {
     // minorPentatonic ends on 10, so the final gap is 10 -> 12, not 10 -> 0.
     expect(maxScaleStep('minorPentatonic')).toBeLessThan(10);

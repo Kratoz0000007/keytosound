@@ -189,9 +189,55 @@ export const GENRES: Record<string, GenrePreset> = {
     padInstrument: 'strings',
     bassInstrument: 'contrabassArco',
     stabInstrument: 'stringsPizz',
+    // Violins from C4 and the double bass from C2, where the instruments live.
+    padOctave: 5,
+    bassOctave: 3,
     // A full drum kit under a piano line would be absurd, but no pulse at all
     // reads as the band having stopped. A soft downbeat is the compromise.
     groove: SOFT_PULSE,
+  },
+
+  sufi: {
+    id: 'sufi',
+    name: 'Sufi',
+    // In the spirit of a Rahman qawwali: the style only, never any song's melody.
+    scale: 'bhairav',
+    keyRoot: 0, // Sa = C
+    // C - Db - Fm - C: every tone of all three chords is in Bhairav.
+    progression: [major(0), major(1), minor(5), major(0)],
+    bpm: 84,
+    weights: {
+      // Seven notes with two semitone steps: lean on chord tones, as Classical
+      // does, but pull harder toward steps, since Bhairav's augmented seconds
+      // otherwise let the line skip between chord tones half the time.
+      interval: 2.6,
+      chordTone: 2.6,
+      contour: 1.4,
+      register: 1.1,
+      repetition: 0.8,
+      tension: 1.1,
+      target: 1.6,
+    },
+    temperature: 0.24,
+    centerPitch: 67, // G4, the middle of the harmonium's recorded range
+    registerSpread: 10,
+    leadInstrument: 'harmonium',
+    glideSeconds: 0, // reeds cannot slide; notes connect by legato
+    padInstrument: 'harmonium',
+    bassInstrument: 'harmonium',
+    stabInstrument: 'harmonium',
+    bassOctave: 3,
+    drone: true,
+    // An eight-beat keherwa across the bar, two steps a beat: ghe on the deep
+    // beats, na and te answering, handclaps on the first and fifth beats.
+    groove: groove({
+      kick: [0, 2, 12],
+      snare: [4, 8, 14],
+      hat: [6, 10],
+      clap: [0, 8],
+      bass: [0, 8],
+      swing: 0,
+    }),
   },
 };
 

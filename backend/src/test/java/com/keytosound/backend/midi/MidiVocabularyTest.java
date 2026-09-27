@@ -22,7 +22,8 @@ class MidiVocabularyTest {
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     private static final List<String> INSTRUMENTS =
-            List.of("piano", "electricPiano", "synthLead", "eightBit", "bass", "grandPiano");
+            List.of("piano", "electricPiano", "synthLead", "eightBit", "bass", "grandPiano",
+                    "uprightPiano", "tenorSax", "harmonium");
 
     private static final List<String> DRUM_VOICES =
             List.of("kick", "snare", "hat", "openHat", "clap", "perc", "fx");

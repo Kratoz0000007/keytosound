@@ -6,6 +6,8 @@ export const SCALES: Record<ScaleName, number[]> = {
   minorPentatonic: [0, 3, 5, 7, 10],
   dorian: [0, 2, 3, 5, 7, 9, 10],
   major: [0, 2, 4, 5, 7, 9, 11],
+  // Raag Bhairav's notes: flat 2nd and flat 6th give the devotional Sufi colour.
+  bhairav: [0, 1, 4, 5, 7, 8, 11],
 };
 
 /**

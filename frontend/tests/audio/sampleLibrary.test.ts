@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { KIT_SAMPLES, PITCHED, sampleUrl } from '../../src/audio/sampleLibrary';
+import { AMBIENCE, KIT_SAMPLES, PITCHED, sampleUrl } from '../../src/audio/sampleLibrary';
 
 const publicSamples = fileURLToPath(new URL('../../public/samples/', import.meta.url));
 const manifest = JSON.parse(
@@ -23,6 +23,7 @@ function referenced(): string[] {
       for (const file of set!.files) out.push(`${set!.dir}/${file}`);
     }
   }
+  for (const bed of Object.values(AMBIENCE)) out.push(`${bed.dir}/${bed.file}`);
   return out;
 }
 
@@ -53,6 +54,16 @@ describe('sample library', () => {
     }
   });
 
+  it('maps every note to the file named after it', () => {
+    // Files are named by the pitch they were measured at. A note mapped to a
+    // differently named file is how the octave-low library names slipped in.
+    for (const set of Object.values(PITCHED)) {
+      for (const [note, file] of Object.entries(set!.notes)) {
+        expect(file).toBe(`${note.replace('#', 's')}.mp3`);
+      }
+    }
+  });
+
   it('builds URLs under the app base', () => {
     expect(sampleUrl('grand-piano', 'C4.mp3')).toBe('/samples/grand-piano/C4.mp3');
     expect(sampleUrl('grand-piano')).toBe('/samples/grand-piano/');
@@ -66,5 +77,6 @@ describe('sample library', () => {
         expect(set!.volume).toBeLessThanOrEqual(0);
       }
     }
+    for (const bed of Object.values(AMBIENCE)) expect(bed.volume).toBeLessThan(-12);
   });
 });

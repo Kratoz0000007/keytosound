@@ -30,6 +30,7 @@ const PARENT_SCALES: Record<ScaleName, number[]> = {
   majorPentatonic: [0, 2, 4, 5, 7, 9, 11],
   dorian: [0, 2, 3, 5, 7, 9, 10],
   major: [0, 2, 4, 5, 7, 9, 11],
+  bhairav: [0, 1, 4, 5, 7, 8, 11],
 };
 
 export interface BarHarmony {

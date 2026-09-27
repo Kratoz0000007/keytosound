@@ -36,6 +36,9 @@ public class MidiWriter {
     private static final Map<String, Integer> LEAD_PROGRAMS = Map.of(
             "piano", 0, // Acoustic Grand Piano
             "grandPiano", 0, // Acoustic Grand Piano
+            "uprightPiano", 0, // Acoustic Grand Piano
+            "tenorSax", 66, // Tenor Sax
+            "harmonium", 20, // Reed Organ
             "electricPiano", 4, // Electric Piano 1
             "synthLead", 81, // Lead 2 (sawtooth)
             "eightBit", 80, // Lead 1 (square)

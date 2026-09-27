@@ -35,6 +35,7 @@ const SCALE_LABELS: Record<ScaleName, string> = {
   majorPentatonic: 'maj pent',
   dorian: 'dorian',
   major: 'major',
+  bhairav: 'bhairav',
 };
 
 interface Readout {

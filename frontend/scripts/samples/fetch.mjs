@@ -30,8 +30,9 @@ async function download(url, to) {
 /**
  * Mono, 44.1 kHz, 96 kbps MP3. Leading silence is cut so every hit lands on
  * its beat; the tail is faded so a trimmed note never ends in a click.
+ * `start` cuts one note out of a longer recording (the harmonium's run).
  */
-function convert(input, output, { seconds, fade }) {
+function convert(input, output, { start = 0, seconds, fade }) {
   const filters = [
     'silenceremove=start_periods=1:start_threshold=-60dB',
     'asetpts=PTS-STARTPTS',
@@ -39,7 +40,7 @@ function convert(input, output, { seconds, fade }) {
     `afade=t=out:st=${Math.max(0, seconds - fade)}:d=${fade}`,
   ].join(',');
   execFileSync(ffmpeg, [
-    '-v', 'error', '-y', '-i', input,
+    '-v', 'error', '-y', '-ss', String(start), '-i', input,
     '-af', filters,
     '-ac', '1', '-ar', '44100', '-codec:a', 'libmp3lame', '-b:a', '96k',
     output,
