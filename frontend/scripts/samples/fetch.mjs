@@ -40,7 +40,8 @@ function convert(input, output, { start = 0, seconds, fade }) {
     `afade=t=out:st=${Math.max(0, seconds - fade)}:d=${fade}`,
   ].join(',');
   execFileSync(ffmpeg, [
-    '-v', 'error', '-y', '-ss', String(start), '-i', input,
+    // Only seek when cutting: even '-ss 0' drops the single frame of a tiny FLAC.
+    '-v', 'error', '-y', ...(start > 0 ? ['-ss', String(start)] : []), '-i', input,
     '-af', filters,
     '-ac', '1', '-ar', '44100', '-codec:a', 'libmp3lame', '-b:a', '96k',
     output,

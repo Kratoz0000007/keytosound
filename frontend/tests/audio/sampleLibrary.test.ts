@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { AMBIENCE, KIT_SAMPLES, PITCHED, sampleUrl } from '../../src/audio/sampleLibrary';
 
@@ -31,6 +31,13 @@ describe('sample library', () => {
   it('every referenced file exists under public/samples', () => {
     const missing = referenced().filter((path) => !existsSync(`${publicSamples}${path}`));
     expect(missing).toEqual([]);
+  });
+
+  it('every referenced file holds real audio, not an empty MP3 shell', () => {
+    // A 43 ms tabla stroke once converted to a 357-byte file no browser could
+    // decode; the smallest real hit is several KB.
+    const empty = referenced().filter((path) => statSync(`${publicSamples}${path}`).size < 1000);
+    expect(empty).toEqual([]);
   });
 
   it('every referenced file was produced by the manifest, so its source is recorded', () => {
