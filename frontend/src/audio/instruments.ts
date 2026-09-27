@@ -1,6 +1,9 @@
 import * as Tone from 'tone';
 import type { InstrumentId } from '../engine/types';
 import type { LeadVoice } from './lead';
+import { PITCHED } from './sampleLibrary';
+import { SampledLead } from './sampledVoices';
+import { createSampler } from './samplers';
 
 /**
  * A lead voice plus the effects it plays through. Monophonic on purpose: a
@@ -78,13 +81,22 @@ function voiceFor(id: InstrumentId): Tone.Synth | Tone.FMSynth | Tone.MonoSynth 
 /**
  * Each instrument is a Tone.js voice plus its characteristic envelope, sent
  * through a short echo and a small room so consecutive notes blur into each
- * other. Adding one is authoring a case above; nothing in engine/ changes.
+ * other. A recorded instrument plays its synth stand-in until its samples
+ * load. Adding one is authoring a case above; nothing in engine/ changes.
  */
 export function createLead(id: InstrumentId): LeadChain {
-  const voice = voiceFor(id);
+  const synth = voiceFor(id);
   const delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.22, wet: 0.14 });
   const reverb = new Tone.Reverb({ decay: 2.4, wet: 0.24 });
-  voice.chain(delay, reverb, Tone.getDestination());
+  delay.chain(reverb, Tone.getDestination());
+  synth.connect(delay);
+
+  const samples = PITCHED[id];
+  const sampler = samples ? createSampler(samples) : null;
+  sampler?.connect(delay);
+  // SampledLead.dispose disposes the sampler and the synth together.
+  const voice = sampler ? new SampledLead(sampler, synth) : synth;
+
   return {
     voice,
     dispose() {

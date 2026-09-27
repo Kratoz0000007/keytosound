@@ -15,6 +15,26 @@ class FakeNode {
   dispose = vi.fn();
 }
 
+/** Never reports loaded, so the band must keep playing its synth voices. */
+const samplers: FakeSampler[] = [];
+class FakeSampler extends FakeNode {
+  loaded = false;
+  constructor() {
+    super();
+    samplers.push(this);
+  }
+}
+
+const players: FakePlayer[] = [];
+class FakePlayer extends FakeNode {
+  loaded = false;
+  start = vi.fn();
+  constructor() {
+    super();
+    players.push(this);
+  }
+}
+
 const sequences: FakeSequence[] = [];
 
 /**
@@ -42,6 +62,8 @@ vi.mock('tone', () => ({
   MembraneSynth: FakeNode,
   NoiseSynth: FakeNode,
   Filter: FakeNode,
+  Sampler: FakeSampler,
+  Player: FakePlayer,
   Sequence: FakeSequence,
   Time: () => ({ toSeconds: () => 0.125 }),
   Frequency: () => ({ toNote: () => 'C4' }),
@@ -62,5 +84,34 @@ describe('BackingBand', () => {
     band.start();
     expect(() => band.dispose()).not.toThrow();
     expect(sequences.at(-1)!.dispose).toHaveBeenCalled();
+  });
+
+  it('builds recorded voices for a sampled genre and disposes them', () => {
+    const engine = new MusicEngine(GENRES.classical, 1);
+    const band = new BackingBand(GENRES.classical, () => engine);
+    // Pad, bass and stab samplers; two or one players per sampled drum voice.
+    expect(samplers).toHaveLength(3);
+    expect(players.length).toBeGreaterThanOrEqual(7);
+
+    band.start();
+    band.dispose();
+
+    for (const node of [...samplers, ...players]) expect(node.dispose).toHaveBeenCalled();
+  });
+
+  it('plays the synth hit while a recording is still loading', () => {
+    const engine = new MusicEngine(GENRES.classical, 1);
+    const band = new BackingBand(GENRES.classical, () => engine);
+    band.trigger('kick', 1);
+    // Fake players never report loaded, so every hit must go to the synth.
+    expect(players.every((p) => p.start.mock.calls.length === 0)).toBe(true);
+    band.dispose();
+  });
+
+  it('builds no recorded voices for a synth genre', () => {
+    const start = samplers.length;
+    const engine = new MusicEngine(GENRES.synthwave, 1);
+    new BackingBand(GENRES.synthwave, () => engine).dispose();
+    expect(samplers).toHaveLength(start);
   });
 });

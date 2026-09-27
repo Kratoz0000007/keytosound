@@ -2,8 +2,11 @@ import * as Tone from 'tone';
 import { VOICES, type Voice } from '../engine/beat';
 import type { BarHarmony } from '../engine/harmony';
 import { pitchClass } from '../engine/theory';
-import type { Chord, GenrePreset } from '../engine/types';
+import type { Chord, GenrePreset, InstrumentId } from '../engine/types';
 import { DEFAULT_KIT, KITS } from './kits';
+import { KIT_SAMPLES, PITCHED, type DrumVoice } from './sampleLibrary';
+import { SampledChords, SampledHit, type ChordVoice } from './sampledVoices';
+import { createPlayers, createSampler } from './samplers';
 
 const STEPS_PER_BAR = 16;
 
@@ -25,13 +28,38 @@ function chordToNotes(chord: Chord, octave: number): string[] {
   );
 }
 
+const DRUM_VOICES: DrumVoice[] = ['kick', 'snare', 'hat', 'openHat', 'clap', 'perc', 'fx'];
+
+function polyVoice(synth: Tone.PolySynth): ChordVoice {
+  return {
+    play: (notes, duration, time) => synth.triggerAttackRelease(notes, duration, time),
+    release: () => synth.releaseAll(),
+    dispose: () => synth.dispose(),
+  };
+}
+
+function monoVoice(synth: Tone.MonoSynth): ChordVoice {
+  return {
+    play: (notes, duration, time) => synth.triggerAttackRelease(notes[0], duration, time),
+    release: () => synth.triggerRelease(),
+    dispose: () => synth.dispose(),
+  };
+}
+
+/** The recorded instrument when there is one, else the band's synth voice. */
+function recorded(id: InstrumentId | undefined, fallback: ChordVoice): ChordVoice {
+  const samples = id ? PITCHED[id] : undefined;
+  if (!samples) return fallback;
+  return new SampledChords(createSampler(samples).toDestination(), fallback);
+}
+
 /**
  * Nine voices plus a chord pad on a 16th-note grid. Reads its source through
  * a getter, because the engine is replaced on every genre switch and replay.
  */
 export class BackingBand {
-  private readonly pad: Tone.PolySynth;
-  private readonly bass: Tone.MonoSynth;
+  private readonly pad: ChordVoice;
+  private readonly bass: ChordVoice;
   private readonly kick: Tone.MembraneSynth;
   private readonly perc: Tone.MembraneSynth;
   private readonly snare: Tone.NoiseSynth;
@@ -39,8 +67,10 @@ export class BackingBand {
   private readonly openHat: Tone.NoiseSynth;
   private readonly clap: Tone.NoiseSynth;
   private readonly clapFilter: Tone.Filter;
-  private readonly stab: Tone.PolySynth;
+  private readonly stab: ChordVoice;
   private readonly fx: Tone.NoiseSynth;
+  private readonly hit: Record<DrumVoice, (time: number) => void>;
+  private readonly sampledHits: SampledHit[] = [];
   private sequence: Tone.Sequence<number> | null = null;
   private chord: Chord;
 
@@ -51,17 +81,19 @@ export class BackingBand {
     const kit = KITS[preset.id] ?? DEFAULT_KIT;
     this.chord = preset.progression[0];
 
-    this.pad = new Tone.PolySynth(Tone.Synth, {
+    const pad = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine' },
       envelope: { attack: 0.6, decay: 1, sustain: 0.6, release: 2 },
     }).toDestination();
-    this.pad.volume.value = -20;
+    pad.volume.value = -20;
+    this.pad = recorded(preset.padInstrument, polyVoice(pad));
 
-    this.bass = new Tone.MonoSynth({
+    const bass = new Tone.MonoSynth({
       oscillator: { type: 'square' },
       envelope: { attack: 0.02, decay: 0.3, sustain: 0.3, release: 0.4 },
     }).toDestination();
-    this.bass.volume.value = -14;
+    bass.volume.value = -14;
+    this.bass = recorded(preset.bassInstrument, monoVoice(bass));
 
     this.kick = new Tone.MembraneSynth({
       pitchDecay: kit.kick.pitchDecay,
@@ -104,11 +136,12 @@ export class BackingBand {
     }).connect(this.clapFilter);
     this.clap.volume.value = -8;
 
-    this.stab = new Tone.PolySynth(Tone.Synth, {
+    const stab = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: kit.stabOscillator },
       envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 },
     }).toDestination();
-    this.stab.volume.value = -20;
+    stab.volume.value = -20;
+    this.stab = recorded(preset.stabInstrument, polyVoice(stab));
 
     // A swell into the beat it lands on, not a hit on it.
     this.fx = new Tone.NoiseSynth({
@@ -116,6 +149,27 @@ export class BackingBand {
       envelope: { attack: 0.7, decay: 0.05, sustain: 0 },
     }).toDestination();
     this.fx.volume.value = -24;
+
+    const synthHit: Record<DrumVoice, (time: number) => void> = {
+      kick: (time) => this.kick.triggerAttackRelease(kit.kick.note, '8n', time),
+      snare: (time) => this.snare.triggerAttackRelease('8n', time),
+      hat: (time) => this.hat.triggerAttackRelease('16n', time),
+      openHat: (time) => this.openHat.triggerAttackRelease('8n', time),
+      clap: (time) => this.clap.triggerAttackRelease('16n', time),
+      perc: (time) => this.perc.triggerAttackRelease(kit.perc.note, '8n', time),
+      fx: (time) => this.fx.triggerAttackRelease('4n', time),
+    };
+    // A kit's recordings replace its synth hits voice by voice; the synth hit
+    // plays until they load, and for any voice the kit does not record.
+    const samples = KIT_SAMPLES[preset.id] ?? {};
+    this.hit = { ...synthHit };
+    for (const voice of DRUM_VOICES) {
+      const set = samples[voice];
+      if (!set) continue;
+      const sampled = new SampledHit(createPlayers(set), synthHit[voice]);
+      this.sampledHits.push(sampled);
+      this.hit[voice] = (time) => sampled.trigger(time);
+    }
   }
 
   /**
@@ -139,7 +193,7 @@ export class BackingBand {
           const seconds = transport.getSecondsAtTime(time);
           const bar = Math.max(0, Math.round((seconds * 1000) / source.barMs));
           this.chord = source.harmonyAt(bar).chord;
-          this.pad.triggerAttackRelease(chordToNotes(this.chord, 4), '1m', time);
+          this.pad.play(chordToNotes(this.chord, 4), '1m', time);
         }
 
         for (const voice of VOICES) {
@@ -153,44 +207,21 @@ export class BackingBand {
 
   /** Plays one voice at `time`. Also used for immediate feedback on a digit press. */
   trigger(voice: Voice, time: number = Tone.now()): void {
-    switch (voice) {
-      case 'kick':
-        this.kick.triggerAttackRelease(KITS[this.preset.id]?.kick.note ?? 'C1', '8n', time);
-        break;
-      case 'snare':
-        this.snare.triggerAttackRelease('8n', time);
-        break;
-      case 'hat':
-        this.hat.triggerAttackRelease('16n', time);
-        break;
-      case 'openHat':
-        this.openHat.triggerAttackRelease('8n', time);
-        break;
-      case 'clap':
-        this.clap.triggerAttackRelease('16n', time);
-        break;
-      case 'perc':
-        this.perc.triggerAttackRelease(KITS[this.preset.id]?.perc.note ?? 'G2', '8n', time);
-        break;
-      case 'bass': {
-        const root = Tone.Frequency(pitchClass(this.chord.root) + 24, 'midi').toNote();
-        this.bass.triggerAttackRelease(root, '8n', time);
-        break;
-      }
-      case 'stab':
-        this.stab.triggerAttackRelease(chordToNotes(this.chord, 4), '16n', time);
-        break;
-      case 'fx':
-        this.fx.triggerAttackRelease('4n', time);
-        break;
+    if (voice === 'bass') {
+      const root = Tone.Frequency(pitchClass(this.chord.root) + 24, 'midi').toNote();
+      this.bass.play([root], '8n', time);
+    } else if (voice === 'stab') {
+      this.stab.play(chordToNotes(this.chord, 4), '16n', time);
+    } else {
+      this.hit[voice](time);
     }
   }
 
   /** Cuts any held notes; the pad's '1m' chords otherwise ring on after a pause. */
   release(): void {
-    this.pad.releaseAll();
-    this.stab.releaseAll();
-    this.bass.triggerRelease();
+    this.pad.release();
+    this.stab.release();
+    this.bass.release();
   }
 
   dispose(): void {
@@ -199,9 +230,11 @@ export class BackingBand {
     // after a restart can be -4e-13s. Tone throws on that, and a genre switch
     // made moments after Start would abort half-way with no lead instrument.
     this.sequence?.dispose();
+    this.pad.dispose();
+    this.bass.dispose();
+    this.stab.dispose();
+    for (const hit of this.sampledHits) hit.dispose();
     for (const node of [
-      this.pad,
-      this.bass,
       this.kick,
       this.perc,
       this.snare,
@@ -209,7 +242,6 @@ export class BackingBand {
       this.openHat,
       this.clap,
       this.clapFilter,
-      this.stab,
       this.fx,
     ]) {
       node.dispose();
