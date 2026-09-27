@@ -12,3 +12,6 @@ target/
 
 # The dev database's files (backend/.pgdata), written by spring-boot:run.
 .pgdata/
+
+# Raw downloads for frontend/scripts/samples/fetch.mjs; only its output is committed.
+frontend/scripts/samples/.cache/
