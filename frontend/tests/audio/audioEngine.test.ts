@@ -46,6 +46,15 @@ vi.mock('../../src/audio/backing', () => ({
   }),
 }));
 
+const colours: { genre: string; dispose: ReturnType<typeof vi.fn> }[] = [];
+vi.mock('../../src/audio/colour', () => ({
+  applyColour: (genre: string) => {
+    const colour = { genre, dispose: vi.fn() };
+    colours.push(colour);
+    return colour;
+  },
+}));
+
 vi.mock('../../src/audio/instruments', () => ({
   createLead: () => ({
     voice: {
@@ -144,6 +153,16 @@ describe('AudioEngine', () => {
     expect(bands[1].startAmbience).not.toHaveBeenCalled();
     engine.resume();
     expect(bands[1].startAmbience).toHaveBeenCalledTimes(1);
+  });
+
+  it("swaps the genre's colour on the output when switching", async () => {
+    colours.length = 0;
+    const engine = new AudioEngine(GENRES.lofi);
+    await engine.start();
+    engine.setGenre(GENRES.jazz);
+    expect(colours.map((c) => c.genre)).toEqual(['lofi', 'jazz']);
+    expect(colours[0].dispose).toHaveBeenCalled();
+    expect(colours[1].dispose).not.toHaveBeenCalled();
   });
 
   it('stays paused across a genre switch', async () => {

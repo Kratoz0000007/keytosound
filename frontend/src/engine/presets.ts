@@ -56,8 +56,10 @@ export const GENRES: Record<string, GenrePreset> = {
     temperature: 0.4,
     centerPitch: 69, // A4
     registerSpread: 9,
-    leadInstrument: 'electricPiano',
-    glideSeconds: 0.06, // short and soft
+    leadInstrument: 'uprightPiano',
+    glideSeconds: 0, // a recording cannot glide; slurred notes connect by legato
+    padInstrument: 'uprightPiano',
+    stabInstrument: 'uprightPiano',
     // Late kick on step 10 and heavy swing give the dragging feel.
     groove: groove({ kick: [0, 10], snare: BACKBEAT, hat: EVERY_8TH, bass: [0, 8], swing: 0.35 }),
   },

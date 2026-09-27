@@ -1,5 +1,6 @@
 import * as Tone from 'tone';
 import { BackingBand, type BandSource } from './backing';
+import { applyColour, type Colour } from './colour';
 import { createLead, type LeadChain } from './instruments';
 import { LegatoLead } from './lead';
 import { Scheduler } from './scheduler';
@@ -25,6 +26,7 @@ export class AudioEngine {
   private chain: LeadChain | null = null;
   private lead: LegatoLead | null = null;
   private backing: BackingBand | null = null;
+  private colour: Colour | null = null;
   private scheduler: Scheduler | null = null;
   private started = false;
   private paused = false;
@@ -46,6 +48,7 @@ export class AudioEngine {
   }
 
   private build(): void {
+    this.colour = applyColour(this.preset.id);
     this.chain = createLead(this.preset.leadInstrument);
     const transport = Tone.getTransport();
     this.lead = new LegatoLead(
@@ -140,6 +143,8 @@ export class AudioEngine {
     transport.cancel(0);
     this.backing?.dispose();
     this.chain?.dispose();
+    this.colour?.dispose();
+    this.colour = null;
     this.backing = null;
     this.chain = null;
     this.lead = null;
