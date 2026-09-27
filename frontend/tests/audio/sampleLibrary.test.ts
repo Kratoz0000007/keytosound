@@ -77,7 +77,9 @@ describe('sample library', () => {
   });
 
   it('gives every sampled voice a usable volume', () => {
-    for (const set of Object.values(PITCHED)) expect(set!.volume).toBeLessThanOrEqual(0);
+    // Above 0 only to lift quiet recordings (the Salamander piano); the master
+    // limiter catches the peaks.
+    for (const set of Object.values(PITCHED)) expect(set!.volume).toBeLessThanOrEqual(10);
     for (const kit of Object.values(KIT_SAMPLES)) {
       for (const set of Object.values(kit)) {
         expect(set!.files.length).toBeGreaterThan(0);
